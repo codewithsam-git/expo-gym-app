@@ -519,26 +519,48 @@ const Home = ({ navigation }) => {
     return (
       <View
         style={{
-          flex: 1,
-          marginVertical: SIZES.base,
           flexDirection: 'row',
-          justifyContent: 'space-between',
           alignItems: 'center',
+          marginVertical: 15,
+          paddingHorizontal: 18
         }}>
+        {/* Left Line */}
         <View
           style={{
-            paddingHorizontal: SIZES.base,
+            flex: 1,
+            height: 1,
+            backgroundColor: 'rgba(255,255,255,0.3)',
+          }}
+        />
+
+        {/* Title Section */}
+        <View
+          style={{
             flexDirection: 'row',
             alignItems: 'center',
+            paddingVertical: 8,
+            paddingHorizontal: 15,
+            borderRadius: 10,
           }}>
           <FontAwesome
             name="tag"
             size={20}
-            color={COLORS.white}
-            style={{ marginRight: SIZES.base }}
+            color="#FFD700" // Gold color for premium look
+            style={{ marginRight: 8 }}
           />
-          <Text style={{ ...FONTS.h3, color: COLORS.white }}>Packages</Text>
+          <Text style={{ fontSize: 16, color: 'white', fontWeight: '600' }}>
+            Packages
+          </Text>
         </View>
+
+        {/* Right Line */}
+        <View
+          style={{
+            flex: 1,
+            height: 1,
+            backgroundColor: 'rgba(255,255,255,0.3)',
+          }}
+        />
       </View>
     );
   }
@@ -547,28 +569,48 @@ const Home = ({ navigation }) => {
     return (
       <View
         style={{
-          flex: 1,
-          marginVertical: SIZES.base,
           flexDirection: 'row',
-          justifyContent: 'space-between',
           alignItems: 'center',
+          marginVertical: 15,
+          paddingHorizontal: 18
         }}>
+        {/* Left Line */}
         <View
           style={{
-            paddingHorizontal: SIZES.base,
+            flex: 1,
+            height: 1,
+            backgroundColor: 'rgba(255,255,255,0.3)',
+          }}
+        />
+
+        {/* Title Section */}
+        <View
+          style={{
             flexDirection: 'row',
             alignItems: 'center',
+            paddingVertical: 8,
+            paddingHorizontal: 15,
+            borderRadius: 10,
           }}>
           <Icon
             name="calendar-outline"
             size={20}
-            color={COLORS.white}
-            style={{ marginRight: SIZES.base }}
+            color="#FFD700" // Gold color for premium look
+            style={{ marginRight: 8 }}
           />
-          <Text style={{ ...FONTS.h3, color: COLORS.white }}>
+          <Text style={{ fontSize: 16, color: 'white', fontWeight: '600' }}>
             Members with Expiring Plans
           </Text>
         </View>
+
+        {/* Right Line */}
+        <View
+          style={{
+            flex: 1,
+            height: 1,
+            backgroundColor: 'rgba(255,255,255,0.3)',
+          }}
+        />
       </View>
     );
   }
@@ -680,7 +722,7 @@ const Home = ({ navigation }) => {
     };
 
     fetchMembers();
-  }, [members]);
+  }, []);
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -701,7 +743,7 @@ const Home = ({ navigation }) => {
     };
 
     fetchPackages();
-  }, [packages]);
+  }, []);
 
   function renderMemberCard(member) {
     return (
@@ -724,7 +766,6 @@ const Home = ({ navigation }) => {
             </Text>
             <Text style={styles.memberPlan}>{member.planName}</Text>
           </View>
-
           <View style={styles.expiryContainer}>
             <View></View>
             <View>
@@ -754,11 +795,10 @@ const Home = ({ navigation }) => {
 
         <View>
           <View>{renderPackagesTitleSection()}</View>
-          <View
-            style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <View style={styles.container}>
             {packages.length === 0 ? (
-              <Text style={{ color: COLORS.lightGray, textAlign: 'center' }}>
-                No packages found
+              <Text style={styles.emptyText}>
+                No packages available at the moment
               </Text>
             ) : (
               <FlatList
@@ -766,24 +806,33 @@ const Home = ({ navigation }) => {
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                   <TouchableOpacity
-                    style={styles.packageItem} // Wrap TouchableOpacity for spacing
-                  >
+                    style={styles.packageItem}
+                    activeOpacity={0.8}>
                     <View style={styles.packageContainer}>
                       <Image
                         source={images.gym1}
                         style={styles.itemImage}
                         resizeMode="cover"
                       />
-                      <Text
-                        style={{ color: COLORS.white, textAlign: 'center' }}>
-                        {item.package_name || 'Package'}
-                      </Text>
+                      <View style={styles.packageContent}>
+                        <Text style={styles.packageTitle}>
+                          {item.package_name || 'Premium Package'}
+                        </Text>
+                        <Text style={styles.packageSubtitle}>
+                          {item.package_type || 'Membership Benefits'}
+                        </Text>
+                        {item.price && (
+                          <Text style={styles.packagePrice}>
+                            ${item.price}/month
+                          </Text>
+                        )}
+                      </View>
                     </View>
                   </TouchableOpacity>
                 )}
-                horizontal={true}
-                showsHorizontalScrollIndicator={false} // Optionally hide scroll indicator
-                contentContainerStyle={styles.flatListContent} // Add style for content container
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.flatListContent}
               />
             )}
           </View>
@@ -793,8 +842,8 @@ const Home = ({ navigation }) => {
           <View>{renderMemberExpiryTitleSection()}</View>
           <View>
             {members.length === 0 && (
-              <Text style={{ color: COLORS.lightGray, textAlign: 'center' }}>
-                No members found
+               <Text style={styles.emptyText}>
+                No members available at the moment
               </Text>
             )}
             <ScrollView
@@ -834,73 +883,100 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   memberCard: {
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    padding: 16,
-    marginTop: 10,
+    position: 'relative', // Ensures absolute positioning works inside
     borderWidth: 1,
-    borderColor: COLORS.gray,
-    flexDirection: 'column', // To align content in a vertical direction
+    borderColor: COLORS.lightGray,
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 10,
   },
   memberHeader: {
-    flexDirection: 'row', // Aligns items horizontally
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between', // Ensures space between elements
   },
   avatarContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginRight: 12,
+    marginRight: 10,
   },
   avatar: {
-    width: '100%',
-    height: '100%',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   memberDetails: {
-    flex: 1, // Allows for flexible space usage
+    flex: 1,
   },
   memberName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.white,
+    marginBottom: 5,
   },
   memberPlan: {
     fontSize: 14,
-    color: COLORS.lightGray,
+    color: 'gray',
   },
   expiryContainer: {
-    flexDirection: 'column',
-    justifyContent: 'space-between', // Aligns expiry text to the right
+    position: 'absolute',
+    right: 5, // Adjusts position to the left
+    top: 6, // Change to `bottom: 5` for lower corner
   },
   expiryDate: {
-    fontSize: 14,
+    fontSize: 12,
+    color: COLORS.lightRed, // Expiry date in red
     fontWeight: 'bold',
-    color: COLORS.lightRed, // A color to stand out
+  },
+  container: {
+    flex: 1,
+    paddingVertical: 10,
+  },
+  emptyText: {
+    color: COLORS.lightGray,
+    fontSize: 16,
+    textAlign: 'center',
+    padding: 20,
+    fontWeight: '500',
   },
   packageItem: {
-    marginHorizontal: 10, // Add spacing between items
-    alignItems: 'center', // Center content within TouchableOpacity
+    marginRight: 20,
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   packageContainer: {
-    borderRadius: 10,
-    padding: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 150, // Adjust the height to your preference
-    width: 150, // Adjust the width to your preference
+    width: 240,
+    backgroundColor: '#fff',
   },
   itemImage: {
     width: '100%',
-    height: '70%', // Adjust height as needed
-    borderRadius: 10,    
+    height: 150,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
   },
-  flatListContent: {
-    paddingHorizontal: 15, // Add padding to the left and right for better alignment
+  packageContent: {
+    padding: 15,
+    alignItems: 'center',
   },
+  packageTitle: {
+    color: COLORS.black,
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 5,
+  },
+  packageSubtitle: {
+    color: COLORS.gray,
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  packagePrice: {
+    color: COLORS.primary,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  flatListContent: {},
 });
 
 export default Home;

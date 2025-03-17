@@ -19,10 +19,16 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.codewithsamexpo.snack2d750b5721b6479e938fb34fb5084fa2"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5ae1041b-4cfe-4eed-985e-10d99d7ae31f"
+      }
     }
   }
 }

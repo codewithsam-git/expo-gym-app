@@ -10,99 +10,23 @@ import {
   Image,
   Platform,
   Modal,
+  Dimensions
 } from 'react-native';
-import { COLORS, FONTS, SIZES, icons } from '../constants';
+import { COLORS, FONTS, SIZES, icons,  images } from '../constants';
 import Header from '../components/Header';
 import BASE_URL from '../Api/commonApi';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import SkeletonMember from '../components/SkeletonMember';
 
+const screenWidth = Dimensions.get('window').width;
+const screenHeight = Dimensions.get('window').height;
 
 const ViewMembers = () => {
-  // const members = [
-  //   {
-  //     id: 1,
-  //     firstName: 'John',
-  //     lastName: 'Doe',
-  //     email: 'john.doe@email.com',
-  //     mobileNo: '123-456-7890',
-  //   },
-  //   {
-  //     id: 2,
-  //     firstName: 'Jane',
-  //     lastName: 'Smith',
-  //     email: 'jane.smith@email.com',
-  //     mobileNo: '987-654-3210',
-  //   },
-  //   {
-  //     id: 3,
-  //     firstName: 'John',
-  //     lastName: 'Doe',
-  //     email: 'john.doe@email.com',
-  //     mobileNo: '123-456-7890',
-  //   },
-  //   {
-  //     id: 4,
-  //     firstName: 'Jane',
-  //     lastName: 'Smith',
-  //     email: 'jane.smith@email.com',
-  //     mobileNo: '987-654-3210',
-  //   },
-  //   {
-  //     id: 5,
-  //     firstName: 'John',
-  //     lastName: 'Doe',
-  //     email: 'john.doe@email.com',
-  //     mobileNo: '123-456-7890',
-  //   },
-  //   {
-  //     id: 6,
-  //     firstName: 'Jane',
-  //     lastName: 'Smith',
-  //     email: 'jane.smith@email.com',
-  //     mobileNo: '987-654-3210',
-  //   },
-  //   {
-  //     id: 7,
-  //     firstName: 'John',
-  //     lastName: 'Doe',
-  //     email: 'john.doe@email.com',
-  //     mobileNo: '123-456-7890',
-  //   },
-  //   {
-  //     id: 8,
-  //     firstName: 'Jane',
-  //     lastName: 'Smith',
-  //     email: 'jane.smith@email.com',
-  //     mobileNo: '987-654-3210',
-  //   },
-  //   {
-  //     id: 8,
-  //     firstName: 'Jane',
-  //     lastName: 'Smith',
-  //     email: 'jane.smith@email.com',
-  //     mobileNo: '987-654-3210',
-  //   },
-  //   {
-  //     id: 8,
-  //     firstName: 'Jane',
-  //     lastName: 'Smith',
-  //     email: 'jane.smith@email.com',
-  //     mobileNo: '987-654-3210',
-  //   },
-  //   {
-  //     id: 8,
-  //     firstName: 'Jane',
-  //     lastName: 'Smith',
-  //     email: 'jane.smith@email.com',
-  //     mobileNo: '987-654-3210',
-  //   },
-  // ];
-
   const navigation = useNavigation();
 
   const [members, setMembers] = useState([]);
-
+  const [skeletonLoader, setSkeletonLoader] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false); // To toggle menu visibility
 
   const handleMenuToggle = () => {
@@ -121,18 +45,29 @@ const ViewMembers = () => {
 
         const data = await response.json();
         setMembers(data.memberData);
+        setSkeletonLoader(false);
       } catch (err) {
         console.error('Fetch error:', err);
+        // setSkeletonLoader(false);
       }
     };
 
     fetchMembers();
   }, [members]);
 
-  function renderMemberCard(member) {
+  function renderMemberCard(member, navigation) {
     return (
-      <View style={styles.memberCard}>
-        <TouchableWithoutFeedback>
+      <TouchableOpacity
+        onPress={() => {
+          if (menuVisible) {
+            setMenuVisible(false);
+          } else {
+            navigation.navigate('profile');
+          }
+        }}
+        activeOpacity={0.7} // Optional: Adds a subtle press feedback
+      >
+        <View style={styles.memberCard}>
           <View style={styles.avatarContainer}>
             <Image
               source={{
@@ -142,42 +77,42 @@ const ViewMembers = () => {
               resizeMode="cover"
             />
           </View>
-        </TouchableWithoutFeedback>
 
-        <TouchableWithoutFeedback>
           <View style={styles.memberDetails}>
             <Text style={styles.memberName}>
               {member.name} {member.surname} {member.title}
             </Text>
             <Text style={styles.memberPlan}>Plan : {member.planName}</Text>
           </View>
-        </TouchableWithoutFeedback>
 
-        <TouchableOpacity style={styles.menuButton} onPress={handleMenuToggle}>
-          <Icon name="more-vert" size={24} color="white" />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={handleMenuToggle}>
+            <Icon name="more-vert" size={24} color="white" />
+          </TouchableOpacity>
 
-        {menuVisible && (
-          <View style={styles.menu}>
-            <TouchableOpacity
-              style={styles.menuOption}
-              onPress={() => {
-                navigation.navigate('EditMember', { memberId: member.id });
-                setMenuVisible(false); // Close the menu after selecting
-              }}>
-              <Text style={styles.menuOptionText}>Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.menuOption}
-              onPress={() => {
-                handleDelete(member.id);
-                setMenuVisible(false); // Close the menu after selecting
-              }}>
-              <Text style={styles.menuOptionText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+          {menuVisible && (
+            <View style={styles.menu}>
+              <TouchableOpacity
+                style={styles.menuOption}
+                onPress={() => {
+                  navigation.navigate('EditMember', { memberId: member.id });
+                  setMenuVisible(false); // Close the menu after selecting
+                }}>
+                <Text style={styles.menuOptionText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuOption}
+                onPress={() => {
+                  handleDelete(member.id);
+                  setMenuVisible(false); // Close the menu after selecting
+                }}>
+                <Text style={styles.menuOptionText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
     );
   }
 
@@ -220,25 +155,36 @@ const ViewMembers = () => {
         </View>
 
         <View style={{ marginTop: SIZES.font }}>
-          {members.length === 0 && (
-            <Text style={{ color: COLORS.lightGray, textAlign: 'center' }}>
-              No members found
-            </Text>
+          {members.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Image
+                source={images.noData}
+                style={styles.noDataImage}
+              />
+              <Text style={styles.emptyText}>
+                No members available at the moment
+              </Text>
+            </View>
+          ) : (
+            <View>
+              {skeletonLoader ? (
+                <SkeletonMember />
+              ) : (
+                <ScrollView
+                  contentContainerStyle={{ flexGrow: 1 }}
+                  scrollEnabled={true}>
+                  {members.map((member, index) => (
+                    <View key={member.id}>
+                      {renderMemberCard(member, navigation)}
+                      {index < members.length - 1 && (
+                        <View style={styles.separator} />
+                      )}
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
           )}
-          <ScrollView
-            contentContainerStyle={{ flexGrow: 1 }}
-            scrollEnabled={true}>
-            {members.map((member, index) => (
-              <TouchableOpacity
-                key={member.id}
-                onPress={() => {
-                  navigation.navigate('profile');
-                }}>
-                <View>{renderMemberCard(member)}</View>
-                {members.length - 1 && <View style={styles.separator} />}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
         </View>
       </SafeAreaView>
     </TouchableWithoutFeedback>
@@ -261,6 +207,23 @@ const styles = StyleSheet.create({
     marginRight: 20,
     alignItems: 'center',
     height: 60,
+  },
+  emptyState: {
+    marginTop : screenWidth/2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SIZES.padding,
+  },
+  noDataImage: {
+    width: 100, // Adjust the size as needed
+    height: 100, // Adjust the size as needed
+    marginBottom: SIZES.base,    
+  },
+  emptyText: {
+    color: COLORS.lightGray,
+    fontSize: 16,
+    textAlign: 'center',
+    fontWeight: '500',
   },
   menuIcon: {
     width: 30,

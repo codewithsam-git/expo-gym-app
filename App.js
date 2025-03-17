@@ -9,9 +9,15 @@ import AddMember from './screens/AddMember';
 import Login from './screens/Login';
 import AddPackage from './screens/AddPackage';
 import ViewPackages from './screens/ViewPackages';
+import AddAsset from './screens/AddAsset';
+import ViewAsset from './screens/ViewAssets';
+import AddStaff from './screens/AddStaff';
+import ViewStaff from './screens/ViewStaff';
 import Profile from './components/Profile';
 import MemberBill from './components/MemberBill';
 import UpdatePlan from './components/UpdatePlan';
+import PackageReports from './screens/PackageReports';
+
 import {
   StatusBar,
   useColorScheme,
@@ -169,7 +175,7 @@ const DrawerNavigator = () => {
         drawerInactiveTintColor: COLORS.white,
         drawerActiveBackgroundColor: 'transparent',
       }}
-      drawerContent={(props) => <CustomDrawerContent {...props} />}>
+      drawerContent={(props) => <CustomDrawerContent {...props} />}>      
       <Drawer.Screen
         name="Home"
         component={Tabs}
@@ -213,7 +219,7 @@ const DrawerNavigator = () => {
         }}
       />
       <Drawer.Screen
-        name="Add Packages"
+        name="Add Package"
         component={AddPackage}
         options={{
           drawerIcon: ({ color }) => (
@@ -233,6 +239,76 @@ const DrawerNavigator = () => {
           drawerIcon: ({ color }) => (
             <Ionicons
               name="folder"
+              size={24}
+              color={color}
+              style={styles.drawerIcon}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Add Asset"
+        component={AddAsset}
+        options={{
+          drawerIcon: ({ color }) => (
+            <Ionicons
+              name="add-circle"
+              size={24}
+              color={color}
+              style={styles.drawerIcon}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="View Assets"
+        component={ViewAsset}
+        options={{
+          drawerIcon: ({ color }) => (
+            <Ionicons
+              name="eye"
+              size={24}
+              color={color}
+              style={styles.drawerIcon}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Add Staff"
+        component={AddStaff}
+        options={{
+          drawerIcon: ({ color }) => (
+            <Ionicons
+              name="add-circle-outline"
+              size={24}
+              color={color}
+              style={styles.drawerIcon}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="View Staff"
+        component={ViewStaff}
+        options={{
+          drawerIcon: ({ color }) => (
+            <Ionicons
+              name="people-outline"
+              size={24}
+              color={color}
+              style={styles.drawerIcon}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Package Reports"
+        component={PackageReports}
+        options={{
+          drawerIcon: ({ color }) => (
+            <Ionicons
+              name="document-text-outline"
               size={24}
               color={color}
               style={styles.drawerIcon}
@@ -268,6 +344,11 @@ const App = () => {
           <Stack.Screen name="profile" component={Profile} />
           <Stack.Screen name="memberBill" component={MemberBill} />
           <Stack.Screen name="updatePlan" component={UpdatePlan} />
+          <Stack.Screen name="packageReports" component={PackageReports} />
+          <Stack.Screen name="addAsset" component={AddAsset} />
+          <Stack.Screen name="viewAsset" component={ViewAsset} />
+          <Stack.Screen name="addStaff" component={AddStaff} />
+          <Stack.Screen name="viewStaff" component={ViewStaff} />
           <Stack.Screen
             name="BookDetail"
             component={BookDetail}

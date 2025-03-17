@@ -22,7 +22,7 @@ import SkeletonMember from '../components/SkeletonMember';
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
 
-const ViewPackages = () => {
+const ViewStaff = () => {
   // const members = [
   //   {
   //     id: 1,
@@ -116,8 +116,8 @@ const ViewPackages = () => {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        console.log(`${BASE_URL}/get-packages`);
-        const response = await fetch(`${BASE_URL}/get-packages`);
+        console.log(`${BASE_URL}/get-staff`);
+        const response = await fetch(`${BASE_URL}/get-staff`);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -211,7 +211,7 @@ const ViewPackages = () => {
             </View>
 
             <View style={styles.headerSection}>
-              <Text style={styles.header}>Packages</Text>
+              <Text style={styles.header}>Staff</Text>
             </View>
 
             <View>
@@ -228,7 +228,7 @@ const ViewPackages = () => {
                 style={styles.noDataImage}
               />
               <Text style={styles.emptyText}>
-                No packages available at the moment
+                No staff available at the moment
               </Text>
             </View>
           ) : (
@@ -403,4 +403,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ViewPackages;
+export default ViewStaff;

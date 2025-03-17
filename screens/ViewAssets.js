@@ -10,7 +10,7 @@ import {
   Image,
   Platform,
   Modal,
-  Dimensions
+  Dimensions,
 } from 'react-native';
 import { COLORS, FONTS, SIZES, icons, images } from '../constants';
 import Header from '../components/Header';
@@ -22,7 +22,7 @@ import SkeletonMember from '../components/SkeletonMember';
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
 
-const ViewPackages = () => {
+const ViewAssets = () => {
   // const members = [
   //   {
   //     id: 1,
@@ -116,8 +116,8 @@ const ViewPackages = () => {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        console.log(`${BASE_URL}/get-packages`);
-        const response = await fetch(`${BASE_URL}/get-packages`);
+        console.log(`${BASE_URL}/get-assets`);
+        const response = await fetch(`${BASE_URL}/get-assets`);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -211,7 +211,7 @@ const ViewPackages = () => {
             </View>
 
             <View style={styles.headerSection}>
-              <Text style={styles.header}>Packages</Text>
+              <Text style={styles.header}>Assets</Text>
             </View>
 
             <View>
@@ -223,18 +223,15 @@ const ViewPackages = () => {
         <View style={{ marginTop: SIZES.font }}>
           {members.length === 0 ? (
             <View style={styles.emptyState}>
-              <Image
-                source={images.noData}
-                style={styles.noDataImage}
-              />
+              <Image source={images.noData} style={styles.noDataImage} />
               <Text style={styles.emptyText}>
-                No packages available at the moment
+                No assets available at the moment
               </Text>
             </View>
           ) : (
             <View>
               {skeletonLoader ? (
-                <SkeletonMember />
+                ''
               ) : (
                 <ScrollView
                   contentContainerStyle={{ flexGrow: 1 }}
@@ -296,7 +293,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   emptyState: {
-    marginTop : screenWidth/2,
+    marginTop: screenWidth / 2,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SIZES.padding,
@@ -304,7 +301,7 @@ const styles = StyleSheet.create({
   noDataImage: {
     width: 100, // Adjust the size as needed
     height: 100, // Adjust the size as needed
-    marginBottom: SIZES.base,    
+    marginBottom: SIZES.base,
   },
   emptyText: {
     color: COLORS.lightGray,
@@ -403,4 +400,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ViewPackages;
+export default ViewAssets;
