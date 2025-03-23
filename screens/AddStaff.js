@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -16,16 +16,13 @@ import {
   Image,
 } from 'react-native';
 import { COLORS, FONTS, SIZES, icons } from '../constants';
-import Header from '../components/Header';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { launchImageLibrary } from 'react-native-image-picker'; // Import the image picker
-import * as ImagePicker from 'expo-image-picker'; // Import expo-image-picker
+import * as ImagePicker from 'expo-image-picker';
 
 import BASE_URL from '../Api/commonApi';
 
 const AddStaff = ({ navigation }) => {
-  const [isFullNameFocus, setIsFullNameFocus] = useState(false);
   const [isRoleFocus, setIsRoleFocus] = useState(false);
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState('');
@@ -36,7 +33,7 @@ const AddStaff = ({ navigation }) => {
     full_name: fullName,
     role: role,
     mob_no: mobNo,
-    profile_photo: imageUri,
+    profile_photo: imageUri || 'profile.jpg',
   };
 
   const handleSubmit = async () => {
@@ -103,15 +100,12 @@ const AddStaff = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={{ marginTop: Platform.OS === 'ios' ? 20 : 60 }}>
-        <Header />
-      </View>
-
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+            <View style={styles.formContainerWrapper}>
             <View style={styles.formContainer}>
               <Text style={styles.title}>Add New staff</Text>
               <View>
@@ -220,9 +214,17 @@ const AddStaff = ({ navigation }) => {
                 </View>
               </View>
             </View>
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
+      <View style={styles.actionContainer}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.downloadButton]}
+          onPress={() => navigation.goBack()}>
+          <Text style={styles.buttonText1}>View Staff</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -243,7 +245,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
   },
+  formContainerWrapper: {
+    flex: 1,
+    justifyContent: 'center', // Center vertically
+    alignItems: 'center', // Center horizontally
+  },
   formContainer: {
+    width: '90%',
     backgroundColor: COLORS.secondary,
     borderRadius: SIZES.radius,
     marginTop: SIZES.padding2,
@@ -305,6 +313,30 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: SIZES.radius,
+  },
+  actionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: SIZES.padding,
+    borderTopWidth: 1,
+    borderTopColor: '#202428',
+  },
+  actionButton: {
+    paddingVertical: SIZES.base,
+    paddingHorizontal: SIZES.padding,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  downloadButton: {
+    backgroundColor: COLORS.primary,
+  },
+  buttonText1: {
+    ...FONTS.body4,
+    color: COLORS.white,
   },
 });
 

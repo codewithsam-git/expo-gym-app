@@ -52,11 +52,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  headerText: {
-    flex: 1,
-    alignItems: 'center',
-  },
+  }
 });
 
 export default Header;

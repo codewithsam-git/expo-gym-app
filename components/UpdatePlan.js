@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   profileHeader: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: Platform.OS === 'ios' ? 20 : 60,
   },
   profileHeaderImage: {
     width: 80,

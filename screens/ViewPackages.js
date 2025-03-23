@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,243 +8,215 @@ import {
   ScrollView,
   SafeAreaView,
   Image,
+  TextInput,
+  Dimensions,
   Platform,
-  Modal,
-  Dimensions
 } from 'react-native';
+import * as Animatable from 'react-native-animatable'; // Import Animatable
 import { COLORS, FONTS, SIZES, icons, images } from '../constants';
 import Header from '../components/Header';
 import BASE_URL from '../Api/commonApi';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { useNavigation } from '@react-navigation/native';
 import SkeletonMember from '../components/SkeletonMember';
+import { useFocusEffect } from '@react-navigation/native';
+import ViewHeader from '../components/ViewHeader';
 
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
 
 const ViewPackages = () => {
-  // const members = [
-  //   {
-  //     id: 1,
-  //     firstName: 'John',
-  //     lastName: 'Doe',
-  //     email: 'john.doe@email.com',
-  //     mobileNo: '123-456-7890',
-  //   },
-  //   {
-  //     id: 2,
-  //     firstName: 'Jane',
-  //     lastName: 'Smith',
-  //     email: 'jane.smith@email.com',
-  //     mobileNo: '987-654-3210',
-  //   },
-  //   {
-  //     id: 3,
-  //     firstName: 'John',
-  //     lastName: 'Doe',
-  //     email: 'john.doe@email.com',
-  //     mobileNo: '123-456-7890',
-  //   },
-  //   {
-  //     id: 4,
-  //     firstName: 'Jane',
-  //     lastName: 'Smith',
-  //     email: 'jane.smith@email.com',
-  //     mobileNo: '987-654-3210',
-  //   },
-  //   {
-  //     id: 5,
-  //     firstName: 'John',
-  //     lastName: 'Doe',
-  //     email: 'john.doe@email.com',
-  //     mobileNo: '123-456-7890',
-  //   },
-  //   {
-  //     id: 6,
-  //     firstName: 'Jane',
-  //     lastName: 'Smith',
-  //     email: 'jane.smith@email.com',
-  //     mobileNo: '987-654-3210',
-  //   },
-  //   {
-  //     id: 7,
-  //     firstName: 'John',
-  //     lastName: 'Doe',
-  //     email: 'john.doe@email.com',
-  //     mobileNo: '123-456-7890',
-  //   },
-  //   {
-  //     id: 8,
-  //     firstName: 'Jane',
-  //     lastName: 'Smith',
-  //     email: 'jane.smith@email.com',
-  //     mobileNo: '987-654-3210',
-  //   },
-  //   {
-  //     id: 8,
-  //     firstName: 'Jane',
-  //     lastName: 'Smith',
-  //     email: 'jane.smith@email.com',
-  //     mobileNo: '987-654-3210',
-  //   },
-  //   {
-  //     id: 8,
-  //     firstName: 'Jane',
-  //     lastName: 'Smith',
-  //     email: 'jane.smith@email.com',
-  //     mobileNo: '987-654-3210',
-  //   },
-  //   {
-  //     id: 8,
-  //     firstName: 'Jane',
-  //     lastName: 'Smith',
-  //     email: 'jane.smith@email.com',
-  //     mobileNo: '987-654-3210',
-  //   },
-  // ];
-
   const navigation = useNavigation();
 
   const [members, setMembers] = useState([]);
   const [skeletonLoader, setSkeletonLoader] = useState(true);
-  const [menuVisible, setMenuVisible] = useState(false); // To toggle menu visibility
+  const [searchQuery, setSearchQuery] = useState('');
+  const [menuVisibleFor, setMenuVisibleFor] = useState(null);
 
-  const handleMenuToggle = () => {
-    setMenuVisible(!menuVisible); // Toggle the visibility of the menu
+  const filteredMembers = members.filter((member) =>
+    member.package_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const fetchMembers = async () => {
+    try {
+      console.log(`${BASE_URL}/packages`);
+      const response = await fetch(`${BASE_URL}/packages`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(data);
+      setMembers(data.packages);
+      setSkeletonLoader(false);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setSkeletonLoader(false);
+    }
   };
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        console.log(`${BASE_URL}/get-packages`);
-        const response = await fetch(`${BASE_URL}/get-packages`);
+    fetchMembers();
+  }, []);
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+  useFocusEffect(
+    useCallback(() => {
+      fetchMembers();
+    }, [])
+  );
 
-        const data = await response.json();
-        console.log(data);
-        setMembers(data.memberData);
-        setSkeletonLoader(false);
-      } catch (err) {
-        console.error('Fetch error:', err);
-        // setSkeletonLoader(false);
-      }
+  function renderMemberCard(member, index) {
+    const isMenuVisible = menuVisibleFor === member.id;
+
+    const toggleMenu = () => {
+      setMenuVisibleFor(isMenuVisible ? null : member.id);
     };
 
-    fetchMembers();
-  }, [members]);
-
-  function renderMemberCard(member) {
     return (
-      <View style={styles.memberCard}>
-        <TouchableWithoutFeedback>
-          <View style={styles.avatarContainer}>
-            <Image
-              source={{
-                uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
-              }}
-              style={styles.avatar}
-              resizeMode="cover"
-            />
-          </View>
-        </TouchableWithoutFeedback>
+      <TouchableOpacity onPress={() => setMenuVisibleFor(false)}>
+        <Animatable.View
+          animation="fadeInUp" // Animate each card sliding up
+          duration={800}
+          delay={index * 100} // Stagger animation for each card
+          style={styles.memberCard}>
+          {/* Avatar Section */}
+          <Animatable.View activeOpacity={0.8}>
+            <View style={styles.avatarContainer}>
+              <Animatable.Image
+                animation="zoomIn" // Zoom in effect for avatar
+                duration={600}
+                source={{
+                  uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
+                }}
+                style={styles.avatar}
+                resizeMode="cover"
+                onError={(e) =>
+                  console.log('Image load error:', e.nativeEvent.error)
+                }
+              />
+            </View>
+          </Animatable.View>
 
-        <TouchableWithoutFeedback>
-          <View style={styles.memberDetails}>
-            <Text style={styles.memberName}>{member.package_name}</Text>
-            <Text style={styles.memberPlan}>Plan : {member.package_type}</Text>
-          </View>
-        </TouchableWithoutFeedback>
+          {/* Member Details Section */}
+          <Animatable.View style={styles.memberDetails} activeOpacity={0.7}>
+            <Animatable.Text
+              style={styles.memberName}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {member.package_name}
+            </Animatable.Text>
+            <Animatable.Text delay={200} style={styles.memberPlan}>
+              Amount: ₹
+              {parseFloat(member.package_amount).toLocaleString('en-IN')}
+              /-
+            </Animatable.Text>
+          </Animatable.View>
 
-        {menuVisible && (
-          <View style={styles.menu}>
-            <TouchableOpacity
-              style={styles.menuOption}
-              onPress={() => {
-                navigation.navigate('EditMember', { memberId: member.id });
-                setMenuVisible(false); // Close the menu after selecting
-              }}>
-              <Text style={styles.menuOptionText}>Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.menuOption}
-              onPress={() => {
-                handleDelete(member.id);
-                setMenuVisible(false); // Close the menu after selecting
-              }}>
-              <Text style={styles.menuOptionText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+          <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
+            <Animatable.View animation="rotate" duration={1000}>
+              <Icon name="more-vert" size={20} color={COLORS.lightGray2} />
+            </Animatable.View>
+          </TouchableOpacity>
+
+          {/* Contextual Menu */}
+          {isMenuVisible && (
+            <Animatable.View
+              animation="fadeInDown"
+              duration={200}
+              style={styles.menuDropdown}>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  navigation.navigate('editPackage', { packageId: member.id });
+                  setMenuVisibleFor(null);
+                }}>
+                <Animatable.View animation="bounceIn" delay={100}>
+                  <Icon name="edit" size={20} color={COLORS.primary} />
+                </Animatable.View>
+                <Text style={styles.menuItemText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  handleDelete(member.id);
+                  setMenuVisibleFor(null);
+                }}>
+                <Animatable.View animation="bounceIn" delay={200}>
+                  <Icon name="delete" size={20} color={COLORS.lightRed} />
+                </Animatable.View>
+                <Text style={styles.menuItemText}>Delete</Text>
+              </TouchableOpacity>
+            </Animatable.View>
+          )}
+        </Animatable.View>
+      </TouchableOpacity>
     );
   }
 
   const handleDelete = (id) => {
-    // Logic to delete the member (e.g., remove from state or make API call)
     console.log(`Member with ID ${id} deleted.`);
+    setMembers(members.filter((member) => member.id !== id)); // Update state to remove deleted member
   };
 
   return (
-    <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
+    <TouchableWithoutFeedback onPress={() => setMenuVisibleFor(false)}>
       <SafeAreaView style={styles.safeArea}>
-        <View
-          style={{
-            marginTop: Platform.OS === 'ios' ? 20 : 60,
-          }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              paddingHorizontal: SIZES.padding,
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}>
-            <View style={styles.header}>
-              <TouchableOpacity onPress={() => navigation.openDrawer()}>
-                <Image
-                  source={icons.menu_icon} // You can use any menu icon for the drawer
-                  style={styles.menuIcon}
-                />
-              </TouchableOpacity>
-            </View>
+        <ViewHeader headerTitle="Packages" navigateTo="addPackage" />
 
-            <View style={styles.headerSection}>
-              <Text style={styles.header}>Packages</Text>
-            </View>
-
-            <View>
-              <Text style={styles.header}> </Text>
-            </View>
-          </View>
-        </View>
+        {filteredMembers && !skeletonLoader && (
+          <Animatable.View
+            animation="fadeInDown" // Animate search bar sliding down
+            duration={800}
+            style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by package name..."
+              placeholderTextColor={COLORS.lightGray4}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </Animatable.View>
+        )}
 
         <View style={{ marginTop: SIZES.font }}>
-          {members.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Image
+          {filteredMembers.length === 0 && !skeletonLoader ? (
+            <Animatable.View
+              animation="bounceIn" // Bounce in effect for empty state
+              duration={1000}
+              style={styles.emptyState}>
+              <Animatable.Image
+                animation="pulse" // Pulse effect for no-data image
+                duration={1500}
+                iterationCount="infinite"
                 source={images.noData}
                 style={styles.noDataImage}
               />
-              <Text style={styles.emptyText}>
+              <Animatable.Text
+                animation="fadeIn"
+                duration={1000}
+                delay={300}
+                style={styles.emptyText}>
                 No packages available at the moment
-              </Text>
-            </View>
+              </Animatable.Text>
+            </Animatable.View>
           ) : (
             <View>
               {skeletonLoader ? (
                 <SkeletonMember />
               ) : (
                 <ScrollView
-                  contentContainerStyle={{ flexGrow: 1 }}
-                  scrollEnabled={true}>
-                  {members.map((member, index) => (
+                  contentContainerStyle={{
+                    flexGrow: 1,
+                    paddingBottom: Platform === 'ios' ? 80 : 120,
+                  }}
+                  scrollEnabled={true}
+                  onScroll={() =>
+                    menuVisibleFor != null && setMenuVisibleFor(null)
+                  }>
+                  {filteredMembers.map((member, index) => (
                     <View key={member.id}>
-                      {renderMemberCard(member, navigation)}
-                      {index < members.length - 1 && (
-                        <View style={styles.separator} />
-                      )}
+                      {renderMemberCard(member, index)}
                     </View>
                   ))}
                 </ScrollView>
@@ -262,49 +234,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.black,
   },
-  menuIcon: {
-    width: 30,
-    height: 30,
-    tintColor: COLORS.white,
+  searchContainer: {
+    padding: SIZES.font,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginRight: 20,
-    alignItems: 'center',
-    height: 60,
-  },
-  menuIcon: {
-    width: 30,
-    height: 30,
-    tintColor: COLORS.white,
-  },
-  headerText: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerSection: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    ...FONTS.h2,
+  searchInput: {
+    height: 40,
+    borderColor: COLORS.gray,
+    borderWidth: 1,
+    borderRadius: SIZES.radius,
+    paddingHorizontal: SIZES.base,
+    fontSize: FONTS.body3?.fontSize || 16,
     color: COLORS.white,
   },
-  scrollView: {
-    padding: 10,
-    marginTop: 10,
-  },
   emptyState: {
-    marginTop : screenWidth/2,
+    marginTop: screenWidth / 2,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SIZES.padding,
   },
   noDataImage: {
-    width: 100, // Adjust the size as needed
-    height: 100, // Adjust the size as needed
-    marginBottom: SIZES.base,    
+    width: 100,
+    height: 100,
+    marginBottom: SIZES.base,
   },
   emptyText: {
     color: COLORS.lightGray,
@@ -314,92 +265,68 @@ const styles = StyleSheet.create({
   },
   memberCard: {
     flexDirection: 'row',
-    padding: SIZES.base,
-    marginHorizontal: SIZES.base,
-    borderRadius: SIZES.radius,
-    shadowColor: COLORS.black,
+    alignItems: 'center',
+    backgroundColor: COLORS.black,
+    borderWidth: 1,
+    borderColor: COLORS.gray,
+    borderRadius: SIZES.font,
+    padding: SIZES.font,
+    margin: SIZES.base,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 5,
+    shadowRadius: 4,
     elevation: 3,
   },
   avatarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: SIZES.base,
+    borderRadius: 50,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: COLORS.lightGray,
+    width: 60,
+    height: 60,
   },
   memberDetails: {
     flex: 1,
-    justifyContent: 'center',
+    marginLeft: 12,
   },
   memberName: {
-    ...FONTS.h3,
+    fontSize: 16,
+    fontWeight: '600',
     color: COLORS.white,
   },
   memberPlan: {
-    ...FONTS.body4,
-    color: COLORS.lightGray,
-  },
-  actions: {
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-  },
-  editButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: SIZES.base / 2,
-    paddingHorizontal: SIZES.base,
-    borderRadius: SIZES.radius,
-    marginBottom: SIZES.base,
-  },
-  deleteButton: {
-    backgroundColor: COLORS.lightRed,
-    paddingVertical: SIZES.base / 2,
-    paddingHorizontal: SIZES.base,
-    borderRadius: SIZES.radius,
-  },
-  buttonText: {
-    ...FONTS.body4,
-    color: COLORS.white,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: COLORS.lightGray,
-    margin: SIZES.base,
+    fontSize: 14,
+    color: COLORS.primary,
+    marginTop: 4,
   },
   menuButton: {
-    padding: 5,
-    marginLeft: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: SIZES.base,
   },
-  menuText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  menu: {
+  menuDropdown: {
     position: 'absolute',
-    top: 0,
-    right: 10,
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    right: SIZES.base,
+    top: SIZES.base,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radius,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
     zIndex: 1000,
   },
-  menuOption: {
-    paddingVertical: 10,
+  menuItem: {
+    flexDirection: 'row',
+    textAlign: 'center',
+    padding: SIZES.base,
   },
-  menuOptionText: {
-    fontSize: 14,
-    color: '#007bff',
+  menuItemText: {
+    ...FONTS.body4,
+    color: COLORS.gray,
+    marginLeft: SIZES.base,
   },
 });
 

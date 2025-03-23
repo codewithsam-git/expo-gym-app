@@ -13,51 +13,37 @@ import {
   Alert,
   Keyboard,
   KeyboardAvoidingView,
+  Image,
 } from 'react-native';
 import { COLORS, FONTS, SIZES, icons } from '../constants';
-import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import * as ImagePicker from 'expo-image-picker'; // Import expo-image-picker
+
 import BASE_URL from '../Api/commonApi';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
-const AddAsset = ({ navigation }) => {
-  const [isAssetTypeFocus, setIsAssetTypeFocus] = useState(false);
-  const [assetName, setAssetName] = useState('');
-  const [assetType, setAssetType] = useState('');
-  const [purchaseDate, setPurchaseDate] = useState('');
-  const [purchasePrice, setPurchasePrice] = useState('');
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+const AddInventory = ({ navigation }) => {
+  const [name, setName] = useState('');
+  const [price, setPrice] = useState('');
+  const [useFor, setUseFor] = useState('');
+  const [imageUri, setImageUri] = useState(null);
 
-  const assetData = {
-    asset_name: assetName,
-    asset_type: assetType,
-    purchase_date: purchaseDate,
-    purchase_price: purchasePrice,
-  };
-
-  const showDatePicker = () => {
-    setDatePickerVisibility(true);
-  };
-
-  const hideDatePicker = () => {
-    setDatePickerVisibility(false);
-  };
-
-  const handleConfirm = (date) => {
-    setPurchaseDate(date.toLocaleDateString());
-    hideDatePicker();
+  const inventoryData = {
+    name: name,
+    price: price,
+    useFor: useFor,
+    image: imageUri || 'inventory.jpg',
   };
 
   const handleSubmit = async () => {
     try {
-      console.log(`${BASE_URL}/save-asset`);
-      console.log('assetData: ', assetData);
-      const response = await fetch(`http://192.168.31.132:9000/save-asset`, {
+      console.log(`${BASE_URL}/save-inventory`);
+      console.log('inventoryData: ', inventoryData);
+      const response = await fetch(`${BASE_URL}/save-inventory`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(assetData),
+        body: JSON.stringify(inventoryData),
       });
 
       console.log('response: ', response);
@@ -65,25 +51,49 @@ const AddAsset = ({ navigation }) => {
       if (response.status === 200) {
         Alert.alert(
           'Success',
-          'Asset added successfully!',
+          'Inventory item added successfully!',
           [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
           { cancelable: false }
         );
-        setAssetName('');
-        setAssetType('');
-        setPurchaseDate('');
-        setPurchasePrice('');
+        setName('');
+        setPrice('');
+        setUseFor('');
+        setImageUri(null);
       } else {
-        throw new Error('Failed to add asset');
+        throw new Error('Failed to add inventory');
       }
     } catch (error) {
       console.error('Error submitting data:', error);
-      Alert.alert('Error', 'Failed to add asset, please try again');
+      Alert.alert('Error', 'Failed to add inventory, please try again');
     }
   };
 
   const onCancel = () => {
     navigation.goBack();
+  };
+
+  const pickImage = async () => {
+    // Ask for permission to access the media library (required on iOS)
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission to access camera roll is required!');
+      return;
+    }
+
+    // Launch the image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaType: ImagePicker.MediaTypeOptions.Images, // Only pick images
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri); // Get the URI of the picked image
+    } else {
+      console.log('Image picker was canceled');
+    }
   };
 
   return (
@@ -95,9 +105,9 @@ const AddAsset = ({ navigation }) => {
           <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
             <View style={styles.formContainerWrapper}>
               <View style={styles.formContainer}>
-                <Text style={styles.title}>Add New Asset</Text>
+                <Text style={styles.title}>Add New Inventory Item</Text>
                 <View>
-                  {/* Asset Name Input */}
+                  {/* Name Input */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="tag"
@@ -106,90 +116,72 @@ const AddAsset = ({ navigation }) => {
                       style={styles.inputIcon}
                     />
                     <TextInput
-                      placeholder="Asset Name"
+                      placeholder="Item Name"
                       placeholderTextColor={COLORS.lightGray}
-                      value={assetName}
-                      onChangeText={setAssetName}
+                      value={name}
+                      onChangeText={setName}
                       style={styles.input}
                     />
                   </View>
 
-                  {/* Asset Type Dropdown */}
+                  {/* Price Input */}
                   <View style={styles.inputContainer}>
                     <Icon
-                      name="th-list"
-                      size={20}
-                      color={COLORS.primary}
-                      style={styles.inputIcon}
-                    />
-                    <Dropdown
-                      style={[styles.input, isAssetTypeFocus]}
-                      placeholderStyle={styles.placeholderStyle}
-                      selectedTextStyle={styles.selectedTextStyle}
-                      inputSearchStyle={styles.inputSearchStyle}
-                      data={[
-                        { label: 'Furniture', value: 'Furniture' },
-                        { label: 'Electronics', value: 'Electronics' },
-                        { label: 'Vehicles', value: 'Vehicles' },
-                      ]}
-                      search
-                      maxHeight={300}
-                      labelField="label"
-                      valueField="value"
-                      placeholder={
-                        !isAssetTypeFocus ? 'Select Asset Type' : '...'
-                      }
-                      searchPlaceholder="Search..."
-                      value={assetType}
-                      onFocus={() => setIsAssetTypeFocus(true)}
-                      onBlur={() => setIsAssetTypeFocus(false)}
-                      onChange={(item) => {
-                        setAssetType(item.value);
-                        setIsAssetTypeFocus(false);
-                      }}
-                    />
-                  </View>
-
-                  {/* Purchase Date Input */}
-                  <View style={styles.inputContainer}>
-                    <TouchableOpacity
-                      onPress={showDatePicker}
-                      style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Icon
-                        name="calendar"
-                        size={20}
-                        color={COLORS.primary}
-                        style={styles.inputIcon}
-                      />
-                      <Text style={[styles.input, { color: COLORS.lightGray }]}>
-                        {purchaseDate || 'Select Purchase Date'}{' '}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <DateTimePickerModal
-                    isVisible={isDatePickerVisible}
-                    mode="date"
-                    onConfirm={handleConfirm}
-                    onCancel={hideDatePicker}
-                  />
-
-                  {/* Purchase Price Input */}
-                  <View style={styles.inputContainer}>
-                    <Icon
-                      name="dollar"
+                      name="money"
                       size={20}
                       color={COLORS.primary}
                       style={styles.inputIcon}
                     />
                     <TextInput
-                      placeholder="Purchase Price"
+                      placeholder="Price"
                       placeholderTextColor={COLORS.lightGray}
-                      value={purchasePrice}
-                      onChangeText={setPurchasePrice}
+                      value={price}
+                      onChangeText={setPrice}
+                      style={styles.input}
+                      keyboardType="numeric"
+                    />
+                  </View>
+
+                  {/* Use For Input */}
+                  <View style={styles.inputContainer}>
+                    <Icon
+                      name="rocket"
+                      size={20}
+                      color={COLORS.primary}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      placeholder="Use For (e.g., Food, Clothing, Electronics)"
+                      placeholderTextColor={COLORS.lightGray}
+                      value={useFor}
+                      onChangeText={setUseFor}
                       style={styles.input}
                     />
                   </View>
+
+                  {/* Image Picker */}
+                  <View style={styles.inputContainer}>
+                    <Icon
+                      name="camera"
+                      size={20}
+                      color={COLORS.primary}
+                      style={styles.inputIcon}
+                    />
+                    <TouchableOpacity onPress={pickImage} style={styles.input}>
+                      <Text style={styles.imagePickerText}>
+                        {imageUri ? 'Change Photo' : 'Select Photo'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {imageUri && (
+                    <View style={styles.imagePreviewContainer}>
+                      <Image
+                        source={{ uri: imageUri }}
+                        style={styles.imagePreview}
+                      />
+                    </View>
+                  )}
 
                   {/* Buttons */}
                   <View style={styles.buttonContainer}>
@@ -212,7 +204,7 @@ const AddAsset = ({ navigation }) => {
         <TouchableOpacity
           style={[styles.actionButton, styles.downloadButton]}
           onPress={() => navigation.goBack()}>
-          <Text style={styles.buttonText1}>View Assets</Text>
+          <Text style={styles.buttonText1}>View Inventory</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -241,6 +233,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', // Center horizontally
   },
   formContainer: {
+    width: '90%',
     backgroundColor: COLORS.secondary,
     borderRadius: SIZES.radius,
     marginTop: SIZES.padding2,
@@ -261,18 +254,6 @@ const styles = StyleSheet.create({
   inputIcon: {
     marginRight: 10,
   },
-  placeholderStyle: {
-    fontSize: 16,
-    color: COLORS.lightGray,
-  },
-  selectedTextStyle: {
-    fontSize: 16,
-    color: COLORS.white,
-  },
-  inputSearchStyle: {
-    height: 40,
-    fontSize: 16,
-  },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -288,6 +269,20 @@ const styles = StyleSheet.create({
   buttonText: {
     ...FONTS.body3,
     color: COLORS.white,
+  },
+  imagePickerText: {
+    color: COLORS.lightGray,
+    fontSize: 16,
+  },
+  imagePreviewContainer: {
+    marginVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imagePreview: {
+    width: 100,
+    height: 100,
+    borderRadius: SIZES.radius,
   },
   actionContainer: {
     flexDirection: 'row',
@@ -315,4 +310,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddAsset;
+export default AddInventory;

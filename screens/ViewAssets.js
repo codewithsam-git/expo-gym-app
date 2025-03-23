@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,8 @@ import BASE_URL from '../Api/commonApi';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 import SkeletonMember from '../components/SkeletonMember';
+import { useFocusEffect } from '@react-navigation/native';
+import ViewHeader from '../components/ViewHeader';
 
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
@@ -113,28 +115,34 @@ const ViewAssets = () => {
     setMenuVisible(!menuVisible); // Toggle the visibility of the menu
   };
 
-  useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        console.log(`${BASE_URL}/get-assets`);
-        const response = await fetch(`${BASE_URL}/get-assets`);
+  const fetchMembers = async () => {
+    try {
+      console.log(`${BASE_URL}/assets-details'`);
+      const response = await fetch(`${BASE_URL}/assets-details'`);
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log(data);
-        setMembers(data.memberData);
-        setSkeletonLoader(false);
-      } catch (err) {
-        console.error('Fetch error:', err);
-        // setSkeletonLoader(false);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
 
+      const data = await response.json();
+      console.log(data);
+      setMembers(data.accounts);
+      setSkeletonLoader(false);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      // setSkeletonLoader(false);
+    }
+  };
+
+  useEffect(() => {
     fetchMembers();
   }, [members]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMembers();
+    }, [])
+  );
 
   function renderMemberCard(member) {
     return (
@@ -190,35 +198,7 @@ const ViewAssets = () => {
   return (
     <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
       <SafeAreaView style={styles.safeArea}>
-        <View
-          style={{
-            marginTop: Platform.OS === 'ios' ? 20 : 60,
-          }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              paddingHorizontal: SIZES.padding,
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}>
-            <View style={styles.header}>
-              <TouchableOpacity onPress={() => navigation.openDrawer()}>
-                <Image
-                  source={icons.menu_icon} // You can use any menu icon for the drawer
-                  style={styles.menuIcon}
-                />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.headerSection}>
-              <Text style={styles.header}>Assets</Text>
-            </View>
-
-            <View>
-              <Text style={styles.header}> </Text>
-            </View>
-          </View>
-        </View>
+        <ViewHeader headerTitle="Assets" navigateTo="addAsset"/>
 
         <View style={{ marginTop: SIZES.font }}>
           {members.length === 0 ? (

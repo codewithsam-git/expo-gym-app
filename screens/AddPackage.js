@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,41 +9,38 @@ import {
   StyleSheet,
   Platform,
   SafeAreaView,
-  Dimensions,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
   Image,
 } from 'react-native';
 import { COLORS, FONTS, SIZES, icons } from '../constants';
-import Header from '../components/Header';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { launchImageLibrary } from 'react-native-image-picker'; // Import the image picker
 import BASE_URL from '../Api/commonApi';
+import * as ImagePicker from 'expo-image-picker';
 
 const AddPackage = ({ navigation }) => {
-  const [isPlanNameFocus, setIsPlanNameFocus] = useState(false);
   const [isDurationFocus, setIsDurationFocus] = useState(false);
-  const [staff, setStaff] = useState('');
   const [imageUrl, setImageUrl] = useState(null);
   const [packageName, setPackageName] = useState('');
   const [price, setPrice] = useState('');
+  const [discount, setDiscount] = useState('');
   const [duration, setDuration] = useState('');
 
   const packageData = {
-    packageName: packageName,
-    price: price,
-    duration: duration,
-    staff: staff,
-    imageUrl: imageUrl,
+    package_name: packageName,
+    package_duration: duration,
+    package_amount: price,
+    discount: discount,
+    image: "imageUrl.jpg", 
   };
 
   const handleSubmit = async () => {
     try {
-      console.log(`${BASE_URL}/save-package`);
+      console.log(`${BASE_URL}/save-packages`);
       console.log('packageData: ', packageData);
-      const response = await fetch(`${BASE_URL}/save-package`, {
+      const response = await fetch(`${BASE_URL}/save-packages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,9 +58,9 @@ const AddPackage = ({ navigation }) => {
           { cancelable: false }
         );
         setPackageName('');
-        setPrice('');
         setDuration('');
-        setStaff('');
+        setPrice('');
+        setDiscount('');
         setImageUrl(null);
       } else {
         throw new Error('Failed to add package');
@@ -78,168 +75,170 @@ const AddPackage = ({ navigation }) => {
     navigation.goBack();
   };
 
-  const pickImage = () => {
-    launchImageLibrary({ mediaType: 'photo', quality: 1 }, (response) => {
-      if (response.assets && response.assets.length > 0) {
-        setImageUrl(response.assets[0].uri); // Set the selected image URI
-      }
+  const pickImage = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission to access camera roll is required!');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaType: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
     });
+
+    if (!result.canceled) {
+      setImageUrl(result.assets[0].uri); // Get the URI of the picked image
+    } else {
+      console.log('Image picker was canceled');
+    }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={{ marginTop: Platform.OS === 'ios' ? 20 : 60 }}>
-        <Header />
-      </View>
-
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-            <View style={styles.formContainer}>
-              <Text style={styles.title}>Add New Package</Text>
-              <View>
-                {/* Package Name Dropdown */}
-                <View style={styles.inputContainer}>
-                  <Icon
-                    name="tag"
-                    size={20}
-                    color={COLORS.primary}
-                    style={styles.inputIcon}
-                  />
-                  <Dropdown
-                    style={[styles.input, isPlanNameFocus]}
-                    placeholderStyle={styles.placeholderStyle}
-                    selectedTextStyle={styles.selectedTextStyle}
-                    inputSearchStyle={styles.inputSearchStyle}
-                    data={[
-                      { label: 'Silver', value: 'Silver' },
-                      { label: 'Gold', value: 'Gold' },
-                      { label: 'Diamond', value: 'Diamond' },
-                    ]}
-                    search
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    placeholder={!isPlanNameFocus ? 'Select Plan' : '...'}
-                    searchPlaceholder="Search..."
-                    value={packageName}
-                    onFocus={() => setIsPlanNameFocus(true)}
-                    onBlur={() => setIsPlanNameFocus(false)}
-                    onChange={(item) => {
-                      setPackageName(item.value);
-                      setIsPlanNameFocus(false);
-                    }}
-                  />
-                </View>
-
-                {/* Price Input */}
-                <View style={styles.inputContainer}>
-                  <Icon
-                    name="dollar"
-                    size={20}
-                    color={COLORS.primary}
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    placeholder="Price"
-                    placeholderTextColor={COLORS.lightGray}
-                    value={price}
-                    onChangeText={setPrice}
-                    style={styles.input}
-                  />
-                </View>
-
-                {/* Duration Dropdown */}
-                <View style={styles.inputContainer}>
-                  <Icon
-                    name="calendar"
-                    size={20}
-                    color={COLORS.primary}
-                    style={styles.inputIcon}
-                  />
-                  <Dropdown
-                    style={[styles.input, isDurationFocus]}
-                    placeholderStyle={styles.placeholderStyle}
-                    selectedTextStyle={styles.selectedTextStyle}
-                    inputSearchStyle={styles.inputSearchStyle}
-                    data={[
-                      { label: '1 month', value: '1 month' },
-                      { label: '3 months', value: '3 months' },
-                      { label: '6 months', value: '6 months' },
-                      { label: '1 year', value: '1 year' },
-                    ]}
-                    search
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    placeholder={!isDurationFocus ? 'Select Duration' : '...'}
-                    searchPlaceholder="Search..."
-                    value={duration}
-                    onFocus={() => setIsDurationFocus(true)}
-                    onBlur={() => setIsDurationFocus(false)}
-                    onChange={(item) => {
-                      setDuration(item.value);
-                      setIsDurationFocus(false);
-                    }}
-                  />
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Icon
-                    name="user"
-                    size={20}
-                    color={COLORS.primary}
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    placeholder="Staff Name"
-                    placeholderTextColor={COLORS.lightGray}
-                    value={staff}
-                    onChangeText={setStaff}
-                    style={styles.input}
-                  />
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Icon
-                    name="camera"
-                    size={20}
-                    color={COLORS.primary}
-                    style={styles.inputIcon}
-                  />
-                  <TouchableOpacity onPress={pickImage} style={styles.input}>
-                    <Text style={styles.imagePickerText}>
-                      {imageUrl ? 'Change Image' : 'Select Image'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                {imageUrl && (
-                  <View style={styles.imagePreviewContainer}>
-                    <Image
-                      source={{ uri: imageUrl }}
-                      style={styles.imagePreview}
+            <View style={styles.formContainerWrapper}>
+              <View style={styles.formContainer}>
+                <Text style={styles.title}>Add New Package</Text>
+                <View>
+                  {/* Price Input */}
+                  <View style={styles.inputContainer}>
+                    <Icon
+                      name="tag"
+                      size={20}
+                      color={COLORS.primary}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      placeholder="Enter Package Name"
+                      placeholderTextColor={COLORS.lightGray}
+                      value={packageName}
+                      onChangeText={setPackageName}
+                      style={styles.input}
                     />
                   </View>
-                )}
 
-                {/* Buttons */}
-                <View style={styles.buttonContainer}>
-                  <TouchableOpacity style={styles.button} onPress={onCancel}>
-                    <Text style={styles.buttonText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.button}
-                    onPress={handleSubmit}>
-                    <Text style={styles.buttonText}>Submit</Text>
-                  </TouchableOpacity>
+                  {/* Duration Dropdown */}
+                  <View style={styles.inputContainer}>
+                    <Icon
+                      name="calendar"
+                      size={20}
+                      color={COLORS.primary}
+                      style={styles.inputIcon}
+                    />
+                    <Dropdown
+                      style={[styles.input, isDurationFocus]}
+                      placeholderStyle={styles.placeholderStyle}
+                      selectedTextStyle={styles.selectedTextStyle}
+                      inputSearchStyle={styles.inputSearchStyle}
+                      data={[
+                        { label: '1 Month', value: '1m' },
+                        { label: '3 Months', value: '3m' },
+                        { label: '6 Months', value: '6m' },
+                        { label: '1 Year', value: '1y' },
+                      ]}
+                      search
+                      maxHeight={300}
+                      labelField="label"
+                      valueField="value"
+                      placeholder={!isDurationFocus ? 'Select Duration' : '...'}
+                      searchPlaceholder="Search..."
+                      value={duration}
+                      onFocus={() => setIsDurationFocus(true)}
+                      onBlur={() => setIsDurationFocus(false)}
+                      onChange={(item) => {
+                        setDuration(item.value);
+                        setIsDurationFocus(false);
+                      }}
+                    />
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <Icon
+                      name="dollar"
+                      size={20}
+                      color={COLORS.primary}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      placeholder="Enter Amount (In Rupees)"
+                      placeholderTextColor={COLORS.lightGray}
+                      value={price}
+                      onChangeText={setPrice}
+                      style={styles.input}
+                    />
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <Icon
+                      name="dollar"
+                      size={20}
+                      color={COLORS.primary}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      placeholder="Enter Discount (In Rupees)"
+                      placeholderTextColor={COLORS.lightGray}
+                      value={discount}
+                      onChangeText={setDiscount}
+                      style={styles.input}
+                    />
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <Icon
+                      name="camera"
+                      size={20}
+                      color={COLORS.primary}
+                      style={styles.inputIcon}
+                    />
+                    <TouchableOpacity onPress={pickImage} style={styles.input}>
+                      <Text style={styles.imagePickerText}>
+                        {imageUrl ? 'Change Photo' : 'Select Photo'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {imageUrl && (
+                    <View style={styles.imagePreviewContainer}>
+                      <Image
+                        source={{ uri: imageUrl }}
+                        style={styles.imagePreview}
+                      />
+                    </View>
+                  )}
+
+                  {/* Buttons */}
+                  <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={styles.button} onPress={onCancel}>
+                      <Text style={styles.buttonText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.button}
+                      onPress={handleSubmit}>
+                      <Text style={styles.buttonText}>Submit</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
+      <View style={styles.actionContainer}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.downloadButton]}
+          onPress={() => navigation.goBack()}>
+          <Text style={styles.buttonText1}>View Packages</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -260,7 +259,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
   },
+  formContainerWrapper: {
+    flex: 1,
+    justifyContent: 'center', // Center vertically
+    alignItems: 'center', // Center horizontally
+  },
   formContainer: {
+    width: '90%',
     backgroundColor: COLORS.secondary,
     borderRadius: SIZES.radius,
     marginTop: SIZES.padding2,
@@ -322,6 +327,30 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: SIZES.radius,
+  },
+  actionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: SIZES.padding,
+    borderTopWidth: 1,
+    borderTopColor: '#202428',
+  },
+  actionButton: {
+    paddingVertical: SIZES.base,
+    paddingHorizontal: SIZES.padding,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  downloadButton: {
+    backgroundColor: COLORS.primary,
+  },
+  buttonText1: {
+    ...FONTS.body4,
+    color: COLORS.white,
   },
 });
 

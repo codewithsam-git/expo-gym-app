@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, Animated, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const SkeletonMember = () => {
     const shimmerAnim = useRef(new Animated.Value(0)).current;

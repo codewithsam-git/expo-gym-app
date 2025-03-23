@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,14 +10,18 @@ import {
   Image,
   Platform,
   Modal,
-  Dimensions
+  Dimensions,
+  TextInput,
 } from 'react-native';
-import { COLORS, FONTS, SIZES, icons,  images } from '../constants';
+import { COLORS, FONTS, SIZES, icons, images } from '../constants';
 import Header from '../components/Header';
 import BASE_URL from '../Api/commonApi';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { useNavigation } from '@react-navigation/native';
 import SkeletonMember from '../components/SkeletonMember';
+import { useFocusEffect } from '@react-navigation/native';
+import ViewHeader from '../components/ViewHeader';
+import * as Animatable from 'react-native-animatable';
 
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
@@ -27,91 +31,231 @@ const ViewMembers = () => {
 
   const [members, setMembers] = useState([]);
   const [skeletonLoader, setSkeletonLoader] = useState(true);
-  const [menuVisible, setMenuVisible] = useState(false); // To toggle menu visibility
+  const [menuVisibleFor, setMenuVisibleFor] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const handleMenuToggle = () => {
-    setMenuVisible(!menuVisible); // Toggle the visibility of the menu
+  const filteredMembers = members.filter((member) =>
+    member.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const fetchMembers = async () => {
+    try {
+      console.log(`${BASE_URL}/members`);
+      const response = await fetch(`${BASE_URL}/members`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setMembers(data.memberData);
+      setSkeletonLoader(false);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setSkeletonLoader(false);
+    }
   };
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        console.log(`${BASE_URL}/members`);
-        const response = await fetch(`${BASE_URL}/members`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setMembers(data.memberData);
-        setSkeletonLoader(false);
-      } catch (err) {
-        console.error('Fetch error:', err);
-        // setSkeletonLoader(false);
-      }
-    };
-
     fetchMembers();
-  }, [members]);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMembers();
+    }, [])
+  );
 
   function renderMemberCard(member, navigation) {
+    const isMenuVisible = menuVisibleFor === member.id;
+    const toggleMenu = () => {
+      setMenuVisibleFor(isMenuVisible ? null : member.id);
+    };
     return (
       <TouchableOpacity
         onPress={() => {
-          if (menuVisible) {
-            setMenuVisible(false);
+          if (menuVisibleFor) {
+            setMenuVisibleFor(false);
           } else {
             navigation.navigate('profile');
           }
         }}
-        activeOpacity={0.7} // Optional: Adds a subtle press feedback
-      >
-        <View style={styles.memberCard}>
-          <View style={styles.avatarContainer}>
-            <Image
-              source={{
-                uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
-              }}
-              style={styles.avatar}
-              resizeMode="cover"
-            />
-          </View>
+        activeOpacity={0.9}
+        style={styles.cardContainer}>
+        <Animatable.View
+          animation="fadeInUp"
+          duration={600}
+          delay={100}
+          style={styles.memberCard}>
+          {/* Top Row - Avatar, Name, and Package */}
+          <Animatable.View style={styles.topRow}>
+            <Animatable.View
+              animation="bounceIn"
+              duration={800}
+              style={styles.avatarWrapper}>
+              <Image
+                source={{
+                  uri:
+                    member.avatarUrl ||
+                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
+                }}
+                style={styles.avatar}
+                resizeMode="cover"
+              />
+              <Animatable.View
+                animation="pulse"
+                iterationCount="infinite"
+                style={[
+                  styles.statusDot,
+                  {
+                    backgroundColor:
+                      member.memberStatus === 'Active'
+                        ? '#5DBE3F'
+                        : COLORS.lightRed,
+                  },
+                ]}
+              />
+            </Animatable.View>
 
-          <View style={styles.memberDetails}>
-            <Text style={styles.memberName}>
-              {member.name} {member.surname} {member.title}
-            </Text>
-            <Text style={styles.memberPlan}>Plan : {member.planName}</Text>
-          </View>
+            <Animatable.View
+              animation="fadeIn"
+              duration={700}
+              style={styles.namePackageContainer}>
+              <Text style={styles.memberName}>
+                {member.name} {member.surname}
+              </Text>
+              <Text style={styles.packageText}>{member.package_name}</Text>
+            </Animatable.View>
 
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={handleMenuToggle}>
-            <Icon name="more-vert" size={24} color="white" />
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
+              <Animatable.View animation="rotate" duration={1000}>
+                <Icon name="more-vert" size={20} color={COLORS.lightGray2} />
+              </Animatable.View>
+            </TouchableOpacity>
+          </Animatable.View>
 
-          {menuVisible && (
-            <View style={styles.menu}>
+          {/* Details Section */}
+          <Animatable.View
+            animation="fadeInUp"
+            duration={600}
+            delay={200}
+            style={styles.detailsSection}>
+            <View style={styles.infoGrid}>
+              {/* Contact Info */}
+              <Animatable.View
+                animation="fadeInLeft"
+                delay={300}
+                style={styles.infoItem}>
+                <Icon name="email" size={16} color={COLORS.primary} />
+                <Text style={styles.infoText}>{member.email}</Text>
+              </Animatable.View>
+              <Animatable.View
+                animation="fadeInLeft"
+                delay={400}
+                style={styles.infoItem}>
+                <Icon name="phone" size={16} color={COLORS.primary} />
+                <Text style={styles.infoText}>{member.phoneno}</Text>
+              </Animatable.View>
+
+              {/* Location */}
+              <Animatable.View
+                animation="fadeInLeft"
+                delay={500}
+                style={styles.infoItem}>
+                <Icon name="location-on" size={16} color={COLORS.primary} />
+                <Text style={styles.infoText}>
+                  {member.city}, {member.country}
+                </Text>
+              </Animatable.View>
+
+              {/* Pricing */}
+              <Animatable.View
+                animation="fadeInLeft"
+                delay={600}
+                style={styles.infoItem}>
+                <Icon name="currency-rupee" size={16} color={COLORS.primary} />
+                <Text style={styles.infoText}>
+                  ₹{member.discountFinalPrice || 'N/A'}{' '}
+                  <Text style={styles.originalPrice}>
+                    ₹{member.packagePrice || 'N/A'}
+                  </Text>
+                </Text>
+              </Animatable.View>
+
+              {/* Dates */}
+              <Animatable.View
+                animation="fadeInLeft"
+                delay={700}
+                style={styles.infoItem}>
+                <Icon name="calendar-today" size={16} color={COLORS.primary} />
+                <Text style={styles.infoText}>
+                  {new Date(member.start_Date).toLocaleDateString()} -{' '}
+                  {new Date(member.end_date).toLocaleDateString()}
+                </Text>
+              </Animatable.View>
+
+              {/* Gender */}
+              <Animatable.View
+                animation="fadeInLeft"
+                delay={800}
+                style={styles.infoItem}>
+                <Icon name="person" size={16} color={COLORS.primary} />
+                <Text style={styles.infoText}>
+                  {member.gender.charAt(0).toUpperCase() +
+                    member.gender.slice(1)}
+                </Text>
+              </Animatable.View>
+            </View>
+          </Animatable.View>
+
+          {/* Menu Dropdown */}
+          {isMenuVisible && (
+            <Animatable.View
+              animation="fadeInDown"
+              duration={200}
+              style={styles.menuDropdown}>
               <TouchableOpacity
-                style={styles.menuOption}
+                style={styles.menuItem}
                 onPress={() => {
-                  navigation.navigate('EditMember', { memberId: member.id });
-                  setMenuVisible(false); // Close the menu after selecting
+                  navigation.navigate('editMember', { memberId: member.id });
+                  setMenuVisibleFor(null);
                 }}>
-                <Text style={styles.menuOptionText}>Edit</Text>
+                <Animatable.View animation="bounceIn" delay={100}>
+                  <Icon name="edit" size={20} color={COLORS.primary} />
+                </Animatable.View>
+                <Text style={styles.menuItemText}>Edit</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.menuOption}
+                style={styles.menuItem}
                 onPress={() => {
                   handleDelete(member.id);
-                  setMenuVisible(false); // Close the menu after selecting
+                  setMenuVisibleFor(null);
                 }}>
-                <Text style={styles.menuOptionText}>Delete</Text>
+                <Animatable.View animation="bounceIn" delay={200}>
+                  <Icon name="delete" size={20} color={COLORS.lightRed} />
+                </Animatable.View>
+                <Text style={styles.menuItemText}>Delete</Text>
               </TouchableOpacity>
-            </View>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  handleDelete(member.id);
+                  setMenuVisibleFor(null);
+                }}>
+                <Animatable.View animation="bounceIn" delay={200}>
+                  <Icon
+                    name={member.memberStatus === 'Active' ? 'cancel' : 'check-circle'}
+                    size={20}
+                    color={member.memberStatus === 'Active' ? 'gray' : 'green'}
+                  />
+                </Animatable.View>
+                <Text style={styles.menuItemText}>
+                  {member.memberStatus === 'Active' ? 'Deactive' : 'Active'}
+                </Text>
+              </TouchableOpacity>
+            </Animatable.View>
           )}
-        </View>
+        </Animatable.View>
       </TouchableOpacity>
     );
   }
@@ -122,63 +266,56 @@ const ViewMembers = () => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
+    <TouchableWithoutFeedback onPress={() => setMenuVisibleFor(false)}>
       <SafeAreaView style={styles.safeArea}>
-        <View
-          style={{
-            marginTop: Platform.OS === 'ios' ? 20 : 60,
-          }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              paddingHorizontal: SIZES.padding,
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}>
-            <View style={styles.header}>
-              <TouchableOpacity onPress={() => navigation.openDrawer()}>
-                <Image
-                  source={icons.menu_icon} // You can use any menu icon for the drawer
-                  style={styles.menuIcon}
-                />
-              </TouchableOpacity>
-            </View>
+        <Animatable.View animation="fadeInDown" duration={800}>
+          <ViewHeader headerTitle="Members" navigateTo="addMember" />
+        </Animatable.View>
 
-            <View style={styles.headerSection}>
-              <Text style={styles.header}>Members</Text>
-            </View>
-
-            <View>
-              <Text style={styles.header}> </Text>
-            </View>
-          </View>
-        </View>
+        {filteredMembers && !skeletonLoader && (
+          <Animatable.View
+            animation="fadeInDown"
+            duration={800}
+            style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by name..."
+              placeholderTextColor={COLORS.lightGray4}
+              value={searchQuery}
+              onChangeText={setSearchQuery} // Update search query as user types
+            />
+          </Animatable.View>
+        )}
 
         <View style={{ marginTop: SIZES.font }}>
-          {members.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Image
-                source={images.noData}
-                style={styles.noDataImage}
-              />
+          {filteredMembers.length === 0 && !skeletonLoader ? (
+            <Animatable.View
+              animation="zoomIn"
+              duration={800}
+              style={styles.emptyState}>
+              <Image source={images.noData} style={styles.noDataImage} />
               <Text style={styles.emptyText}>
                 No members available at the moment
               </Text>
-            </View>
+            </Animatable.View>
           ) : (
             <View>
               {skeletonLoader ? (
                 <SkeletonMember />
               ) : (
                 <ScrollView
-                  contentContainerStyle={{ flexGrow: 1 }}
-                  scrollEnabled={true}>
-                  {members.map((member, index) => (
+                  contentContainerStyle={{
+                    flexGrow: 1,
+                    paddingBottom: Platform === 'ios' ? 120 : 180,
+                  }}
+                  scrollEnabled={true}
+                  onScroll={() =>
+                    menuVisibleFor != null && setMenuVisibleFor(null)
+                  }
+                  scrollEventThrottle={16}>
+                  {filteredMembers.map((member, index) => (
                     <View key={member.id}>
                       {renderMemberCard(member, navigation)}
-                      {index < members.length - 1 && (
-                        <View style={styles.separator} />
-                      )}
                     </View>
                   ))}
                 </ScrollView>
@@ -196,20 +333,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.black,
   },
-  menuIcon: {
-    width: 30,
-    height: 30,
-    tintColor: COLORS.white,
+  searchContainer: {
+    padding: SIZES.font,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginRight: 20,
-    alignItems: 'center',
-    height: 60,
+  searchInput: {
+    height: 40,
+    borderColor: COLORS.gray,
+    borderWidth: 1,
+    borderRadius: SIZES.radius,
+    paddingHorizontal: SIZES.base,
+    fontSize: FONTS.body3.fontSize || 16,
+    color: COLORS.white,
   },
   emptyState: {
-    marginTop : screenWidth/2,
+    marginTop: screenWidth / 2,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SIZES.padding,
@@ -217,7 +354,7 @@ const styles = StyleSheet.create({
   noDataImage: {
     width: 100, // Adjust the size as needed
     height: 100, // Adjust the size as needed
-    marginBottom: SIZES.base,    
+    marginBottom: SIZES.base,
   },
   emptyText: {
     color: COLORS.lightGray,
@@ -225,115 +362,113 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
   },
-  menuIcon: {
-    width: 30,
-    height: 30,
-    tintColor: COLORS.white,
-  },
-  headerText: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerSection: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    ...FONTS.h2,
-    color: COLORS.white,
-  },
-  scrollView: {
-    padding: 10,
-    marginTop: 10,
+  cardContainer: {
+    marginVertical: SIZES.base,
+    marginHorizontal: SIZES.font,
   },
   memberCard: {
-    flexDirection: 'row',
-    padding: SIZES.base,
-    marginHorizontal: SIZES.base,
-    borderRadius: SIZES.radius,
+    borderRadius: SIZES.radius * 2,
+    overflow: 'hidden',
     shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: COLORS.gray,
   },
-  avatarContainer: {
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: SIZES.base,
+    padding: SIZES.base,
+    backgroundColor: '#202428',
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray,
+  },
+  avatarWrapper: {
+    position: 'relative',
+    marginRight: SIZES.font,
   },
   avatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: COLORS.lightGray,
+    borderWidth: 2,
+    borderColor: COLORS.white,
   },
-  memberDetails: {
+  statusDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: COLORS.white,
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+  },
+  namePackageContainer: {
     flex: 1,
-    justifyContent: 'center',
   },
   memberName: {
     ...FONTS.h3,
     color: COLORS.white,
+    fontWeight: '700',
   },
-  memberPlan: {
+  packageText: {
     ...FONTS.body4,
-    color: COLORS.lightGray,
-  },
-  actions: {
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-  },
-  editButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: SIZES.base / 2,
-    paddingHorizontal: SIZES.base,
-    borderRadius: SIZES.radius,
-    marginBottom: SIZES.base,
-  },
-  deleteButton: {
-    backgroundColor: COLORS.lightRed,
-    paddingVertical: SIZES.base / 2,
-    paddingHorizontal: SIZES.base,
-    borderRadius: SIZES.radius,
-  },
-  buttonText: {
-    ...FONTS.body4,
-    color: COLORS.white,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: COLORS.lightGray,
-    margin: SIZES.base,
+    color: COLORS.primary,
+    fontWeight: '500',
   },
   menuButton: {
-    padding: 5,
-    marginLeft: 10,
-    justifyContent: 'center',
+    padding: SIZES.base,
+  },
+  detailsSection: {
+    padding: SIZES.base,
+  },
+  infoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  infoItem: {
+    flexDirection: 'row',
     alignItems: 'center',
+    width: '50%',
+    marginBottom: SIZES.base,
   },
-  menuText: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  infoText: {
+    ...FONTS.body4,
+    color: COLORS.white,
+    marginLeft: SIZES.base,
+    flexShrink: 1,
   },
-  menu: {
+  originalPrice: {
+    textDecorationLine: 'line-through',
+    color: COLORS.lightGray4,
+    fontSize: 12,
+  },
+  menuDropdown: {
     position: 'absolute',
-    top: 0,
-    right: 10,
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    right: SIZES.base,
+    top: SIZES.base,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radius,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
     zIndex: 1000,
   },
-  menuOption: {
-    paddingVertical: 10,
+  menuItem: {
+    flexDirection: 'row',
+    textAlign: 'center',
+    padding: SIZES.base,
   },
-  menuOptionText: {
-    fontSize: 14,
-    color: '#007bff',
+  menuItemText: {
+    ...FONTS.body4,
+    color: COLORS.gray,
+    marginLeft: SIZES.base,
   },
 });
 

@@ -9,25 +9,20 @@ import {
   StyleSheet,
   Platform,
   SafeAreaView,
-  Dimensions,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
 } from 'react-native';
 import StepIndicator from 'react-native-step-indicator';
-import { COLORS, FONTS, SIZES, icons } from '../constants';
-import Header from '../components/Header';
+import { COLORS, FONTS, SIZES } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import DatePicker from 'react-native-date-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import BASE_URL from '../Api/commonApi';
-import MemberBill from '../components/MemberBill';
 import { useNavigation } from '@react-navigation/native';
-const windowWidth = Dimensions.get('window').width;
-const windowHeight = Dimensions.get('window').height;
 
-const AddMember = () => {
+const EditMember = ({ route }) => {
+  const { memberId } = route.params;
   const navigation = useNavigation();
   const [currentStep, setCurrentStep] = useState(0);
   const [isCountryFocus, setIsCountryFocus] = useState(false);
@@ -130,7 +125,7 @@ const AddMember = () => {
   const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
   const [planName, setPlanName] = useState('');
-  const [charges, setCharges] = useState('');
+  const [charges, setCharges] = useState('123');
   const [address, setAddress] = useState('');
   const [discount, setDiscount] = useState('');
   const [duration, setDuration] = useState('');
@@ -164,6 +159,42 @@ const AddMember = () => {
 
   useEffect(() => {
     fetchPackages();
+  }, []);
+
+  const fetchMemberById = async () => {
+    try {
+      console.log(`${BASE_URL}/edit-members?id=${memberId}`);
+      const response = await fetch(`${BASE_URL}/edit-members?id=${memberId}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const fetchedMember = data.memberDatabyId;
+      setFirstName(fetchedMember.name);
+      setLastName(fetchedMember.surname);
+      setGender(fetchedMember.gender);
+      setBirthdate(fetchedMember.birthdate);
+      setEmail(fetchedMember.email);
+      setMobileNo(fetchedMember.phoneno);
+      setCountry(fetchedMember.country);
+      setCity(fetchedMember.city);
+      setAddress(fetchedMember.address);
+      setPlanName(fetchedMember.package_name);
+      setCharges(fetchedMember.packagePrice.toString());
+      setDiscount(fetchedMember.discountFinalPrice.toString());
+      setDuration(fetchedMember.duration);
+      setStartDate(fetchedMember.start_Date);
+      setEndDate(fetchedMember.end_date);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setSkeletonLoader(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMemberById();
   }, []);
 
   useEffect(() => {
@@ -205,8 +236,10 @@ const AddMember = () => {
     setDiscount(item.discount.toString());
     setDuration(item.duration);
     setIsPlanNameFocus(false);
+
     if (!startDate) return;
 
+    console.log('item.duration: ', item.duration);
     let endDateObj = new Date(startDate);
 
     if (item.duration) {
@@ -223,6 +256,14 @@ const AddMember = () => {
       }
     }
 
+    const formatDate = (dateObj) => {
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const year = dateObj.getFullYear();
+      return `${year}-${month}-${day}`;
+    };
+
+    console.log('formatDate(endDateObj): ', formatDate(endDateObj));
     setEndDate(formatDate(endDateObj));
   };
 
@@ -252,8 +293,9 @@ const AddMember = () => {
     memberStatus: 0,
     profile_image: 'img.jpg',
   };
-  console.log(memberData.start_Date);
-  console.log(memberData.end_date);
+
+  console.log(memberData.end_date, memberData.start_Date);
+
   const handleSubmit = async () => {
     if (!memberData.email) {
       Alert.alert('Missing Data', ' Email is mandatory');
@@ -284,22 +326,29 @@ const AddMember = () => {
     }
     setLoading(true);
     try {
-      console.log(`${BASE_URL}/save-members`);
-      const response = await fetch(`${BASE_URL}/save-members`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(memberData),
-      });
+      console.log(`${BASE_URL}/edit-membersData?id=${memberId}`);
+      const response = await fetch(
+        `${BASE_URL}/edit-membersData?id=${memberId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(memberData),
+        }
+      );
 
       console.log('response: ', response);
 
-      if (response.status === 200) {
-        Alert.alert('Success', 'Member added successfully!', [{ text: 'OK' }], {
-          cancelable: false,
-        });
-        console.log('memberData', memberData);
+      if (response.ok) {
+        Alert.alert(
+          'Success',
+          'Member Updated successfully!',
+          [{ text: 'OK' }],
+          {
+            cancelable: false,
+          }
+        );
 
         setFirstName('');
         setLastName('');
@@ -316,14 +365,13 @@ const AddMember = () => {
         setStartDate('');
         setEndDate('');
         setCurrentStep(0);
-        setLoading(false);
-        navigation.navigate('memberBill');
+        setLoading(false);        
       } else {
         throw new Error('Failed to add member');
       }
     } catch (error) {
       console.error('Error submitting data:', error);
-      Alert.alert('Error', 'Failed to add member, please try again');
+      Alert.alert('Error', 'Failed to update member, please try again');
       setLoading(false);
     }
   };
@@ -405,8 +453,8 @@ const AddMember = () => {
                           selectedTextStyle={styles.selectedTextStyle}
                           inputSearchStyle={styles.inputSearchStyle}
                           data={[
-                            { label: 'Male', value: 'Male' },
-                            { label: 'Female', value: 'Female' },
+                            { label: 'Male', value: 'male' },
+                            { label: 'Female', value: 'female' },
                             { label: 'Other', value: 'Other' },
                           ]}
                           search
@@ -725,12 +773,10 @@ const AddMember = () => {
                             styles.buttonText,
                             { opacity: loading ? 0.5 : 1 },
                           ]}>
-                          Generating...
+                          Updating...
                         </Text>
                       ) : (
-                        <Text style={styles.buttonText}>
-                          Save & Generate Bill
-                        </Text>
+                        <Text style={styles.buttonText}>Update</Text>
                       )}
                     </TouchableOpacity>
                   )}
@@ -837,4 +883,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddMember;
+export default EditMember;
