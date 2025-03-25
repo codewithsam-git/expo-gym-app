@@ -17,6 +17,7 @@ import {
 import { COLORS, FONTS, SIZES, icons } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import BASE_URL from '../Api/commonApi';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
@@ -63,24 +64,21 @@ const EditPackage = ({ route }) => {
     package_duration: duration,
     package_amount: price,
     discount: discount,
-    image: "imageUrl.jpg",
-    id: packageId
+    image: 'imageUrl.jpg',
+    id: packageId,
   };
 
   const handleSubmit = async () => {
     try {
       console.log(`${BASE_URL}/update-packages`);
       console.log('packageData: ', packageData);
-      const response = await fetch(
-        `${BASE_URL}/update-packages`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(packageData),
-        }
-      );
+      const response = await fetch(`${BASE_URL}/update-packages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(packageData),
+      });
 
       console.log('response: ', response);
 
@@ -91,11 +89,7 @@ const EditPackage = ({ route }) => {
           [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
           { cancelable: false }
         );
-        setPackageName('');
-        setDuration('');
-        setPrice('');
-        setDiscount('');
-        setImageUrl(null);
+        navigation.goBack();
       } else {
         throw new Error('Failed to add package');
       }
@@ -195,8 +189,8 @@ const EditPackage = ({ route }) => {
                   </View>
 
                   <View style={styles.inputContainer}>
-                    <Icon
-                      name="dollar"
+                    <MaterialIcon
+                      name="currency-rupee"
                       size={20}
                       color={COLORS.primary}
                       style={styles.inputIcon}
@@ -211,8 +205,8 @@ const EditPackage = ({ route }) => {
                   </View>
 
                   <View style={styles.inputContainer}>
-                    <Icon
-                      name="dollar"
+                    <MaterialIcon
+                      name="currency-rupee"
                       size={20}
                       color={COLORS.primary}
                       style={styles.inputIcon}
@@ -251,13 +245,15 @@ const EditPackage = ({ route }) => {
 
                   {/* Buttons */}
                   <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={onCancel}>
-                      <Text style={styles.buttonText}>Cancel</Text>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={onCancel}>
+                      <Text style={styles.cancelButtonText}>Cancel</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={styles.button}
+                      style={styles.submitButton}
                       onPress={handleSubmit}>
-                      <Text style={styles.buttonText}>Update</Text>
+                      <Text style={styles.submitButtonText}>Update</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -266,13 +262,6 @@ const EditPackage = ({ route }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
-      <View style={styles.actionContainer}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.downloadButton]}
-          onPress={() => navigation.goBack()}>
-          <Text style={styles.buttonText1}>View Packages</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -336,7 +325,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  button: {
+  cancelButton: {
+    flex: 1,
+    backgroundColor: COLORS.secondary,
+    margin: SIZES.base,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: SIZES.radius,
+    padding: SIZES.font,
+    alignItems: 'center',
+  },
+  submitButton: {
     flex: 1,
     backgroundColor: COLORS.primary,
     margin: SIZES.base,
@@ -344,7 +343,11 @@ const styles = StyleSheet.create({
     padding: SIZES.font,
     alignItems: 'center',
   },
-  buttonText: {
+  cancelButtonText: {
+    ...FONTS.body3,
+    color: COLORS.white,
+  },
+  submitButtonText: {
     ...FONTS.body3,
     color: COLORS.white,
   },

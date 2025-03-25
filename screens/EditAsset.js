@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,44 +9,93 @@ import {
   StyleSheet,
   Platform,
   SafeAreaView,
+  Dimensions,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
-  Image,
 } from 'react-native';
 import { COLORS, FONTS, SIZES, icons } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import BASE_URL from '../Api/commonApi';
-import * as ImagePicker from 'expo-image-picker';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { useNavigation } from '@react-navigation/native';
 
-const AddPackage = ({ navigation }) => {
-  const [isDurationFocus, setIsDurationFocus] = useState(false);
-  const [imageUrl, setImageUrl] = useState(null);
-  const [packageName, setPackageName] = useState('');
-  const [price, setPrice] = useState('');
-  const [discount, setDiscount] = useState('');
-  const [duration, setDuration] = useState('');
+const EditAsset = ({ route }) => {
+  const { assetId } = route.params;
+  const navigation = useNavigation();
 
-  const packageData = {
-    package_name: packageName,
-    package_duration: duration,
-    package_amount: price,
-    discount: discount,
-    image: "imageUrl.jpg", 
+  const [isAssetTypeFocus, setIsAssetTypeFocus] = useState(false);
+  const [assetName, setAssetName] = useState('');
+  const [assetType, setAssetType] = useState('');
+  const [purchaseDate, setPurchaseDate] = useState('');
+  const [purchasePrice, setPurchasePrice] = useState('');
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+
+  const fetchAssetById = async () => {
+    try {
+      console.log(`${BASE_URL}/get-assets?id=${assetId}`);
+      const response = await fetch(`${BASE_URL}/get-assets?id=${assetId}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const fetchedAsset = data.data;
+      setAssetName(fetchedAsset.asset_name);
+      setAssetType(fetchedAsset.asset_type);
+      setPurchaseDate(fetchedAsset.purchase_date);
+      setPurchasePrice(fetchedAsset.purchase_price.toString());
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setSkeletonLoader(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAssetById();
+  }, []);
+
+  const assetData = {
+    id: assetId,
+    asset_name: assetName,
+    asset_type: assetType,
+    purchase_date: purchaseDate,
+    purchase_price: purchasePrice,
+  };
+
+  const showDatePicker = () => {
+    setDatePickerVisibility(true);
+  };
+
+  const hideDatePicker = () => {
+    setDatePickerVisibility(false);
+  };
+
+  const formatDate = (dateObj) => {
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    return `${year}-${month}-${day}`;
+  };
+
+  const handleConfirm = (date) => {
+    setPurchaseDate(formatDate(date));
+    hideDatePicker();
   };
 
   const handleSubmit = async () => {
     try {
-      console.log(`${BASE_URL}/save-packages`);
-      console.log('packageData: ', packageData);
-      const response = await fetch(`${BASE_URL}/save-packages`, {
+      console.log(`${BASE_URL}/update-assets`);
+      console.log('assetData: ', assetData);
+      const response = await fetch(`${BASE_URL}/update-assets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(packageData),
+        body: JSON.stringify(assetData),
       });
 
       console.log('response: ', response);
@@ -54,48 +103,22 @@ const AddPackage = ({ navigation }) => {
       if (response.status === 200) {
         Alert.alert(
           'Success',
-          'Package added successfully!',
+          'Asset Updated successfully!',
           [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
           { cancelable: false }
         );
-        setPackageName('');
-        setDuration('');
-        setPrice('');
-        setDiscount('');
-        setImageUrl(null);
+        navigation.goBack();
       } else {
-        throw new Error('Failed to add package');
+        throw new Error('Failed to update asset');
       }
     } catch (error) {
       console.error('Error submitting data:', error);
-      Alert.alert('Error', 'Failed to add package, please try again');
+      Alert.alert('Error', 'Failed to add asset, please try again');
     }
   };
 
   const onCancel = () => {
     navigation.goBack();
-  };
-
-  const pickImage = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (permissionResult.granted === false) {
-      Alert.alert('Permission to access camera roll is required!');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaType: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImageUrl(result.assets[0].uri); // Get the URI of the picked image
-    } else {
-      console.log('Image picker was canceled');
-    }
   };
 
   return (
@@ -107,9 +130,9 @@ const AddPackage = ({ navigation }) => {
           <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
             <View style={styles.formContainerWrapper}>
               <View style={styles.formContainer}>
-                <Text style={styles.title}>Add New Package</Text>
+                <Text style={styles.title}>Update Asset</Text>
                 <View>
-                  {/* Price Input */}
+                  {/* Asset Name Input */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="tag"
@@ -118,113 +141,109 @@ const AddPackage = ({ navigation }) => {
                       style={styles.inputIcon}
                     />
                     <TextInput
-                      placeholder="Enter Package Name"
+                      placeholder="Asset Name"
                       placeholderTextColor={COLORS.lightGray}
-                      value={packageName}
-                      onChangeText={setPackageName}
+                      value={assetName}
+                      onChangeText={setAssetName}
                       style={styles.input}
                     />
                   </View>
 
-                  {/* Duration Dropdown */}
+                  {/* Asset Type Dropdown */}
                   <View style={styles.inputContainer}>
                     <Icon
-                      name="calendar"
+                      name="th-list"
                       size={20}
                       color={COLORS.primary}
                       style={styles.inputIcon}
                     />
                     <Dropdown
-                      style={[styles.input, isDurationFocus]}
+                      style={[styles.input, isAssetTypeFocus]}
                       placeholderStyle={styles.placeholderStyle}
                       selectedTextStyle={styles.selectedTextStyle}
                       inputSearchStyle={styles.inputSearchStyle}
                       data={[
-                        { label: '1 Month', value: '1m' },
-                        { label: '3 Months', value: '3m' },
-                        { label: '6 Months', value: '6m' },
-                        { label: '1 Year', value: '1y' },
+                        { label: 'Furniture', value: 'Furniture' },
+                        { label: 'Electronics', value: 'Electronics' },
+                        { label: 'Vehicles', value: 'Vehicles' },
                       ]}
                       search
                       maxHeight={300}
                       labelField="label"
                       valueField="value"
-                      placeholder={!isDurationFocus ? 'Select Duration' : '...'}
+                      placeholder={
+                        !isAssetTypeFocus ? 'Select Asset Type' : '...'
+                      }
                       searchPlaceholder="Search..."
-                      value={duration}
-                      onFocus={() => setIsDurationFocus(true)}
-                      onBlur={() => setIsDurationFocus(false)}
+                      value={assetType}
+                      onFocus={() => setIsAssetTypeFocus(true)}
+                      onBlur={() => setIsAssetTypeFocus(false)}
                       onChange={(item) => {
-                        setDuration(item.value);
-                        setIsDurationFocus(false);
+                        setAssetType(item.value);
+                        setIsAssetTypeFocus(false);
                       }}
                     />
                   </View>
 
+                  {/* Purchase Date Input */}
                   <View style={styles.inputContainer}>
-                    <MaterialIcon
-                      name="currency-rupee"
-                      size={20}
-                      color={COLORS.primary}
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      placeholder="Enter Amount (In Rupees)"
-                      placeholderTextColor={COLORS.lightGray}
-                      value={price}
-                      onChangeText={setPrice}
-                      style={styles.input}
-                    />
-                  </View>
-
-                  <View style={styles.inputContainer}>
-                    <MaterialIcon
-                      name="currency-rupee"
-                      size={20}
-                      color={COLORS.primary}
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      placeholder="Enter Discount (Final Price)"
-                      placeholderTextColor={COLORS.lightGray}
-                      value={discount}
-                      onChangeText={setDiscount}
-                      style={styles.input}
-                    />
-                  </View>
-
-                  <View style={styles.inputContainer}>
-                    <Icon
-                      name="camera"
-                      size={20}
-                      color={COLORS.primary}
-                      style={styles.inputIcon}
-                    />
-                    <TouchableOpacity onPress={pickImage} style={styles.input}>
-                      <Text style={styles.imagePickerText}>
-                        {imageUrl ? 'Change Photo' : 'Select Photo'}
-                      </Text>
+                    <TouchableOpacity
+                      onPress={showDatePicker}
+                      style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Icon
+                        name="calendar"
+                        size={20}
+                        color={COLORS.primary}
+                        style={styles.inputIcon}
+                      />
+                      {purchaseDate ? (
+                        <Text style={[styles.input, { color: COLORS.white }]}>
+                          {purchaseDate || 'Select Purchase Date'}{' '}
+                        </Text>
+                      ) : (
+                        <Text
+                          style={[styles.input, { color: COLORS.lightGray }]}>
+                          {purchaseDate || 'Select Purchase Date'}{' '}
+                        </Text>
+                      )}
                     </TouchableOpacity>
                   </View>
 
-                  {imageUrl && (
-                    <View style={styles.imagePreviewContainer}>
-                      <Image
-                        source={{ uri: imageUrl }}
-                        style={styles.imagePreview}
-                      />
-                    </View>
-                  )}
+                  <DateTimePickerModal
+                    isVisible={isDatePickerVisible}
+                    mode="date"
+                    onConfirm={handleConfirm}
+                    onCancel={hideDatePicker}
+                  />
+
+                  {/* Purchase Price Input */}
+                  <View style={styles.inputContainer}>
+                    <MaterialIcon
+                      name="currency-rupee"
+                      size={20}
+                      color={COLORS.primary}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      placeholder="Purchase Price"
+                      placeholderTextColor={COLORS.lightGray}
+                      value={purchasePrice}
+                      onChangeText={setPurchasePrice}
+                      style={styles.input}
+                    />
+                  </View>
 
                   {/* Buttons */}
                   <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={onCancel}>
-                      <Text style={styles.buttonText}>Cancel</Text>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={onCancel}>
+                      <Text style={styles.cancelButtonText}>Cancel</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={styles.button}
+                      style={styles.submitButton}
                       onPress={handleSubmit}>
-                      <Text style={styles.buttonText}>Submit</Text>
+                      <Text style={styles.submitButtonText}>Update</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -233,13 +252,6 @@ const AddPackage = ({ navigation }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
-      <View style={styles.actionContainer}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.downloadButton]}
-          onPress={() => navigation.goBack()}>
-          <Text style={styles.buttonText1}>View Packages</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -266,7 +278,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', // Center horizontally
   },
   formContainer: {
-    width: '90%',
     backgroundColor: COLORS.secondary,
     borderRadius: SIZES.radius,
     marginTop: SIZES.padding2,
@@ -275,9 +286,9 @@ const styles = StyleSheet.create({
     height: 'auto',
   },
   input: {
-    flex: 1, // Make input field take up the remaining space
+    flex: 1,
     borderBottomWidth: 1,
-    paddingVertical: 12, // Increased padding for better alignment
+    paddingVertical: 12,
     paddingHorizontal: 10,
     marginBottom: 20,
     color: COLORS.white,
@@ -285,7 +296,7 @@ const styles = StyleSheet.create({
     ...FONTS.body3,
   },
   inputIcon: {
-    marginRight: 10, // Space between icon and input field
+    marginRight: 10,
   },
   placeholderStyle: {
     fontSize: 16,
@@ -303,7 +314,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  button: {
+  cancelButton: {
+    flex: 1,
+    backgroundColor: COLORS.secondary,
+    margin: SIZES.base,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: SIZES.radius,
+    padding: SIZES.font,
+    alignItems: 'center',
+  },
+  submitButton: {
     flex: 1,
     backgroundColor: COLORS.primary,
     margin: SIZES.base,
@@ -311,23 +332,13 @@ const styles = StyleSheet.create({
     padding: SIZES.font,
     alignItems: 'center',
   },
-  buttonText: {
+  cancelButtonText: {
     ...FONTS.body3,
     color: COLORS.white,
   },
-  imagePickerText: {
-    color: COLORS.lightGray,
-    fontSize: 16,
-  },
-  imagePreviewContainer: {
-    marginVertical: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imagePreview: {
-    width: 100,
-    height: 100,
-    borderRadius: SIZES.radius,
+  submitButtonText: {
+    ...FONTS.body3,
+    color: COLORS.white,
   },
   actionContainer: {
     flexDirection: 'row',
@@ -355,4 +366,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddPackage;
+export default EditAsset;

@@ -11,8 +11,9 @@ import {
   TextInput,
   Dimensions,
   Platform,
+  Alert,
 } from 'react-native';
-import * as Animatable from 'react-native-animatable'; // Import Animatable
+import * as Animatable from 'react-native-animatable';
 import { COLORS, FONTS, SIZES, icons, images } from '../constants';
 import Header from '../components/Header';
 import BASE_URL from '../Api/commonApi';
@@ -65,6 +66,43 @@ const ViewPackages = () => {
       fetchMembers();
     }, [])
   );
+
+  const handleDelete = async (id) => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this package?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Delete cancelled'),
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            try {
+              console.log(`${BASE_URL}/delete-package/${id}`);
+              const response = await fetch(`${BASE_URL}/delete-package/${id}`);
+
+              if (!response.ok) {
+                throw new Error(
+                  `Failed to delete item, HTTP error! status: ${response.status}`
+                );
+              }
+
+              setMembers((prevMembers) =>
+                prevMembers.filter((member) => member.id !== id)
+              );
+            } catch (err) {
+              console.error('Delete error:', err);
+              alert('Failed to delete the package. Please try again.');
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
 
   function renderMemberCard(member, index) {
     const isMenuVisible = menuVisibleFor === member.id;
@@ -154,15 +192,12 @@ const ViewPackages = () => {
     );
   }
 
-  const handleDelete = (id) => {
-    console.log(`Member with ID ${id} deleted.`);
-    setMembers(members.filter((member) => member.id !== id)); // Update state to remove deleted member
-  };
-
   return (
     <TouchableWithoutFeedback onPress={() => setMenuVisibleFor(false)}>
       <SafeAreaView style={styles.safeArea}>
-        <ViewHeader headerTitle="Packages" navigateTo="addPackage" />
+        <Animatable.View animation="fadeInDown" duration={800}>
+          <ViewHeader headerTitle="Packages" navigateTo="addPackage" />
+        </Animatable.View>
 
         {filteredMembers && !skeletonLoader && (
           <Animatable.View
@@ -208,7 +243,7 @@ const ViewPackages = () => {
                 <ScrollView
                   contentContainerStyle={{
                     flexGrow: 1,
-                    paddingBottom: Platform === 'ios' ? 80 : 120,
+                    paddingBottom: Platform === 'ios' ? 80 : 150,
                   }}
                   scrollEnabled={true}
                   onScroll={() =>

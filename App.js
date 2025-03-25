@@ -22,6 +22,9 @@ import PackageReports from './screens/PackageReports';
 import Splash from './components/SplashScreen';
 import EditMember from './screens/EditMember';
 import EditPackage from './screens/EditPackage';
+import EditStaff from './screens/EditStaff';
+import EditAsset from './screens/EditAsset';
+import EditInventory from './screens/EditInventory';
 
 import {
   StatusBar,
@@ -433,6 +436,9 @@ const App = () => {
             <Stack.Screen name="viewInventory" component={ViewInventory} />
             <Stack.Screen name="editMember" component={EditMember} />
             <Stack.Screen name="editPackage" component={EditPackage} />
+            <Stack.Screen name="editStaff" component={EditStaff} />
+            <Stack.Screen name="editAsset" component={EditAsset} />
+            <Stack.Screen name="editInventory" component={EditInventory} />
             <Stack.Screen
               name="BookDetail"
               component={BookDetail}

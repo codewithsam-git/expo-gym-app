@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   Image,
   Platform,
-  Modal,
+  Alert,
   Dimensions,
   TextInput,
 } from 'react-native';
@@ -65,6 +65,57 @@ const ViewMembers = () => {
       fetchMembers();
     }, [])
   );
+
+  const handleDelete = (id) => {
+    console.log(`Member with ID ${id} deleted.`);
+  };
+
+  const handleStatusChange = async (member) => {
+    console.log('member: ', member.id);
+    const memberId = member.id;
+    Alert.alert(
+      'Confirm Deactivate',
+      'Are you sure you want deactivate this member?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            try {
+              console.log(`${BASE_URL}/edit-membersData?id=${memberId}`);
+              const response = await fetch(
+                `${BASE_URL}/edit-membersData?id=${memberId}`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    ...member,
+                    memberStatus: 'Inactive',
+                  }),
+                }
+              );
+
+              if (!response.ok) {
+                throw new Error(
+                  `Failed to change status, HTTP error! status: ${response.status}`
+                );
+              }
+              fetchMembers();
+            } catch (err) {
+              console.error('Staus change error:', err);
+              alert('Failed to status of member. Please try again.');
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
 
   function renderMemberCard(member, navigation) {
     const isMenuVisible = menuVisibleFor === member.id;
@@ -140,71 +191,85 @@ const ViewMembers = () => {
             duration={600}
             delay={200}
             style={styles.detailsSection}>
-            <View style={styles.infoGrid}>
-              {/* Contact Info */}
-              <Animatable.View
-                animation="fadeInLeft"
-                delay={300}
-                style={styles.infoItem}>
-                <Icon name="email" size={16} color={COLORS.primary} />
-                <Text style={styles.infoText}>{member.email}</Text>
-              </Animatable.View>
-              <Animatable.View
-                animation="fadeInLeft"
-                delay={400}
-                style={styles.infoItem}>
-                <Icon name="phone" size={16} color={COLORS.primary} />
-                <Text style={styles.infoText}>{member.phoneno}</Text>
-              </Animatable.View>
+            <View style={styles.row}>
+              <View style={styles.column}>
+                {/* Contact Info */}
+                <Animatable.View
+                  animation="fadeInLeft"
+                  delay={300}
+                  style={styles.infoItem}>
+                  <Icon name="email" size={16} color={COLORS.primary} />
+                  <Text style={styles.infoText}>{member.email}</Text>
+                </Animatable.View>
 
-              {/* Location */}
-              <Animatable.View
-                animation="fadeInLeft"
-                delay={500}
-                style={styles.infoItem}>
-                <Icon name="location-on" size={16} color={COLORS.primary} />
-                <Text style={styles.infoText}>
-                  {member.city}, {member.country}
-                </Text>
-              </Animatable.View>
-
-              {/* Pricing */}
-              <Animatable.View
-                animation="fadeInLeft"
-                delay={600}
-                style={styles.infoItem}>
-                <Icon name="currency-rupee" size={16} color={COLORS.primary} />
-                <Text style={styles.infoText}>
-                  ₹{member.discountFinalPrice || 'N/A'}{' '}
-                  <Text style={styles.originalPrice}>
-                    ₹{member.packagePrice || 'N/A'}
+                <Animatable.View
+                  animation="fadeInLeft"
+                  delay={700}
+                  style={styles.infoItem}>
+                  <Icon
+                    name="calendar-today"
+                    size={16}
+                    color={COLORS.primary}
+                  />
+                  <Text style={styles.infoText}>
+                    {new Date(member.start_Date).toLocaleDateString()} -{' '}
+                    {new Date(member.end_date).toLocaleDateString()}
                   </Text>
-                </Text>
-              </Animatable.View>
+                </Animatable.View>
 
-              {/* Dates */}
-              <Animatable.View
-                animation="fadeInLeft"
-                delay={700}
-                style={styles.infoItem}>
-                <Icon name="calendar-today" size={16} color={COLORS.primary} />
-                <Text style={styles.infoText}>
-                  {new Date(member.start_Date).toLocaleDateString()} -{' '}
-                  {new Date(member.end_date).toLocaleDateString()}
-                </Text>
-              </Animatable.View>
+                {/* Location */}
+                <Animatable.View
+                  animation="fadeInLeft"
+                  delay={500}
+                  style={styles.infoItem}>
+                  <Icon name="location-on" size={16} color={COLORS.primary} />
+                  <Text style={styles.infoText}>
+                    {member.city}, {member.country}
+                  </Text>
+                </Animatable.View>
+              </View>
 
-              {/* Gender */}
-              <Animatable.View
-                animation="fadeInLeft"
-                delay={800}
-                style={styles.infoItem}>
-                <Icon name="person" size={16} color={COLORS.primary} />
-                <Text style={styles.infoText}>
-                  {member.gender.charAt(0).toUpperCase() +
-                    member.gender.slice(1)}
-                </Text>
-              </Animatable.View>
+              <View style={styles.column1}>
+                {/* Pricing */}
+                <Animatable.View
+                  animation="fadeInLeft"
+                  delay={600}
+                  style={styles.infoItem}>
+                  <Icon
+                    name="currency-rupee"
+                    size={16}
+                    color={COLORS.primary}
+                  />
+                  <Text style={styles.infoText}>
+                    ₹{member.discountFinalPrice || 'N/A'}{' '}
+                    <Text style={styles.originalPrice}>
+                      ₹{member.packagePrice || 'N/A'}
+                    </Text>
+                  </Text>
+                </Animatable.View>
+
+                {/* Dates */}
+
+                <Animatable.View
+                  animation="fadeInLeft"
+                  delay={400}
+                  style={styles.infoItem}>
+                  <Icon name="phone" size={16} color={COLORS.primary} />
+                  <Text style={styles.infoText}>{member.phoneno}</Text>
+                </Animatable.View>
+
+                {/* Gender */}
+                <Animatable.View
+                  animation="fadeInLeft"
+                  delay={800}
+                  style={styles.infoItem}>
+                  <Icon name="person" size={16} color={COLORS.primary} />
+                  <Text style={styles.infoText}>
+                    {member.gender.charAt(0).toUpperCase() +
+                      member.gender.slice(1)}
+                  </Text>
+                </Animatable.View>
+              </View>
             </View>
           </Animatable.View>
 
@@ -225,7 +290,7 @@ const ViewMembers = () => {
                 </Animatable.View>
                 <Text style={styles.menuItemText}>Edit</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              {/*<TouchableOpacity
                 style={styles.menuItem}
                 onPress={() => {
                   handleDelete(member.id);
@@ -235,23 +300,17 @@ const ViewMembers = () => {
                   <Icon name="delete" size={20} color={COLORS.lightRed} />
                 </Animatable.View>
                 <Text style={styles.menuItemText}>Delete</Text>
-              </TouchableOpacity>
+              </TouchableOpacity>*/}
               <TouchableOpacity
                 style={styles.menuItem}
                 onPress={() => {
-                  handleDelete(member.id);
+                  handleStatusChange(member);
                   setMenuVisibleFor(null);
                 }}>
                 <Animatable.View animation="bounceIn" delay={200}>
-                  <Icon
-                    name={member.memberStatus === 'Active' ? 'cancel' : 'check-circle'}
-                    size={20}
-                    color={member.memberStatus === 'Active' ? 'gray' : 'green'}
-                  />
+                  <Icon name="cancel" size={20} color={COLORS.lightGray4} />
                 </Animatable.View>
-                <Text style={styles.menuItemText}>
-                  {member.memberStatus === 'Active' ? 'Deactive' : 'Active'}
-                </Text>
+                <Text style={styles.menuItemText}>Deactive</Text>
               </TouchableOpacity>
             </Animatable.View>
           )}
@@ -259,11 +318,6 @@ const ViewMembers = () => {
       </TouchableOpacity>
     );
   }
-
-  const handleDelete = (id) => {
-    // Logic to delete the member (e.g., remove from state or make API call)
-    console.log(`Member with ID ${id} deleted.`);
-  };
 
   return (
     <TouchableWithoutFeedback onPress={() => setMenuVisibleFor(false)}>
@@ -422,18 +476,22 @@ const styles = StyleSheet.create({
   menuButton: {
     padding: SIZES.base,
   },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   detailsSection: {
     padding: SIZES.base,
   },
-  infoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+  column: {
+    width: '60%',
+  },
+  column1: {
+    width: '40%',
   },
   infoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '50%',
     marginBottom: SIZES.base,
   },
   infoText: {

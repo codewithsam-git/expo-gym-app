@@ -19,6 +19,7 @@ import { COLORS, FONTS, SIZES, icons } from '../constants';
 import Header from '../components/Header';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import DatePicker from 'react-native-date-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import BASE_URL from '../Api/commonApi';
@@ -249,7 +250,7 @@ const AddMember = () => {
     duration: duration,
     start_Date: startDate,
     end_date: endDate,
-    memberStatus: 0,
+    memberStatus: "Active",
     profile_image: 'img.jpg',
   };
   console.log(memberData.start_Date);
@@ -590,8 +591,8 @@ const AddMember = () => {
                       </View>
 
                       <View style={styles.inputContainer}>
-                        <Icon
-                          name="dollar"
+                        <MaterialIcon
+                          name="currency-rupee"
                           size={20}
                           color={COLORS.primary}
                           style={styles.inputIcon}

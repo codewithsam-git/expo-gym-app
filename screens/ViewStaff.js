@@ -8,19 +8,17 @@ import {
   ScrollView,
   SafeAreaView,
   Image,
-  Platform,
-  Modal,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { COLORS, FONTS, SIZES, icons, images } from '../constants';
-import Header from '../components/Header';
 import BASE_URL from '../Api/commonApi';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 import SkeletonMember from '../components/SkeletonMember';
 import { useFocusEffect } from '@react-navigation/native';
 import ViewHeader from '../components/ViewHeader';
-
+import * as Animatable from 'react-native-animatable';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
 
@@ -106,14 +104,9 @@ const ViewStaff = () => {
   ];
 
   const navigation = useNavigation();
-
   const [members, setMembers] = useState([]);
   const [skeletonLoader, setSkeletonLoader] = useState(false);
-  const [menuVisible, setMenuVisible] = useState(false); // To toggle menu visibility
-
-  const handleMenuToggle = () => {
-    setMenuVisible(!menuVisible); // Toggle the visibility of the menu
-  };
+  const [menuVisibleFor, setMenuVisibleFor] = useState(null);
 
   const fetchMembers = async () => {
     try {
@@ -141,13 +134,63 @@ const ViewStaff = () => {
   useFocusEffect(
     useCallback(() => {
       fetchMembers();
-    }, []) 
+    }, [])
   );
 
+  const handleDelete = async (id) => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this staff?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Delete cancelled'),
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            try {
+              console.log(`${BASE_URL}/delete-staff/${id}`);
+              const response = await fetch(`${BASE_URL}/delete-staff/${id}`);
+
+              if (!response.ok) {
+                throw new Error(
+                  `Failed to delete item, HTTP error! status: ${response.status}`
+                );
+              }
+
+              setMembers((prevMembers) =>
+                prevMembers.filter((member) => member.id !== id)
+              );
+            } catch (err) {
+              console.error('Delete error:', err);
+              alert('Failed to delete the staff. Please try again.');
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
   function renderMemberCard(member) {
+    const isMenuVisible = menuVisibleFor === member.id;
+
+    const toggleMenu = () => {
+      setMenuVisibleFor(isMenuVisible ? null : member.id);
+    };
+
     return (
-      <TouchableOpacity style={{ marginTop: 10 }}>
-        <View style={styles.card}>
+      <TouchableOpacity
+        style={{ marginTop: 10 }}
+        onPress={() => setMenuVisibleFor(false)}>
+        {/* Animate the main card view */}
+        <Animatable.View
+          style={styles.card}
+          animation="fadeInUp"
+          duration={600}
+          delay={100}>
           <View style={styles.avatarContainer}>
             <Image
               source={{
@@ -163,20 +206,58 @@ const ViewStaff = () => {
             <Text style={styles.memberEmail}>{member.mob_no}</Text>
             <Text style={styles.memberPlan}>Role: {member.role}</Text>
           </View>
-        </View>
+
+          <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
+            {/* Adding rotation animation to the menu icon */}
+            <Animatable.View animation="fadeInUp" duration={1000}>
+              <Icon name="more-vert" size={20} color={COLORS.lightGray2} />
+            </Animatable.View>
+          </TouchableOpacity>
+        </Animatable.View>
+
+        {/* Animate the menu dropdown when visible */}
+        {isMenuVisible && (
+          <Animatable.View
+            animation="fadeInDown"
+            duration={200}
+            style={styles.menuDropdown}>
+            {/* Edit Button with bounce effect */}
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                navigation.navigate('editStaff', { staffId: member.id });
+                setMenuVisibleFor(null);
+              }}>
+              <Animatable.View animation="bounceIn" delay={100}>
+                <Icon name="edit" size={20} color={COLORS.primary} />
+              </Animatable.View>
+              <Text style={styles.menuItemText}>Edit</Text>
+            </TouchableOpacity>
+
+            {/* Delete Button with bounce effect */}
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                handleDelete(member.id);
+                setMenuVisibleFor(null);
+              }}>
+              <Animatable.View animation="bounceIn" delay={200}>
+                <Icon name="delete" size={20} color={COLORS.lightRed} />
+              </Animatable.View>
+              <Text style={styles.menuItemText}>Delete</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+        )}
       </TouchableOpacity>
     );
   }
 
-  const handleDelete = (id) => {
-    // Logic to delete the member (e.g., remove from state or make API call)
-    console.log(`Member with ID ${id} deleted.`);
-  };
-
   return (
-    <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
+    <TouchableWithoutFeedback onPress={() => setMenuVisibleFor(false)}>
       <SafeAreaView style={styles.safeArea}>
-        <ViewHeader headerTitle="Staff" navigateTo="addStaff"/>
+        <Animatable.View animation="fadeInDown" duration={800}>
+          <ViewHeader headerTitle="Staff" navigateTo="addStaff" />
+        </Animatable.View>
 
         <View style={{ marginTop: SIZES.font }}>
           {members.length === 0 ? (
@@ -193,7 +274,10 @@ const ViewStaff = () => {
               ) : (
                 <ScrollView
                   contentContainerStyle={{ flexGrow: 1 }}
-                  scrollEnabled={true}>
+                  scrollEnabled={true}
+                  onScroll={() =>
+                    menuVisibleFor != null && setMenuVisibleFor(null)
+                  }>
                   <View style={styles.cardWrapper}>
                     {members.map((member, index) => (
                       <View key={member.id} style={styles.cardContainer}>
@@ -279,6 +363,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gray1,
     borderRadius: 10,
     padding: 15,
+    position: 'relative', // Ensure the parent is positioned for absolute positioning
   },
   avatarContainer: {
     alignItems: 'center',
@@ -306,48 +391,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.lightGray4,
   },
-  menu: {
+  menuButton: {
+    position: 'absolute', // Absolute positioning
+    top: 10, // Adjust top to position the menu
+    right: 10, // Adjust left to position the menu
+  },
+  menuDropdown: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    elevation: 4, // Shadow for the menu
-  },
-  menuOption: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderColor: '#ddd',
-  },
-  menuOptionText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  actions: {
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-  },
-  editButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: SIZES.base / 2,
-    paddingHorizontal: SIZES.base,
+    right: SIZES.base,
+    top: SIZES.base,
+    backgroundColor: COLORS.white,
     borderRadius: SIZES.radius,
-    marginBottom: SIZES.base,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+    zIndex: 1000,
   },
-  deleteButton: {
-    backgroundColor: COLORS.lightRed,
-    paddingVertical: SIZES.base / 2,
-    paddingHorizontal: SIZES.base,
-    borderRadius: SIZES.radius,
+  menuItem: {
+    flexDirection: 'row',
+    textAlign: 'center',
+    padding: SIZES.base,
   },
-  buttonText: {
+  menuItemText: {
     ...FONTS.body4,
-    color: COLORS.white,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: COLORS.lightGray,
-    margin: SIZES.base,
+    color: COLORS.gray,
+    marginLeft: SIZES.base,
   },
 });
 

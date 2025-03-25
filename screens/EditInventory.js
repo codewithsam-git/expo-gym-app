@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,44 +9,73 @@ import {
   StyleSheet,
   Platform,
   SafeAreaView,
+  Dimensions,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
   Image,
 } from 'react-native';
 import { COLORS, FONTS, SIZES, icons } from '../constants';
-import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
+import * as ImagePicker from 'expo-image-picker'; // Import expo-image-picker
+import { useNavigation } from '@react-navigation/native';
 import BASE_URL from '../Api/commonApi';
-import * as ImagePicker from 'expo-image-picker';
 
-const AddPackage = ({ navigation }) => {
-  const [isDurationFocus, setIsDurationFocus] = useState(false);
-  const [imageUrl, setImageUrl] = useState(null);
-  const [packageName, setPackageName] = useState('');
+const EditInventory = ({ route }) => {
+  const { inventoryId } = route.params;
+  const navigation = useNavigation();
+
+  const [name, setName] = useState('');
   const [price, setPrice] = useState('');
-  const [discount, setDiscount] = useState('');
-  const [duration, setDuration] = useState('');
+  const [useFor, setUseFor] = useState('');
+  const [imageUri, setImageUri] = useState(null);
 
-  const packageData = {
-    package_name: packageName,
-    package_duration: duration,
-    package_amount: price,
-    discount: discount,
-    image: "imageUrl.jpg", 
+  const fetchInventoryById = async () => {
+    try {
+      console.log(`${BASE_URL}/edit-inventory?id=${inventoryId}`);
+      const response = await fetch(
+        `${BASE_URL}/edit-inventory?id=${inventoryId}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const fetchedInventory = data.inventory;
+      setName(fetchedInventory.name);
+      setPrice(fetchedInventory.price.toString());
+      setUseFor(fetchedInventory.useFor);
+      setImageUri(fetchedInventory.image);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setSkeletonLoader(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInventoryById();
+  }, []);
+
+  const inventoryData = {
+    id: inventoryId,
+    name: name,
+    price: price,
+    useFor: useFor,
+    image: imageUri || 'inventory.jpg',
   };
 
   const handleSubmit = async () => {
     try {
-      console.log(`${BASE_URL}/save-packages`);
-      console.log('packageData: ', packageData);
-      const response = await fetch(`${BASE_URL}/save-packages`, {
+      console.log(`${BASE_URL}/update-inventory`);
+      console.log('inventoryData: ', inventoryData);
+      const response = await fetch(`${BASE_URL}/update-inventory`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(packageData),
+        body: JSON.stringify(inventoryData),
       });
 
       console.log('response: ', response);
@@ -54,21 +83,17 @@ const AddPackage = ({ navigation }) => {
       if (response.status === 200) {
         Alert.alert(
           'Success',
-          'Package added successfully!',
+          'Inventory item updated successfully!',
           [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
           { cancelable: false }
         );
-        setPackageName('');
-        setDuration('');
-        setPrice('');
-        setDiscount('');
-        setImageUrl(null);
+        navigation.goBack();
       } else {
-        throw new Error('Failed to add package');
+        throw new Error('Failed to update inventory');
       }
     } catch (error) {
       console.error('Error submitting data:', error);
-      Alert.alert('Error', 'Failed to add package, please try again');
+      Alert.alert('Error', 'Failed to update inventory, please try again');
     }
   };
 
@@ -77,6 +102,7 @@ const AddPackage = ({ navigation }) => {
   };
 
   const pickImage = async () => {
+    // Ask for permission to access the media library (required on iOS)
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -85,14 +111,15 @@ const AddPackage = ({ navigation }) => {
       return;
     }
 
+    // Launch the image picker
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaType: ImagePicker.MediaTypeOptions.Images,
+      mediaType: ImagePicker.MediaTypeOptions.Images, // Only pick images
       allowsEditing: true,
       quality: 1,
     });
 
     if (!result.canceled) {
-      setImageUrl(result.assets[0].uri); // Get the URI of the picked image
+      setImageUri(result.assets[0].uri); // Get the URI of the picked image
     } else {
       console.log('Image picker was canceled');
     }
@@ -107,9 +134,9 @@ const AddPackage = ({ navigation }) => {
           <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
             <View style={styles.formContainerWrapper}>
               <View style={styles.formContainer}>
-                <Text style={styles.title}>Add New Package</Text>
+                <Text style={styles.title}>Update Inventory Item</Text>
                 <View>
-                  {/* Price Input */}
+                  {/* Name Input */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="tag"
@@ -118,49 +145,15 @@ const AddPackage = ({ navigation }) => {
                       style={styles.inputIcon}
                     />
                     <TextInput
-                      placeholder="Enter Package Name"
+                      placeholder="Item Name"
                       placeholderTextColor={COLORS.lightGray}
-                      value={packageName}
-                      onChangeText={setPackageName}
+                      value={name}
+                      onChangeText={setName}
                       style={styles.input}
                     />
                   </View>
 
-                  {/* Duration Dropdown */}
-                  <View style={styles.inputContainer}>
-                    <Icon
-                      name="calendar"
-                      size={20}
-                      color={COLORS.primary}
-                      style={styles.inputIcon}
-                    />
-                    <Dropdown
-                      style={[styles.input, isDurationFocus]}
-                      placeholderStyle={styles.placeholderStyle}
-                      selectedTextStyle={styles.selectedTextStyle}
-                      inputSearchStyle={styles.inputSearchStyle}
-                      data={[
-                        { label: '1 Month', value: '1m' },
-                        { label: '3 Months', value: '3m' },
-                        { label: '6 Months', value: '6m' },
-                        { label: '1 Year', value: '1y' },
-                      ]}
-                      search
-                      maxHeight={300}
-                      labelField="label"
-                      valueField="value"
-                      placeholder={!isDurationFocus ? 'Select Duration' : '...'}
-                      searchPlaceholder="Search..."
-                      value={duration}
-                      onFocus={() => setIsDurationFocus(true)}
-                      onBlur={() => setIsDurationFocus(false)}
-                      onChange={(item) => {
-                        setDuration(item.value);
-                        setIsDurationFocus(false);
-                      }}
-                    />
-                  </View>
-
+                  {/* Price Input */}
                   <View style={styles.inputContainer}>
                     <MaterialIcon
                       name="currency-rupee"
@@ -169,30 +162,33 @@ const AddPackage = ({ navigation }) => {
                       style={styles.inputIcon}
                     />
                     <TextInput
-                      placeholder="Enter Amount (In Rupees)"
+                      placeholder="Price"
                       placeholderTextColor={COLORS.lightGray}
                       value={price}
                       onChangeText={setPrice}
                       style={styles.input}
+                      keyboardType="numeric"
                     />
                   </View>
 
+                  {/* Use For Input */}
                   <View style={styles.inputContainer}>
-                    <MaterialIcon
-                      name="currency-rupee"
+                    <Icon
+                      name="rocket"
                       size={20}
                       color={COLORS.primary}
                       style={styles.inputIcon}
                     />
                     <TextInput
-                      placeholder="Enter Discount (Final Price)"
+                      placeholder="Use For (e.g., Food, Clothing, Electronics)"
                       placeholderTextColor={COLORS.lightGray}
-                      value={discount}
-                      onChangeText={setDiscount}
+                      value={useFor}
+                      onChangeText={setUseFor}
                       style={styles.input}
                     />
                   </View>
 
+                  {/* Image Picker */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="camera"
@@ -202,15 +198,15 @@ const AddPackage = ({ navigation }) => {
                     />
                     <TouchableOpacity onPress={pickImage} style={styles.input}>
                       <Text style={styles.imagePickerText}>
-                        {imageUrl ? 'Change Photo' : 'Select Photo'}
+                        {imageUri ? 'Change Photo' : 'Select Photo'}
                       </Text>
                     </TouchableOpacity>
                   </View>
 
-                  {imageUrl && (
+                  {imageUri && (
                     <View style={styles.imagePreviewContainer}>
                       <Image
-                        source={{ uri: imageUrl }}
+                        source={{ uri: imageUri }}
                         style={styles.imagePreview}
                       />
                     </View>
@@ -218,13 +214,15 @@ const AddPackage = ({ navigation }) => {
 
                   {/* Buttons */}
                   <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={onCancel}>
-                      <Text style={styles.buttonText}>Cancel</Text>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={onCancel}>
+                      <Text style={styles.cancelButtonText}>Cancel</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={styles.button}
+                      style={styles.submitButton}
                       onPress={handleSubmit}>
-                      <Text style={styles.buttonText}>Submit</Text>
+                      <Text style={styles.submitButtonText}>Update</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -233,13 +231,6 @@ const AddPackage = ({ navigation }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
-      <View style={styles.actionContainer}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.downloadButton]}
-          onPress={() => navigation.goBack()}>
-          <Text style={styles.buttonText1}>View Packages</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -275,9 +266,9 @@ const styles = StyleSheet.create({
     height: 'auto',
   },
   input: {
-    flex: 1, // Make input field take up the remaining space
+    flex: 1,
     borderBottomWidth: 1,
-    paddingVertical: 12, // Increased padding for better alignment
+    paddingVertical: 12,
     paddingHorizontal: 10,
     marginBottom: 20,
     color: COLORS.white,
@@ -285,25 +276,23 @@ const styles = StyleSheet.create({
     ...FONTS.body3,
   },
   inputIcon: {
-    marginRight: 10, // Space between icon and input field
-  },
-  placeholderStyle: {
-    fontSize: 16,
-    color: COLORS.lightGray,
-  },
-  selectedTextStyle: {
-    fontSize: 16,
-    color: COLORS.white,
-  },
-  inputSearchStyle: {
-    height: 40,
-    fontSize: 16,
+    marginRight: 10,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  button: {
+  cancelButton: {
+    flex: 1,
+    backgroundColor: COLORS.secondary,
+    margin: SIZES.base,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: SIZES.radius,
+    padding: SIZES.font,
+    alignItems: 'center',
+  },
+  submitButton: {
     flex: 1,
     backgroundColor: COLORS.primary,
     margin: SIZES.base,
@@ -311,7 +300,11 @@ const styles = StyleSheet.create({
     padding: SIZES.font,
     alignItems: 'center',
   },
-  buttonText: {
+  cancelButtonText: {
+    ...FONTS.body3,
+    color: COLORS.white,
+  },
+  submitButtonText: {
     ...FONTS.body3,
     color: COLORS.white,
   },
@@ -329,30 +322,6 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: SIZES.radius,
   },
-  actionContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: SIZES.padding,
-    borderTopWidth: 1,
-    borderTopColor: '#202428',
-  },
-  actionButton: {
-    paddingVertical: SIZES.base,
-    paddingHorizontal: SIZES.padding,
-    borderRadius: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  downloadButton: {
-    backgroundColor: COLORS.primary,
-  },
-  buttonText1: {
-    ...FONTS.body4,
-    color: COLORS.white,
-  },
 });
 
-export default AddPackage;
+export default EditInventory;

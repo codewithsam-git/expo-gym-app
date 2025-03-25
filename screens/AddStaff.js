@@ -112,7 +112,7 @@ const AddStaff = ({ navigation }) => {
                 {/* Full Name Input */}
                 <View style={styles.inputContainer}>
                   <Icon
-                    name="staff"
+                    name="user"
                     size={20}
                     color={COLORS.primary}
                     style={styles.inputIcon}

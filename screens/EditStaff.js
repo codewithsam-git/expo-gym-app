@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Platform,
   SafeAreaView,
+  Dimensions,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
@@ -17,36 +18,65 @@ import {
 import { COLORS, FONTS, SIZES, icons } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
-import BASE_URL from '../Api/commonApi';
 import * as ImagePicker from 'expo-image-picker';
+import { useNavigation } from '@react-navigation/native';
 
-const AddPackage = ({ navigation }) => {
-  const [isDurationFocus, setIsDurationFocus] = useState(false);
-  const [imageUrl, setImageUrl] = useState(null);
-  const [packageName, setPackageName] = useState('');
-  const [price, setPrice] = useState('');
-  const [discount, setDiscount] = useState('');
-  const [duration, setDuration] = useState('');
+import BASE_URL from '../Api/commonApi';
 
-  const packageData = {
-    package_name: packageName,
-    package_duration: duration,
-    package_amount: price,
-    discount: discount,
-    image: "imageUrl.jpg", 
+const EditStaff = ({ route }) => {
+  const { staffId } = route.params;
+  const navigation = useNavigation();
+
+  const [isRoleFocus, setIsRoleFocus] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [role, setRole] = useState('');
+  const [mobNo, setMobNo] = useState('');
+  const [imageUri, setImageUri] = useState(null);
+
+  const fetchStaffById = async () => {
+    try {
+      console.log(`${BASE_URL}/get-staff?id=${staffId}`);
+      const response = await fetch(`${BASE_URL}/get-staff?id=${staffId}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const fetchedStaff = data.data;
+      console.log('fetchedStaff: ', fetchedStaff);
+      setFullName(fetchedStaff.full_name);
+      setRole(fetchedStaff.role);
+      setMobNo(fetchedStaff.mob_no.toString());
+      setImageUri(fetchedStaff.profile_photo || 'profile.jpg');
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setSkeletonLoader(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStaffById();
+  }, []);
+
+  const staffData = {
+    id: staffId,
+    full_name: fullName,
+    role: role,
+    mob_no: mobNo,
+    profile_photo: imageUri || 'profile.jpg',
   };
 
   const handleSubmit = async () => {
     try {
-      console.log(`${BASE_URL}/save-packages`);
-      console.log('packageData: ', packageData);
-      const response = await fetch(`${BASE_URL}/save-packages`, {
+      console.log(`${BASE_URL}/edit-staff`);
+      console.log('staffData: ', staffData);
+      const response = await fetch(`${BASE_URL}/edit-staff`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(packageData),
+        body: JSON.stringify(staffData),
       });
 
       console.log('response: ', response);
@@ -54,21 +84,17 @@ const AddPackage = ({ navigation }) => {
       if (response.status === 200) {
         Alert.alert(
           'Success',
-          'Package added successfully!',
+          'staff updated successfully!',
           [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
           { cancelable: false }
         );
-        setPackageName('');
-        setDuration('');
-        setPrice('');
-        setDiscount('');
-        setImageUrl(null);
+        navigation.goBack();
       } else {
-        throw new Error('Failed to add package');
+        throw new Error('Failed to add staff');
       }
     } catch (error) {
       console.error('Error submitting data:', error);
-      Alert.alert('Error', 'Failed to add package, please try again');
+      Alert.alert('Error', 'Failed to add staff, please try again');
     }
   };
 
@@ -77,6 +103,7 @@ const AddPackage = ({ navigation }) => {
   };
 
   const pickImage = async () => {
+    // Ask for permission to access the media library (required on iOS)
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -85,14 +112,15 @@ const AddPackage = ({ navigation }) => {
       return;
     }
 
+    // Launch the image picker
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaType: ImagePicker.MediaTypeOptions.Images,
+      mediaType: ImagePicker.MediaTypeOptions.Images, // Only pick images
       allowsEditing: true,
       quality: 1,
     });
 
     if (!result.canceled) {
-      setImageUrl(result.assets[0].uri); // Get the URI of the picked image
+      setImageUri(result.assets[0].uri); // Get the URI of the picked image
     } else {
       console.log('Image picker was canceled');
     }
@@ -107,89 +135,74 @@ const AddPackage = ({ navigation }) => {
           <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
             <View style={styles.formContainerWrapper}>
               <View style={styles.formContainer}>
-                <Text style={styles.title}>Add New Package</Text>
+                <Text style={styles.title}>Update staff</Text>
                 <View>
-                  {/* Price Input */}
+                  {/* Full Name Input */}
                   <View style={styles.inputContainer}>
                     <Icon
-                      name="tag"
+                      name="user"
                       size={20}
                       color={COLORS.primary}
                       style={styles.inputIcon}
                     />
                     <TextInput
-                      placeholder="Enter Package Name"
+                      placeholder="Full Name"
                       placeholderTextColor={COLORS.lightGray}
-                      value={packageName}
-                      onChangeText={setPackageName}
+                      value={fullName}
+                      onChangeText={setFullName}
                       style={styles.input}
                     />
                   </View>
 
-                  {/* Duration Dropdown */}
+                  {/* Role Dropdown */}
                   <View style={styles.inputContainer}>
                     <Icon
-                      name="calendar"
+                      name="briefcase"
                       size={20}
                       color={COLORS.primary}
                       style={styles.inputIcon}
                     />
                     <Dropdown
-                      style={[styles.input, isDurationFocus]}
+                      style={[styles.input, isRoleFocus]}
                       placeholderStyle={styles.placeholderStyle}
                       selectedTextStyle={styles.selectedTextStyle}
                       inputSearchStyle={styles.inputSearchStyle}
                       data={[
-                        { label: '1 Month', value: '1m' },
-                        { label: '3 Months', value: '3m' },
-                        { label: '6 Months', value: '6m' },
-                        { label: '1 Year', value: '1y' },
+                        { label: 'Admin', value: 'Admin' },
+                        { label: 'Manager', value: 'Manager' },
+                        { label: 'Staff', value: 'Staff' },
                       ]}
                       search
                       maxHeight={300}
                       labelField="label"
                       valueField="value"
-                      placeholder={!isDurationFocus ? 'Select Duration' : '...'}
+                      placeholder={!isRoleFocus ? 'Select Role' : '...'}
                       searchPlaceholder="Search..."
-                      value={duration}
-                      onFocus={() => setIsDurationFocus(true)}
-                      onBlur={() => setIsDurationFocus(false)}
+                      value={role}
+                      onFocus={() => setIsRoleFocus(true)}
+                      onBlur={() => setIsRoleFocus(false)}
                       onChange={(item) => {
-                        setDuration(item.value);
-                        setIsDurationFocus(false);
+                        setRole(item.value);
+                        setIsRoleFocus(false);
                       }}
                     />
                   </View>
 
+                  {/* Mobile Number Input */}
                   <View style={styles.inputContainer}>
-                    <MaterialIcon
-                      name="currency-rupee"
+                    <Icon
+                      name="phone"
                       size={20}
                       color={COLORS.primary}
                       style={styles.inputIcon}
                     />
                     <TextInput
-                      placeholder="Enter Amount (In Rupees)"
+                      placeholder="Mobile Number"
                       placeholderTextColor={COLORS.lightGray}
-                      value={price}
-                      onChangeText={setPrice}
+                      value={mobNo}
+                      onChangeText={setMobNo}
                       style={styles.input}
-                    />
-                  </View>
-
-                  <View style={styles.inputContainer}>
-                    <MaterialIcon
-                      name="currency-rupee"
-                      size={20}
-                      color={COLORS.primary}
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      placeholder="Enter Discount (Final Price)"
-                      placeholderTextColor={COLORS.lightGray}
-                      value={discount}
-                      onChangeText={setDiscount}
-                      style={styles.input}
+                      keyboardType="phone-pad"
                     />
                   </View>
 
@@ -202,29 +215,30 @@ const AddPackage = ({ navigation }) => {
                     />
                     <TouchableOpacity onPress={pickImage} style={styles.input}>
                       <Text style={styles.imagePickerText}>
-                        {imageUrl ? 'Change Photo' : 'Select Photo'}
+                        {imageUri ? 'Change Photo' : 'Select Photo'}
                       </Text>
                     </TouchableOpacity>
                   </View>
 
-                  {imageUrl && (
+                  {imageUri && (
                     <View style={styles.imagePreviewContainer}>
                       <Image
-                        source={{ uri: imageUrl }}
+                        source={{ uri: imageUri }}
                         style={styles.imagePreview}
                       />
                     </View>
                   )}
 
-                  {/* Buttons */}
                   <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={onCancel}>
-                      <Text style={styles.buttonText}>Cancel</Text>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={onCancel}>
+                      <Text style={styles.cancelButtonText}>Cancel</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={styles.button}
+                      style={styles.submitButton}
                       onPress={handleSubmit}>
-                      <Text style={styles.buttonText}>Submit</Text>
+                      <Text style={styles.submitButtonText}>Update</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -233,13 +247,6 @@ const AddPackage = ({ navigation }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
-      <View style={styles.actionContainer}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.downloadButton]}
-          onPress={() => navigation.goBack()}>
-          <Text style={styles.buttonText1}>View Packages</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -275,9 +282,9 @@ const styles = StyleSheet.create({
     height: 'auto',
   },
   input: {
-    flex: 1, // Make input field take up the remaining space
+    flex: 1,
     borderBottomWidth: 1,
-    paddingVertical: 12, // Increased padding for better alignment
+    paddingVertical: 12,
     paddingHorizontal: 10,
     marginBottom: 20,
     color: COLORS.white,
@@ -285,7 +292,7 @@ const styles = StyleSheet.create({
     ...FONTS.body3,
   },
   inputIcon: {
-    marginRight: 10, // Space between icon and input field
+    marginRight: 10,
   },
   placeholderStyle: {
     fontSize: 16,
@@ -303,7 +310,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  button: {
+  cancelButton: {
+    flex: 1,
+    backgroundColor: COLORS.secondary,
+    margin: SIZES.base,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: SIZES.radius,
+    padding: SIZES.font,
+    alignItems: 'center',
+  },
+  submitButton: {
     flex: 1,
     backgroundColor: COLORS.primary,
     margin: SIZES.base,
@@ -311,7 +328,11 @@ const styles = StyleSheet.create({
     padding: SIZES.font,
     alignItems: 'center',
   },
-  buttonText: {
+  cancelButtonText: {
+    ...FONTS.body3,
+    color: COLORS.white,
+  },
+  submitButtonText: {
     ...FONTS.body3,
     color: COLORS.white,
   },
@@ -355,4 +376,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddPackage;
+export default EditStaff;

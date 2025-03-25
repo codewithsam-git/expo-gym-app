@@ -17,6 +17,7 @@ import StepIndicator from 'react-native-step-indicator';
 import { COLORS, FONTS, SIZES } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import BASE_URL from '../Api/commonApi';
 import { useNavigation } from '@react-navigation/native';
@@ -290,7 +291,7 @@ const EditMember = ({ route }) => {
     duration: duration,
     start_Date: startDate,
     end_date: endDate,
-    memberStatus: 0,
+    memberStatus: "Active",
     profile_image: 'img.jpg',
   };
 
@@ -349,23 +350,7 @@ const EditMember = ({ route }) => {
             cancelable: false,
           }
         );
-
-        setFirstName('');
-        setLastName('');
-        setGender('');
-        setBirthdate('');
-        setEmail('');
-        setMobileNo('');
-        setCountry('');
-        setCity('');
-        setPlanName('');
-        setCharges('');
-        setDiscount('');
-        setDuration('');
-        setStartDate('');
-        setEndDate('');
-        setCurrentStep(0);
-        setLoading(false);        
+        navigation.goBack();
       } else {
         throw new Error('Failed to add member');
       }
@@ -638,8 +623,8 @@ const EditMember = ({ route }) => {
                       </View>
 
                       <View style={styles.inputContainer}>
-                        <Icon
-                          name="dollar"
+                        <MaterialIcon
+                          name="currency-rupee"
                           size={20}
                           color={COLORS.primary}
                           style={styles.inputIcon}

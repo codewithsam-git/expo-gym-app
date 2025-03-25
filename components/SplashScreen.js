@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, Image, StyleSheet, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; // For navigation
 import {COLORS, images} from "../constants";
 
@@ -8,7 +8,7 @@ const SplashScreen = () => {
 
   useEffect(() => {
     setTimeout(() => {
-      navigation.replace('Home');
+      navigation.replace('Login');
     }, 2500);
   }, [navigation]);
 
@@ -17,6 +17,7 @@ const SplashScreen = () => {
       <Image
         source={images.gymLogo}
         style={styles.logo}
+        resizeMode="contain"
       />
     </View>
   );
@@ -27,11 +28,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.black,
   },
   logo: {
     width: 250,
     height: 250,
+    marginBottom: 60
   },
 });
 

@@ -267,92 +267,6 @@ const Home = ({ navigation }) => {
     );
   }
 
-  function renderExpiringMembers() {
-    // Example data of expiring members. You can replace this with the data fetched from your API.
-    const expiringMembersData = [
-      {
-        id: 1,
-        name: 'John Doe',
-        plan: 'Gold Membership',
-        expiryDate: '2025-03-14',
-        image: images.member1, // Replace with the actual image or add a placeholder
-      },
-      {
-        id: 2,
-        name: 'Jane Smith',
-        plan: 'Silver Membership',
-        expiryDate: '2025-03-15',
-        image: images.member2, // Replace with the actual image or add a placeholder
-      },
-      {
-        id: 3,
-        name: 'Michael Johnson',
-        plan: 'Platinum Membership',
-        expiryDate: '2025-03-18',
-        image: images.member3, // Replace with the actual image or add a placeholder
-      },
-    ];
-
-    return (
-      <View style={{ marginTop: SIZES.padding }}>
-        <FlatList
-          data={expiringMembersData}
-          renderItem={({ item }) => (
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                backgroundColor: COLORS.white,
-                padding: SIZES.padding,
-                borderRadius: 15,
-                elevation: 5,
-              }}>
-              {/* Member Image */}
-              <Image
-                source={item.image}
-                style={{
-                  width: 50,
-                  height: 50,
-                  borderRadius: 25,
-                  marginRight: SIZES.base,
-                }}
-              />
-
-              {/* Member Details */}
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    ...FONTS.body2,
-                    color: COLORS.black,
-                    fontWeight: 'bold',
-                  }}>
-                  {item.name}
-                </Text>
-                <Text style={{ ...FONTS.body3, color: COLORS.lightGray }}>
-                  {item.plan}
-                </Text>
-              </View>
-
-              {/* Expiry Date */}
-              <View style={{ justifyContent: 'flex-end' }}>
-                <Text
-                  style={{
-                    ...FONTS.body3,
-                    color: COLORS.danger, // Red color for expiry notice
-                    fontWeight: 'bold',
-                  }}>
-                  {`Expires: ${item.expiryDate}`}
-                </Text>
-              </View>
-            </View>
-          )}
-          keyExtractor={(item) => item.id.toString()}
-        />
-      </View>
-    );
-  }
-
   const [members, setMembers] = useState([]);
   const [packages, setPackages] = useState([]);
   const [totalCount, setTotalCount] = useState([]);
@@ -466,7 +380,12 @@ const Home = ({ navigation }) => {
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     style={styles.packageItem}
-                    activeOpacity={0.8}>
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      navigation.navigate('editPackage', {
+                        packageId: item.id,
+                      });
+                    }}>
                     <View style={styles.packageContainer}>
                       <Image
                         source={images.gym1}

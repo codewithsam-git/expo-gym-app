@@ -8,18 +8,16 @@ import {
   ScrollView,
   SafeAreaView,
   Image,
-  Platform,
-  Modal,
+  Alert,
   Dimensions,
 } from 'react-native';
 import { COLORS, FONTS, SIZES, icons, images } from '../constants';
-import Header from '../components/Header';
 import BASE_URL from '../Api/commonApi';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation
-import SkeletonMember from '../components/SkeletonMember';
 import { useFocusEffect } from '@react-navigation/native';
 import ViewHeader from '../components/ViewHeader';
+import * as Animatable from 'react-native-animatable'; // Import Animatable
 
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
@@ -110,15 +108,12 @@ const ViewAssets = () => {
   const [members, setMembers] = useState([]);
   const [skeletonLoader, setSkeletonLoader] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false); // To toggle menu visibility
-
-  const handleMenuToggle = () => {
-    setMenuVisible(!menuVisible); // Toggle the visibility of the menu
-  };
+  const [menuVisibleFor, setMenuVisibleFor] = useState(null);
 
   const fetchMembers = async () => {
     try {
-      console.log(`${BASE_URL}/assets-details'`);
-      const response = await fetch(`${BASE_URL}/assets-details'`);
+      console.log(`${BASE_URL}/assets-details`);
+      const response = await fetch(`${BASE_URL}/assets-details`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -136,7 +131,7 @@ const ViewAssets = () => {
 
   useEffect(() => {
     fetchMembers();
-  }, [members]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -144,61 +139,125 @@ const ViewAssets = () => {
     }, [])
   );
 
-  function renderMemberCard(member) {
+  const handleDelete = async (id) => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this asset?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Delete cancelled'),
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            try {
+              console.log(`${BASE_URL}/delete-assets?id=${id}`);
+              const response = await fetch(`${BASE_URL}/delete-assets?id=${id}`);
+
+              if (!response.ok) {
+                throw new Error(
+                  `Failed to delete item, HTTP error! status: ${response.status}`
+                );
+              }
+
+              setMembers((prevMembers) =>
+                prevMembers.filter((member) => member.id !== id)
+              );
+            } catch (err) {
+              console.error('Delete error:', err);
+              alert('Failed to delete the asset. Please try again.');
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
+  function renderMemberCard(member, index) {
+    const isMenuVisible = menuVisibleFor === member.id;
+
+    const toggleMenu = () => {
+      setMenuVisibleFor(isMenuVisible ? null : member.id);
+    };
+
     return (
-      <View style={styles.memberCard}>
-        <TouchableWithoutFeedback>
-          <View style={styles.avatarContainer}>
-            <Image
-              source={{
-                uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
-              }}
-              style={styles.avatar}
-              resizeMode="cover"
-            />
-          </View>
-        </TouchableWithoutFeedback>
+      <TouchableOpacity onPress={() => setMenuVisibleFor(false)}>
+        <Animatable.View
+          animation="fadeInUp" // Animate each card sliding up
+          duration={800}
+          delay={index * 100} // Stagger animation for each card
+          style={styles.memberCard}>
+          {/* Avatar Section */}
 
-        <TouchableWithoutFeedback>
-          <View style={styles.memberDetails}>
-            <Text style={styles.memberName}>{member.package_name}</Text>
-            <Text style={styles.memberPlan}>Plan : {member.package_type}</Text>
-          </View>
-        </TouchableWithoutFeedback>
+          {/* Member Details Section */}
+          <Animatable.View style={styles.memberDetails} activeOpacity={0.7}>
+            <Animatable.Text
+              style={styles.memberName}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {member.asset_name}
+            </Animatable.Text>
+            <Animatable.Text delay={200} style={styles.memberPlan}>
+              Type: {member.asset_type}
+            </Animatable.Text>
+            <Animatable.Text delay={200} style={styles.memberPlan}>
+              Date: {member.purchase_date}
+            </Animatable.Text>
+            <Animatable.Text delay={200} style={styles.memberPlan}>
+              Price: {member.purchase_price}
+            </Animatable.Text>
+          </Animatable.View>
 
-        {menuVisible && (
-          <View style={styles.menu}>
-            <TouchableOpacity
-              style={styles.menuOption}
-              onPress={() => {
-                navigation.navigate('EditMember', { memberId: member.id });
-                setMenuVisible(false); // Close the menu after selecting
-              }}>
-              <Text style={styles.menuOptionText}>Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.menuOption}
-              onPress={() => {
-                handleDelete(member.id);
-                setMenuVisible(false); // Close the menu after selecting
-              }}>
-              <Text style={styles.menuOptionText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+          <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
+            <Animatable.View animation="fadeInUp" duration={1000}>
+              <Icon name="more-vert" size={20} color={COLORS.lightGray2} />
+            </Animatable.View>
+          </TouchableOpacity>
+
+          {/* Contextual Menu */}
+          {isMenuVisible && (
+            <Animatable.View
+              animation="fadeInDown"
+              duration={200}
+              style={styles.menuDropdown}>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  navigation.navigate('editAsset', { assetId: member.id });
+                  setMenuVisibleFor(null);
+                }}>
+                <Animatable.View animation="bounceIn" delay={100}>
+                  <Icon name="edit" size={20} color={COLORS.primary} />
+                </Animatable.View>
+                <Text style={styles.menuItemText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  handleDelete(member.id);
+                  setMenuVisibleFor(null);
+                }}>
+                <Animatable.View animation="bounceIn" delay={200}>
+                  <Icon name="delete" size={20} color={COLORS.lightRed} />
+                </Animatable.View>
+                <Text style={styles.menuItemText}>Delete</Text>
+              </TouchableOpacity>
+            </Animatable.View>
+          )}
+        </Animatable.View>
+      </TouchableOpacity>
     );
   }
-
-  const handleDelete = (id) => {
-    // Logic to delete the member (e.g., remove from state or make API call)
-    console.log(`Member with ID ${id} deleted.`);
-  };
 
   return (
     <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
       <SafeAreaView style={styles.safeArea}>
-        <ViewHeader headerTitle="Assets" navigateTo="addAsset"/>
+        <Animatable.View animation="fadeInDown" duration={800}>
+          <ViewHeader headerTitle="Asset" navigateTo="addAsset" />
+        </Animatable.View>
 
         <View style={{ marginTop: SIZES.font }}>
           {members.length === 0 ? (
@@ -239,39 +298,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.black,
   },
-  menuIcon: {
-    width: 30,
-    height: 30,
-    tintColor: COLORS.white,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginRight: 20,
-    alignItems: 'center',
-    height: 60,
-  },
-  menuIcon: {
-    width: 30,
-    height: 30,
-    tintColor: COLORS.white,
-  },
-  headerText: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerSection: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    ...FONTS.h2,
-    color: COLORS.white,
-  },
-  scrollView: {
-    padding: 10,
-    marginTop: 10,
-  },
   emptyState: {
     marginTop: screenWidth / 2,
     justifyContent: 'center',
@@ -289,94 +315,64 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
   },
+
   memberCard: {
     flexDirection: 'row',
-    padding: SIZES.base,
-    marginHorizontal: SIZES.base,
-    borderRadius: SIZES.radius,
-    shadowColor: COLORS.black,
+    alignItems: 'center',
+    backgroundColor: COLORS.black,
+    borderWidth: 1,
+    borderColor: COLORS.gray,
+    borderRadius: SIZES.font,
+    padding: SIZES.font,
+    margin: SIZES.base,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 5,
+    shadowRadius: 4,
     elevation: 3,
-  },
-  avatarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: SIZES.base,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: COLORS.lightGray,
   },
   memberDetails: {
     flex: 1,
-    justifyContent: 'center',
+    marginLeft: 12,
   },
   memberName: {
-    ...FONTS.h3,
+    fontSize: 16,
+    fontWeight: '600',
     color: COLORS.white,
   },
   memberPlan: {
-    ...FONTS.body4,
-    color: COLORS.lightGray,
-  },
-  actions: {
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-  },
-  editButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: SIZES.base / 2,
-    paddingHorizontal: SIZES.base,
-    borderRadius: SIZES.radius,
-    marginBottom: SIZES.base,
-  },
-  deleteButton: {
-    backgroundColor: COLORS.lightRed,
-    paddingVertical: SIZES.base / 2,
-    paddingHorizontal: SIZES.base,
-    borderRadius: SIZES.radius,
-  },
-  buttonText: {
-    ...FONTS.body4,
-    color: COLORS.white,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: COLORS.lightGray,
-    margin: SIZES.base,
+    fontSize: 14,
+    color: COLORS.lightGray4,
+    marginTop: 4,
   },
   menuButton: {
-    padding: 5,
-    marginLeft: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  menuText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  menu: {
     position: 'absolute',
-    top: 0,
-    right: 10,
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    top: SIZES.base,
+    right: SIZES.base,
+    padding: SIZES.base,
+  },
+  menuDropdown: {
+    position: 'absolute',
+    right: SIZES.base,
+    top: SIZES.base,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radius,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
     zIndex: 1000,
   },
-  menuOption: {
-    paddingVertical: 10,
+  menuItem: {
+    flexDirection: 'row',
+    textAlign: 'center',
+    padding: SIZES.base,
   },
-  menuOptionText: {
-    fontSize: 14,
-    color: '#007bff',
+  menuItemText: {
+    ...FONTS.body4,
+    color: COLORS.gray,
+    marginLeft: SIZES.base,
   },
 });
 

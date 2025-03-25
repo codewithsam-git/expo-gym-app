@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { COLORS, FONTS, SIZES, icons } from '../constants';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import * as ImagePicker from 'expo-image-picker'; // Import expo-image-picker
 
 import BASE_URL from '../Api/commonApi';
@@ -126,8 +127,8 @@ const AddInventory = ({ navigation }) => {
 
                   {/* Price Input */}
                   <View style={styles.inputContainer}>
-                    <Icon
-                      name="money"
+                    <MaterialIcon
+                      name="currency-rupee"
                       size={20}
                       color={COLORS.primary}
                       style={styles.inputIcon}

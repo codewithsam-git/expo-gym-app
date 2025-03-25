@@ -17,6 +17,7 @@ import {
 import { COLORS, FONTS, SIZES, icons } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import BASE_URL from '../Api/commonApi';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
@@ -43,8 +44,15 @@ const AddAsset = ({ navigation }) => {
     setDatePickerVisibility(false);
   };
 
+  const formatDate = (dateObj) => {
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    return `${year}-${month}-${day}`;
+  };
+
   const handleConfirm = (date) => {
-    setPurchaseDate(date.toLocaleDateString());
+    setPurchaseDate(formatDate(date));
     hideDatePicker();
   };
 
@@ -52,7 +60,7 @@ const AddAsset = ({ navigation }) => {
     try {
       console.log(`${BASE_URL}/save-asset`);
       console.log('assetData: ', assetData);
-      const response = await fetch(`http://192.168.31.132:9000/save-asset`, {
+      const response = await fetch(`${BASE_URL}/save-assets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -73,6 +81,7 @@ const AddAsset = ({ navigation }) => {
         setAssetType('');
         setPurchaseDate('');
         setPurchasePrice('');
+        navigation.goBack();
       } else {
         throw new Error('Failed to add asset');
       }
@@ -161,9 +170,16 @@ const AddAsset = ({ navigation }) => {
                         color={COLORS.primary}
                         style={styles.inputIcon}
                       />
-                      <Text style={[styles.input, { color: COLORS.lightGray }]}>
-                        {purchaseDate || 'Select Purchase Date'}{' '}
-                      </Text>
+                      {purchaseDate ? (
+                        <Text style={[styles.input, { color: COLORS.white }]}>
+                          {purchaseDate || 'Select Purchase Date'}{' '}
+                        </Text>
+                      ) : (
+                        <Text
+                          style={[styles.input, { color: COLORS.lightGray }]}>
+                          {purchaseDate || 'Select Purchase Date'}{' '}
+                        </Text>
+                      )}
                     </TouchableOpacity>
                   </View>
 
@@ -176,8 +192,8 @@ const AddAsset = ({ navigation }) => {
 
                   {/* Purchase Price Input */}
                   <View style={styles.inputContainer}>
-                    <Icon
-                      name="dollar"
+                    <MaterialIcon
+                      name="currency-rupee"
                       size={20}
                       color={COLORS.primary}
                       style={styles.inputIcon}

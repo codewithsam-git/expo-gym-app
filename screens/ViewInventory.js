@@ -7,7 +7,7 @@ import {
   ScrollView,
   SafeAreaView,
   Image,
-  Platform,
+  Alert,
   Dimensions,
 } from 'react-native';
 import { COLORS, FONTS, SIZES, icons, images } from '../constants';
@@ -16,6 +16,8 @@ import SkeletonMember from '../components/SkeletonMember';
 import BASE_URL from '../Api/commonApi';
 import { useFocusEffect } from '@react-navigation/native';
 import ViewHeader from '../components/ViewHeader';
+import * as Animatable from 'react-native-animatable';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
@@ -25,6 +27,7 @@ const ViewInventory = () => {
 
   const [inventoryItems, setInventoryItems] = useState([]);
   const [skeletonLoader, setSkeletonLoader] = useState(true);
+  const [menuVisibleFor, setMenuVisibleFor] = useState(null);
 
   const fetchInventory = async () => {
     try {
@@ -47,31 +50,125 @@ const ViewInventory = () => {
   }, []);
 
   useFocusEffect(
-    useCallback(()=>{
+    useCallback(() => {
       fetchInventory();
     }, [])
-  )
+  );
 
-  function renderInventoryCard(item) {
+  const handleDelete = async (id) => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this inventory item?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Delete cancelled'),
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            try {
+              console.log(`${BASE_URL}/delete-inventory/${id}`);
+              const response = await fetch(
+                `${BASE_URL}/delete-inventory/${id}`
+              );
+
+              if (!response.ok) {
+                throw new Error(
+                  `Failed to delete item, HTTP error! status: ${response.status}`
+                );
+              }
+
+              setInventoryItems((prevInventory) =>
+                prevInventory.filter((inventory) => inventory.id !== id)
+              );
+            } catch (err) {
+              console.error('Delete error:', err);
+              alert('Failed to delete the inventory item. Please try again.');
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
+  function renderInventoryCard(item, index) {
+    const isMenuVisible = menuVisibleFor === item.id;
+
+    const toggleMenu = () => {
+      setMenuVisibleFor(isMenuVisible ? null : item.id);
+    };
+
     return (
-      <View style={styles.card}>
-        <Image
-          source={images.gym2}
-          style={styles.cardImage}
-          resizeMode="cover"
-        />
-        <View style={styles.cardDetails}>
-          <Text style={styles.itemName}>{item.name}</Text>
-          <Text style={styles.usedFor}>{item.useFor || 'Inventory'}</Text>
-          <Text style={styles.price}>Price: {item.price}/-</Text>
-        </View>
-      </View>
+      <TouchableOpacity onPress={() => setMenuVisibleFor(false)}>
+        <Animatable.View
+          animation="fadeInUp"
+          duration={800}
+          delay={index * 100}
+          style={styles.card}>
+          <Image
+            source={images.gym2}
+            style={styles.cardImage}
+            resizeMode="cover"
+          />
+
+          <View style={styles.cardDetails}>
+            <View style={styles.itemInfoContainer}>
+              <Text style={styles.itemName}>{item.name}</Text>
+              <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
+                <Animatable.View animation="fadeInRight" duration={700}>
+                  <Icon name="more-vert" size={20} color={COLORS.black} />
+                </Animatable.View>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.usedFor}>{item.useFor || 'Inventory'}</Text>
+            <Text style={styles.price}>Price: {item.price}/-</Text>
+          </View>
+
+          {/* Contextual Menu */}
+          {isMenuVisible && (
+            <Animatable.View
+              animation="fadeInDown"
+              duration={200}
+              style={styles.menuDropdown}>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  navigation.navigate('editInventory', {
+                    inventoryId: item.id,
+                  });
+                  setMenuVisibleFor(null);
+                }}>
+                <Animatable.View animation="bounceIn" delay={100}>
+                  <Icon name="edit" size={20} color={COLORS.primary} />
+                </Animatable.View>
+                <Text style={styles.menuItemText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  handleDelete(item.id);
+                  setMenuVisibleFor(null);
+                }}>
+                <Animatable.View animation="bounceIn" delay={200}>
+                  <Icon name="delete" size={20} color={COLORS.lightRed} />
+                </Animatable.View>
+                <Text style={styles.menuItemText}>Delete</Text>
+              </TouchableOpacity>
+            </Animatable.View>
+          )}
+        </Animatable.View>
+      </TouchableOpacity>
     );
   }
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ViewHeader headerTitle="Inventories" navigateTo="addInventory"/>
+      <Animatable.View animation="fadeInDown" duration={800}>
+        <ViewHeader headerTitle="Inventories" navigateTo="addInventory" />
+      </Animatable.View>
 
       <ScrollView contentContainerStyle={styles.gridContainer}>
         {inventoryItems.length === 0 ? (
@@ -84,11 +181,14 @@ const ViewInventory = () => {
             {skeletonLoader ? (
               <SkeletonMember />
             ) : (
-              <ScrollView contentContainerStyle={styles.scrollContainer}>
+              <ScrollView
+                onScroll={() =>
+                  menuVisibleFor != null && setMenuVisibleFor(null)
+                }>
                 <View style={styles.grid}>
                   {inventoryItems.map((item, index) => (
                     <View key={item.id} style={styles.cardWrapper}>
-                      {renderInventoryCard(item)}
+                      {renderInventoryCard(item, index)}
                     </View>
                   ))}
                 </View>
@@ -106,27 +206,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.black,
   },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SIZES.padding,
-    marginTop: Platform.OS === 'ios' ? 20 : 40,
-    marginBottom: SIZES.base,
-  },
-  menuIcon: {
-    width: 30,
-    height: 30,
-    tintColor: COLORS.white,
-  },
-  headerText: {
-    ...FONTS.h2,
-    color: COLORS.white,
-    textAlign: 'center',
-    flex: 1,
-  },
-  gridContainer: {
-  },
+  gridContainer: {},
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -156,7 +236,12 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 15,
   },
   cardDetails: {
-    padding: 18,
+    padding: 12,
+  },
+  itemInfoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   itemName: {
     marginVertical: 3,
@@ -194,6 +279,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     fontWeight: '500',
+  },
+  menuButton: {
+    padding: SIZES.base,
+  },
+  menuDropdown: {
+    position: 'absolute',
+    right: SIZES.base,
+    top: SIZES.base,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radius,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+    zIndex: 1000,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    textAlign: 'center',
+    padding: SIZES.base,
+  },
+  menuItemText: {
+    ...FONTS.body4,
+    color: COLORS.gray,
+    marginLeft: SIZES.base,
   },
 });
 
