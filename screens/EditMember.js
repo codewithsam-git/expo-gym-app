@@ -12,9 +12,12 @@ import {
   Alert,
   Keyboard,
   KeyboardAvoidingView,
+  Modal,
+  Image,
+  Linking,
 } from 'react-native';
 import StepIndicator from 'react-native-step-indicator';
-import { COLORS, FONTS, SIZES } from '../constants';
+import { COLORS, FONTS, SIZES, images } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
@@ -29,7 +32,7 @@ const EditMember = ({ route }) => {
   const [isCountryFocus, setIsCountryFocus] = useState(false);
   const [isGenderFocus, setIsGenderFocus] = useState(false);
   const [isPlanNameFocus, setIsPlanNameFocus] = useState(false);
-  const steps = ['Step 1', 'Step 2'];
+  const steps = ['Step 1', 'Step 2', 'Step3'];
 
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isDatePickerVisible2, setDatePickerVisibility2] = useState(false);
@@ -132,7 +135,9 @@ const EditMember = ({ route }) => {
   const [duration, setDuration] = useState('');
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState('');
+  const [imageUri, setImageUri] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const fetchPackages = async () => {
     try {
@@ -188,6 +193,7 @@ const EditMember = ({ route }) => {
       setDuration(fetchedMember.duration);
       setStartDate(fetchedMember.start_Date);
       setEndDate(fetchedMember.end_date);
+      setImageUri(fetchMemberById.profile_image);
     } catch (err) {
       console.error('Fetch error:', err);
       setSkeletonLoader(false);
@@ -291,7 +297,7 @@ const EditMember = ({ route }) => {
     duration: duration,
     start_Date: startDate,
     end_date: endDate,
-    memberStatus: "Active",
+    memberStatus: 'Active',
     profile_image: 'img.jpg',
   };
 
@@ -359,6 +365,54 @@ const EditMember = ({ route }) => {
       Alert.alert('Error', 'Failed to update member, please try again');
       setLoading(false);
     }
+  };
+
+  const requestPermission = async (type) => {
+    let permissionResult;
+
+    if (type === 'camera') {
+      permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    } else {
+      permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+    }
+
+    if (permissionResult.status === 'granted') {
+      return true;
+    } else {
+      Alert.alert(
+        'Permission Denied',
+        `To access the ${type}, enable permissions in your device settings.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ]
+      );
+      return false;
+    }
+  };
+
+  const pickImage = async (source) => {
+    const hasPermission = await requestPermission(source);
+    if (!hasPermission) return;
+
+    let result;
+    if (source === 'camera') {
+      result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        quality: 1,
+      });
+    } else {
+      result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        quality: 1,
+      });
+    }
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+    setModalVisible(false);
   };
 
   return (
@@ -438,8 +492,8 @@ const EditMember = ({ route }) => {
                           selectedTextStyle={styles.selectedTextStyle}
                           inputSearchStyle={styles.inputSearchStyle}
                           data={[
-                            { label: 'Male', value: 'male' },
-                            { label: 'Female', value: 'female' },
+                            { label: 'Male', value: 'Male' },
+                            { label: 'Female', value: 'Female' },
                             { label: 'Other', value: 'Other' },
                           ]}
                           search
@@ -725,6 +779,117 @@ const EditMember = ({ route }) => {
                       />
                     </View>
                   )}
+
+                  {currentStep === 2 && (
+                    <View>
+                      <View style={styles.imageContainer}>
+                        <TouchableOpacity
+                          onPress={() => setModalVisible(true)}
+                          style={styles.image}>
+                          <View style={styles.iconWrapper}>
+                            <Icon
+                              name="camera"
+                              size={22}
+                              color={COLORS.white}
+                              style={styles.imageIcon}
+                            />
+                          </View>
+                          <Text style={styles.imageText}>
+                            {imageUri ? 'Change Photo' : 'Select Photo'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      {imageUri ? (
+                        <View>
+                          <View style={styles.imagePreviewContainer}>
+                            <Image
+                              source={{ uri: imageUri }}
+                              style={styles.imagePreview}
+                            />
+                          </View>
+                          <Text style={styles.imageDescription}>
+                            This is your selected photo. You can update it
+                            anytime by tapping 'Change Photo'.
+                          </Text>
+                        </View>
+                      ) : (
+                        <View>
+                          <View style={styles.imagePreviewContainer}>
+                            <Image
+                              source={images.noData}
+                              style={styles.imagePreview}
+                            />
+                          </View>
+                          <Text style={styles.imageDescription}>
+                            No image selected. Tap 'Select Photo' to upload an
+                            image.
+                          </Text>
+                        </View>
+                      )}
+
+                      <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={modalVisible}>
+                        <View style={styles.modalContainer}>
+                          <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>
+                              Choose an option
+                            </Text>
+                            <TouchableOpacity
+                              style={styles.modalButton}
+                              onPress={() => pickImage('camera')}>
+                              <Icon
+                                name="camera"
+                                size={22}
+                                color={COLORS.primary}
+                              />
+                              <Text style={styles.modalButtonText}>
+                                Take a Photo
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.modalButton}
+                              onPress={() => pickImage('gallery')}>
+                              <Icon
+                                name="image"
+                                size={22}
+                                color={COLORS.primary}
+                              />
+                              <Text style={styles.modalButtonText}>
+                                Choose from Gallery
+                              </Text>
+                            </TouchableOpacity>
+                            {imageUri && (
+                              <TouchableOpacity
+                                style={styles.modalButton}
+                                onPress={() => {
+                                  setImageUri(null);
+                                  setModalVisible(false);
+                                }}>
+                                <Icon name="trash" size={22} color="red" />
+                                <Text
+                                  style={[
+                                    styles.modalButtonText,
+                                    { color: 'red' },
+                                  ]}>
+                                  Remove Photo
+                                </Text>
+                              </TouchableOpacity>
+                            )}
+                            <TouchableOpacity
+                              style={styles.cancelButton}
+                              onPress={() => setModalVisible(false)}>
+                              <Text style={styles.cancelButtonText}>
+                                Cancel
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </Modal>
+                    </View>
+                  )}
                 </View>
 
                 <View style={styles.buttons}>
@@ -771,13 +936,6 @@ const EditMember = ({ route }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
-      <View style={styles.actionContainer}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.downloadButton]}
-          onPress={() => navigation.goBack()}>
-          <Text style={styles.buttonText1}>View Members</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -866,6 +1024,88 @@ const styles = StyleSheet.create({
     ...FONTS.body4,
     color: COLORS.white,
   },
+  imageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+    justifyContent: 'center',
+  },
+  image: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 50,
+    elevation: 3,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    width: '80%',
+  },
+  iconWrapper: {
+    backgroundColor: COLORS.secondary,
+    padding: 10,
+    borderRadius: 50,
+    marginRight: 12,
+  },
+
+  imageIcon: {
+    marginRight: 0,
+  },
+  imageText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  imagePreviewContainer: {
+    width: 250,
+    height: 250,
+    alignSelf: 'center',
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginVertical: SIZES.base,
+  },
+  imagePreview: {
+    width: 250,
+    height: 250,
+    borderRadius: SIZES.radius,
+  },
+  imageDescription: {
+    textAlign: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    color: COLORS.white,
+    borderColor: COLORS.lightGray,
+    ...FONTS.body3,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15 },
+  modalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    width: '100%',
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
+  },
+  modalButtonText: { fontSize: 16, marginLeft: 10 },
+  cancelButton: { marginTop: 10, padding: 10 },
+  cancelButtonText: { fontSize: 16, color: 'gray' },
 });
 
 export default EditMember;

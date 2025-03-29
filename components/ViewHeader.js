@@ -43,7 +43,6 @@ const ViewHeader = ({ headerTitle, navigateTo }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: Platform.OS === 'ios' ? 0 : 60,
     backgroundColor: COLORS.black,
     paddingVertical: SIZES.padding * 0.5,
   },

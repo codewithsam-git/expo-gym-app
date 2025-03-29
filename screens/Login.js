@@ -23,7 +23,7 @@ const Login = ({ navigation }) => {
     // }
 
     // try {
-    //     const response = await fetch('http://192.168.31.132:3000/api/users/login', {
+    //     const response = await fetch(``, {
     //         method: 'POST',
     //         headers: {
     //             'Content-Type': 'application/json',

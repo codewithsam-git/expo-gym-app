@@ -10,6 +10,7 @@ import {
   Image,
   Dimensions,
   Alert,
+  Platform,
 } from 'react-native';
 import { COLORS, FONTS, SIZES, icons, images } from '../constants';
 import BASE_URL from '../Api/commonApi';
@@ -208,10 +209,7 @@ const ViewStaff = () => {
           </View>
 
           <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-            {/* Adding rotation animation to the menu icon */}
-            <Animatable.View animation="fadeInUp" duration={1000}>
-              <Icon name="more-vert" size={20} color={COLORS.lightGray2} />
-            </Animatable.View>
+            <Icon name="more-vert" size={20} color={COLORS.lightGray2} />
           </TouchableOpacity>
         </Animatable.View>
 
@@ -273,7 +271,10 @@ const ViewStaff = () => {
                 <SkeletonMember />
               ) : (
                 <ScrollView
-                  contentContainerStyle={{ flexGrow: 1 }}
+                  contentContainerStyle={{
+                    flexGrow: 1,
+                    paddingBottom: Platform.OS === 'ios' ? 120 : 200,
+                  }}
                   scrollEnabled={true}
                   onScroll={() =>
                     menuVisibleFor != null && setMenuVisibleFor(null)

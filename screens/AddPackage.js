@@ -174,6 +174,7 @@ const AddPackage = ({ navigation }) => {
                       value={price}
                       onChangeText={setPrice}
                       style={styles.input}
+                      keyboardType="phone-pad"
                     />
                   </View>
 
@@ -190,6 +191,7 @@ const AddPackage = ({ navigation }) => {
                       value={discount}
                       onChangeText={setDiscount}
                       style={styles.input}
+                      keyboardType="phone-pad"
                     />
                   </View>
 
@@ -233,13 +235,13 @@ const AddPackage = ({ navigation }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
-      <View style={styles.actionContainer}>
+      {/*<View style={styles.actionContainer}>
         <TouchableOpacity
           style={[styles.actionButton, styles.downloadButton]}
           onPress={() => navigation.goBack()}>
           <Text style={styles.buttonText1}>View Packages</Text>
         </TouchableOpacity>
-      </View>
+      </View>*/}
     </SafeAreaView>
   );
 };

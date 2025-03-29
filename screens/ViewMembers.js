@@ -117,7 +117,7 @@ const ViewMembers = () => {
     );
   };
 
-  function renderMemberCard(member, navigation) {
+  function renderMemberCard(member, index, navigation) {
     const isMenuVisible = menuVisibleFor === member.id;
     const toggleMenu = () => {
       setMenuVisibleFor(isMenuVisible ? null : member.id);
@@ -128,7 +128,7 @@ const ViewMembers = () => {
           if (menuVisibleFor) {
             setMenuVisibleFor(false);
           } else {
-            navigation.navigate('profile');
+            navigation.navigate('profile', { memberId: member.id });
           }
         }}
         activeOpacity={0.9}
@@ -136,7 +136,7 @@ const ViewMembers = () => {
         <Animatable.View
           animation="fadeInUp"
           duration={600}
-          delay={100}
+          delay={index * 100}
           style={styles.memberCard}>
           {/* Top Row - Avatar, Name, and Package */}
           <Animatable.View style={styles.topRow}>
@@ -179,33 +179,21 @@ const ViewMembers = () => {
             </Animatable.View>
 
             <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-              <Animatable.View animation="rotate" duration={1000}>
-                <Icon name="more-vert" size={20} color={COLORS.lightGray2} />
-              </Animatable.View>
+              <Icon name="more-vert" size={20} color={COLORS.lightGray2} />
             </TouchableOpacity>
           </Animatable.View>
 
           {/* Details Section */}
-          <Animatable.View
-            animation="fadeInUp"
-            duration={600}
-            delay={200}
-            style={styles.detailsSection}>
+          <View style={styles.detailsSection}>
             <View style={styles.row}>
               <View style={styles.column}>
                 {/* Contact Info */}
-                <Animatable.View
-                  animation="fadeInLeft"
-                  delay={300}
-                  style={styles.infoItem}>
+                <View style={styles.infoItem}>
                   <Icon name="email" size={16} color={COLORS.primary} />
                   <Text style={styles.infoText}>{member.email}</Text>
-                </Animatable.View>
+                </View>
 
-                <Animatable.View
-                  animation="fadeInLeft"
-                  delay={700}
-                  style={styles.infoItem}>
+                <View style={styles.infoItem}>
                   <Icon
                     name="calendar-today"
                     size={16}
@@ -215,26 +203,20 @@ const ViewMembers = () => {
                     {new Date(member.start_Date).toLocaleDateString()} -{' '}
                     {new Date(member.end_date).toLocaleDateString()}
                   </Text>
-                </Animatable.View>
+                </View>
 
                 {/* Location */}
-                <Animatable.View
-                  animation="fadeInLeft"
-                  delay={500}
-                  style={styles.infoItem}>
+                <View style={styles.infoItem}>
                   <Icon name="location-on" size={16} color={COLORS.primary} />
                   <Text style={styles.infoText}>
                     {member.city}, {member.country}
                   </Text>
-                </Animatable.View>
+                </View>
               </View>
 
               <View style={styles.column1}>
                 {/* Pricing */}
-                <Animatable.View
-                  animation="fadeInLeft"
-                  delay={600}
-                  style={styles.infoItem}>
+                <View style={styles.infoItem}>
                   <Icon
                     name="currency-rupee"
                     size={16}
@@ -246,32 +228,26 @@ const ViewMembers = () => {
                       ₹{member.packagePrice || 'N/A'}
                     </Text>
                   </Text>
-                </Animatable.View>
+                </View>
 
                 {/* Dates */}
 
-                <Animatable.View
-                  animation="fadeInLeft"
-                  delay={400}
-                  style={styles.infoItem}>
+                <View style={styles.infoItem}>
                   <Icon name="phone" size={16} color={COLORS.primary} />
                   <Text style={styles.infoText}>{member.phoneno}</Text>
-                </Animatable.View>
+                </View>
 
                 {/* Gender */}
-                <Animatable.View
-                  animation="fadeInLeft"
-                  delay={800}
-                  style={styles.infoItem}>
+                <View style={styles.infoItem}>
                   <Icon name="person" size={16} color={COLORS.primary} />
                   <Text style={styles.infoText}>
                     {member.gender.charAt(0).toUpperCase() +
                       member.gender.slice(1)}
                   </Text>
-                </Animatable.View>
+                </View>
               </View>
             </View>
-          </Animatable.View>
+          </View>
 
           {/* Menu Dropdown */}
           {isMenuVisible && (
@@ -290,17 +266,17 @@ const ViewMembers = () => {
                 </Animatable.View>
                 <Text style={styles.menuItemText}>Edit</Text>
               </TouchableOpacity>
-              {/*<TouchableOpacity
+              <TouchableOpacity
                 style={styles.menuItem}
                 onPress={() => {
-                  handleDelete(member.id);
+                  navigation.navigate('history', { memberId: member.id });
                   setMenuVisibleFor(null);
                 }}>
                 <Animatable.View animation="bounceIn" delay={200}>
-                  <Icon name="delete" size={20} color={COLORS.lightRed} />
+                  <Icon name="history" size={20} color={COLORS.darkBlue} />
                 </Animatable.View>
-                <Text style={styles.menuItemText}>Delete</Text>
-              </TouchableOpacity>*/}
+                <Text style={styles.menuItemText}>View History</Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.menuItem}
                 onPress={() => {
@@ -360,7 +336,7 @@ const ViewMembers = () => {
                 <ScrollView
                   contentContainerStyle={{
                     flexGrow: 1,
-                    paddingBottom: Platform === 'ios' ? 120 : 180,
+                    paddingBottom: Platform.OS === 'ios' ? 120 : 200,
                   }}
                   scrollEnabled={true}
                   onScroll={() =>
@@ -369,7 +345,7 @@ const ViewMembers = () => {
                   scrollEventThrottle={16}>
                   {filteredMembers.map((member, index) => (
                     <View key={member.id}>
-                      {renderMemberCard(member, navigation)}
+                      {renderMemberCard(member, index, navigation)}
                     </View>
                   ))}
                 </ScrollView>

@@ -230,6 +230,7 @@ const EditAsset = ({ route }) => {
                       value={purchasePrice}
                       onChangeText={setPurchasePrice}
                       style={styles.input}
+                      keyboardType="phone-pad"
                     />
                   </View>
 

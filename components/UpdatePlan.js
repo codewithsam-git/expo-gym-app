@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,27 +12,87 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Image,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { COLORS, FONTS, SIZES } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import Header from './Header';
 import { useNavigation } from '@react-navigation/native';
+import BASE_URL from '../Api/commonApi';
 
-const UpdatePlan = () => {
+const UpdatePlan = ({ route }) => {
   const navigation = useNavigation();
-  const [choosePlan, setChoosePlan] = useState('Gold');
-  const [charges, setCharges] = useState('299');
-  const [discount, setDiscount] = useState('50');
-  const [duration, setDuration] = useState('3 months');
-  const [startDate, setStartDate] = useState('01/03/2025');
-  const [endDate, setEndDate] = useState('01/04/2025');
+  const { memberId } = route.params;  
+
+  const [choosePlan, setChoosePlan] = useState([]);
+  const [members, setMembers] = useState({});
+  const [charges, setCharges] = useState('');
+  const [discount, setDiscount] = useState('');
+  const [duration, setDuration] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [isDurationFocus, setIsDurationFocus] = useState(false);
   const [planName, setPlanName] = useState('');
   const [isPlanNameFocus, setIsPlanNameFocus] = useState(false);
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [gender, setGender] = useState('');
+  const [birthdate, setBirthdate] = useState('');
+  const [email, setEmail] = useState('');
+  const [mobileNo, setMobileNo] = useState('');
+  const [country, setCountry] = useState('');
+  const [city, setCity] = useState('');
+  const [address, setAddress] = useState('');
+  const [imageUri, setImageUri] = useState(null);
+
+  const fetchMemberById = async () => {
+    try {
+      console.log(`${BASE_URL}/update-plan?id=${memberId}`);
+      const response = await fetch(`${BASE_URL}/update-plan?id=${memberId}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const fetchedMember = data.updatePlanData;
+      setMembers(data.updatePlanData);
+      const packageOptions = data.getPackagesDropdown.map((pkg) => ({
+        label: pkg.package_name,
+        value: pkg.package_name,
+        charges: pkg.package_amount,
+        discount: pkg.discount,
+        duration: pkg.package_duration,
+      }));
+      setChoosePlan(packageOptions);
+      setPlanName(data.updatePlanData.package_name);
+      setFirstName(fetchedMember.name);
+      setLastName(fetchedMember.surname);
+      setGender(fetchedMember.gender);
+      setBirthdate(fetchedMember.birthdate);
+      setEmail(fetchedMember.email);
+      setMobileNo(fetchedMember.phoneno);
+      setCountry(fetchedMember.country);
+      setCity(fetchedMember.city);
+      setAddress(fetchedMember.address);
+      setCharges(fetchedMember.packagePrice.toString());
+      setDiscount(fetchedMember.discountFinalPrice.toString());
+      setDuration(fetchedMember.duration);
+      setStartDate(fetchedMember.start_Date);
+      setEndDate(fetchedMember.end_date);
+      setImageUri(fetchMemberById.profile_image);
+      console.log("fetchedMember.end_date: ", fetchedMember.end_date);
+    } catch (err) {
+      console.error('Fetch error:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchMemberById();
+  }, []);
 
   const showDatePicker = () => {
     setDatePickerVisibility(true);
@@ -42,78 +102,128 @@ const UpdatePlan = () => {
     setDatePickerVisibility(false);
   };
 
-  const handleDurationChange = (item) => {
-    setDuration(item.value);
-    setIsDurationFocus(false);
-
-    if (!startDate) return; // Only update endDate if startDate is selected
-
-    const startDateObj = new Date(startDate.split('-').reverse().join('-')); // Convert "DD-MM-YYYY" to "YYYY-MM-DD"
-
-    if (isNaN(startDateObj)) {
-      console.log('Invalid start date');
-      return;
-    }
-
-    let endDateObj = new Date(startDateObj);
-
-    if (item.value.endsWith('month') || item.value.endsWith('months')) {
-      const monthsToAdd = parseInt(item.value);
-      endDateObj.setMonth(endDateObj.getMonth() + monthsToAdd);
-    } else if (item.value.endsWith('year')) {
-      const yearsToAdd = parseInt(item.value);
-      endDateObj.setFullYear(endDateObj.getFullYear() + yearsToAdd);
-    }
-
-    const formatDate = (dateObj) => {
-      const day = String(dateObj.getDate()).padStart(2, '0');
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Months are 0-based
-      const year = dateObj.getFullYear();
-      return `${day}-${month}-${year}`;
-    };
-
-    setEndDate(formatDate(endDateObj));
-  };
-
   const handleConfirm = (date) => {
     if (!date) return;
-
-    const startDateObj = new Date(date);
-    if (isNaN(startDateObj)) {
-      console.log('Invalid date');
-      return;
-    }
-
+    setStartDate(date);
     const formatDate = (dateObj) => {
       const day = String(dateObj.getDate()).padStart(2, '0');
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
       const year = dateObj.getFullYear();
-      return `${day}-${month}-${year}`;
+      return `${year}-${month}-${day}`;
     };
 
-    setStartDate(formatDate(startDateObj));
+    const startDateFormatted = formatDate(date);
+    setStartDate(startDateFormatted);
 
-    let endDateObj = new Date(startDateObj);
+    let endDateObj = new Date(date);
 
-    if (duration.endsWith(' month') || duration.endsWith(' months')) {
-      const monthsToAdd = parseInt(
-        duration.replace(' month', '').replace(' months', '').trim()
-      );
-      endDateObj.setMonth(endDateObj.getMonth() + monthsToAdd);
-    } else if (duration.endsWith('year')) {
-      const yearsToAdd = parseInt(
-        duration.replace(' year', '').replace(' years', '').trim()
-      );
-      endDateObj.setFullYear(endDateObj.getFullYear() + yearsToAdd);
+    if (duration) {
+      const durationMatch = duration.match(/^(\d+)([my])$/);
+      if (durationMatch) {
+        const durationValue = parseInt(durationMatch[1]);
+        const durationUnit = durationMatch[2];
+
+        if (durationUnit === 'm') {
+          endDateObj.setMonth(endDateObj.getMonth() + durationValue);
+        } else if (durationUnit === 'y') {
+          endDateObj.setFullYear(endDateObj.getFullYear() + durationValue);
+        }
+      }
     }
 
     setEndDate(formatDate(endDateObj));
-
     hideDatePicker();
   };
 
-  const handleUpdate = () => {
-    alert('Plan Updated Successfully');
+  const handlePackageChange = (item) => {
+    setPlanName(item.value);
+    setCharges(item.charges.toString());
+    setDiscount(item.discount.toString());
+    setDuration(item.duration);
+    setIsPlanNameFocus(false);
+
+    if (!startDate) return;
+
+    console.log('item.duration: ', item.duration);
+    let endDateObj = new Date(startDate);
+
+    if (item.duration) {
+      const durationMatch = item.duration.match(/^(\d+)([my])$/);
+      if (durationMatch) {
+        const durationValue = parseInt(durationMatch[1]);
+        const durationUnit = durationMatch[2];
+
+        if (durationUnit === 'm') {
+          endDateObj.setMonth(endDateObj.getMonth() + durationValue);
+        } else if (durationUnit === 'y') {
+          endDateObj.setFullYear(endDateObj.getFullYear() + durationValue);
+        }
+      }
+    }
+
+    const formatDate = (dateObj) => {
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const year = dateObj.getFullYear();
+      return `${year}-${month}-${day}`;
+    };
+
+    console.log('formatDate(endDateObj): ', formatDate(endDateObj));
+    setEndDate(formatDate(endDateObj));
+  };
+
+  const memberData = {
+    member_id: memberId,
+    name: firstName,
+    surname: lastName,
+    gender: gender,
+    birthdate: birthdate,
+    email: email,
+    phoneno: mobileNo,
+    country: country,
+    city: city,
+    package_name: planName,
+    packagePrice: charges,
+    discountFinalPrice: discount,
+    address: address,
+    duration: duration,
+    start_Date: startDate,
+    end_date: endDate,
+    memberStatus: 'Active',
+    profile_image: imageUri || 'img.jpg',
+  };
+
+  const handleUpdate = async () => {
+    console.log('membersData: ', memberData);
+    try {
+      console.log(`${BASE_URL}/update-plan-save`);
+      const response = await fetch(`${BASE_URL}/update-plan-save`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(memberData),
+      });
+
+      console.log('response: ', response);
+
+      if (response.ok) {
+        Alert.alert(
+          'Success',
+          'Member Updated successfully!',
+          [{ text: 'OK' }],
+          {
+            cancelable: false,
+          }
+        );
+        navigation.goBack();
+      } else {
+        throw new Error('Failed to add member');
+      }
+    } catch (error) {
+      console.error('Error submitting data:', error);
+      Alert.alert('Error', 'Failed to update member, please try again');
+    }
   };
 
   return (
@@ -148,7 +258,7 @@ const UpdatePlan = () => {
                 />
                 <View style={styles.textContainer}>
                   <Text style={styles.label}>Plan Name:</Text>
-                  <Text style={styles.value}>Silver</Text>
+                  <Text style={styles.value}>{members.package_name}</Text>
                 </View>
               </View>
 
@@ -160,8 +270,8 @@ const UpdatePlan = () => {
                   style={styles.icon}
                 />
                 <View style={styles.textContainer}>
-                  <Text style={styles.label}>Charges:</Text>
-                  <Text style={styles.value}>2999/-</Text>
+                  <Text style={styles.label}>Gender:</Text>
+                  <Text style={styles.value}>{members.gender}</Text>
                 </View>
               </View>
               <View style={styles.field}>
@@ -173,14 +283,14 @@ const UpdatePlan = () => {
                 />
                 <View style={styles.textContainer}>
                   <Text style={styles.label}>Start Date:</Text>
-                  <Text style={styles.value}>01 Jan 2025</Text>
+                  <Text style={styles.value}>{members.start_Date}</Text>
                 </View>
               </View>
             </View>
 
             {/* Right Column (4 fields) */}
             <View style={styles.column1}>
-              <View style={styles.field}>
+              {/*<View style={styles.field}>
                 <Icon
                   name="mail-outline"
                   size={20}
@@ -191,18 +301,31 @@ const UpdatePlan = () => {
                   <Text style={styles.label}>Duration:</Text>
                   <Text style={styles.value}>3 Months</Text>
                 </View>
+              </View>*/}
+
+              <View style={styles.field}>
+                <FontAwesome
+                  name="rupee"
+                  size={20}
+                  color={COLORS.primary}
+                  style={styles.icon}
+                />
+                <View style={styles.textContainer}>
+                  <Text style={styles.label}>Charges:</Text>
+                  <Text style={styles.value}>{members.packagePrice}</Text>
+                </View>
               </View>
 
               <View style={styles.field}>
-                <Icon
-                  name="call-outline"
+                <FontAwesome
+                  name="tag"
                   size={20}
                   color={COLORS.primary}
                   style={styles.icon}
                 />
                 <View style={styles.textContainer}>
                   <Text style={styles.label}>Discount:</Text>
-                  <Text style={styles.value}>20%</Text>
+                  <Text style={styles.value}>{members.discountFinalPrice}</Text>
                 </View>
               </View>
 
@@ -214,8 +337,8 @@ const UpdatePlan = () => {
                   style={styles.icon}
                 />
                 <View style={styles.textContainer}>
-                  <Text style={styles.label}>Start Date:</Text>
-                  <Text style={styles.value}>01 Apr 2025</Text>
+                  <Text style={styles.label}>End Date:</Text>
+                  <Text style={styles.value}>{members.end_date}</Text>
                 </View>
               </View>
             </View>
@@ -242,11 +365,7 @@ const UpdatePlan = () => {
                   placeholderStyle={styles.placeholderStyle}
                   selectedTextStyle={styles.selectedTextStyle}
                   inputSearchStyle={styles.inputSearchStyle}
-                  data={[
-                    { label: 'Silver', value: 'Silver' },
-                    { label: 'Gold', value: 'Gold' },
-                    { label: 'Diamond', value: 'Diamond' },
-                  ]}
+                  data={choosePlan}
                   search
                   maxHeight={300}
                   labelField="label"
@@ -256,10 +375,11 @@ const UpdatePlan = () => {
                   value={planName}
                   onFocus={() => setIsPlanNameFocus(true)}
                   onBlur={() => setIsPlanNameFocus(false)}
-                  onChange={(item) => {
-                    setPlanName(item.value);
-                    setIsPlanNameFocus(false);
-                  }}
+                  // onChange={(item) => {
+                  //   setPlanName(item.value);
+                  //   setIsPlanNameFocus(false);
+                  // }}
+                  onChange={handlePackageChange}
                 />
               </View>
 
@@ -293,37 +413,6 @@ const UpdatePlan = () => {
                   onChangeText={setDiscount}
                   style={styles.input}
                   keyboardType="numeric"
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Icon
-                  name="calendar"
-                  size={20}
-                  color={COLORS.primary}
-                  style={styles.inputIcon}
-                />
-                <Dropdown
-                  style={[styles.input, isDurationFocus]}
-                  placeholderStyle={styles.placeholderStyle}
-                  selectedTextStyle={styles.selectedTextStyle}
-                  inputSearchStyle={styles.inputSearchStyle}
-                  data={[
-                    { label: '1 month', value: '1 month' },
-                    { label: '3 months', value: '3 months' },
-                    { label: '6 months', value: '6 months' },
-                    { label: '1 year', value: '1 year' },
-                  ]}
-                  search
-                  maxHeight={300}
-                  labelField="label"
-                  valueField="value"
-                  placeholder={!isDurationFocus ? 'Select Duration' : '...'}
-                  searchPlaceholder="Search..."
-                  value={duration}
-                  onFocus={() => setIsDurationFocus(true)}
-                  onBlur={() => setIsDurationFocus(false)}
-                  onChange={handleDurationChange}
                 />
               </View>
 
@@ -393,7 +482,7 @@ const UpdatePlan = () => {
 
         <TouchableOpacity
           style={[styles.actionButton, styles.downloadButton]}
-          onPress={() => console.log('update')}>
+          onPress={handleUpdate}>
           <Text style={styles.buttonText}>Update</Text>
         </TouchableOpacity>
       </View>

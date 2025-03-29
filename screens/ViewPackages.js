@@ -152,9 +152,7 @@ const ViewPackages = () => {
           </Animatable.View>
 
           <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-            <Animatable.View animation="rotate" duration={1000}>
-              <Icon name="more-vert" size={20} color={COLORS.lightGray2} />
-            </Animatable.View>
+            <Icon name="more-vert" size={20} color={COLORS.lightGray2} />
           </TouchableOpacity>
 
           {/* Contextual Menu */}
@@ -243,7 +241,7 @@ const ViewPackages = () => {
                 <ScrollView
                   contentContainerStyle={{
                     flexGrow: 1,
-                    paddingBottom: Platform === 'ios' ? 80 : 150,
+                    paddingBottom: Platform.OS === 'ios' ? 120 : 200,
                   }}
                   scrollEnabled={true}
                   onScroll={() =>

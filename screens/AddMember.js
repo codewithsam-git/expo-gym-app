@@ -9,24 +9,22 @@ import {
   StyleSheet,
   Platform,
   SafeAreaView,
-  Dimensions,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
+  Image,
+  Linking,
+  Modal,
 } from 'react-native';
 import StepIndicator from 'react-native-step-indicator';
-import { COLORS, FONTS, SIZES, icons } from '../constants';
-import Header from '../components/Header';
+import { COLORS, FONTS, SIZES, images } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
-import DatePicker from 'react-native-date-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import BASE_URL from '../Api/commonApi';
-import MemberBill from '../components/MemberBill';
 import { useNavigation } from '@react-navigation/native';
-const windowWidth = Dimensions.get('window').width;
-const windowHeight = Dimensions.get('window').height;
+import * as ImagePicker from 'expo-image-picker';
 
 const AddMember = () => {
   const navigation = useNavigation();
@@ -34,7 +32,7 @@ const AddMember = () => {
   const [isCountryFocus, setIsCountryFocus] = useState(false);
   const [isGenderFocus, setIsGenderFocus] = useState(false);
   const [isPlanNameFocus, setIsPlanNameFocus] = useState(false);
-  const steps = ['Step 1', 'Step 2'];
+  const steps = ['Step 1', 'Step 2', 'Step 3'];
 
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isDatePickerVisible2, setDatePickerVisibility2] = useState(false);
@@ -137,7 +135,9 @@ const AddMember = () => {
   const [duration, setDuration] = useState('');
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState('');
+  const [imageUri, setImageUri] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const fetchPackages = async () => {
     try {
@@ -182,6 +182,7 @@ const AddMember = () => {
     setDuration('');
     setStartDate('');
     setEndDate('');
+    setImageUri(null);
   }, []);
 
   const handleStepClick = (stepIndex) => {
@@ -250,14 +251,14 @@ const AddMember = () => {
     duration: duration,
     start_Date: startDate,
     end_date: endDate,
-    memberStatus: "Active",
-    profile_image: 'img.jpg',
+    memberStatus: 'Active',
+    profile_image: (imageUri || 'profile.jpg').split('/').pop(),
   };
-  console.log(memberData.start_Date);
-  console.log(memberData.end_date);
+
   const handleSubmit = async () => {
     if (!memberData.email) {
       Alert.alert('Missing Data', ' Email is mandatory');
+      setCurrentStep(0);
       return;
     }
 
@@ -268,11 +269,13 @@ const AddMember = () => {
       )
     ) {
       Alert.alert('Invalid Data', 'Please enter a valid Email Id.');
+      setCurrentStep(0);
       return;
     }
 
     if (!memberData.phoneno) {
       Alert.alert('Missing Data', 'Phone number is mandatory');
+      setCurrentStep(0);
       return;
     }
 
@@ -281,6 +284,7 @@ const AddMember = () => {
         'Invalid Mobile Number',
         'Please enter a valid phone number.'
       );
+      setCurrentStep(0);
       return;
     }
     setLoading(true);
@@ -318,7 +322,7 @@ const AddMember = () => {
         setEndDate('');
         setCurrentStep(0);
         setLoading(false);
-        navigation.navigate('memberBill');
+        navigation.navigate('viewMember');
       } else {
         throw new Error('Failed to add member');
       }
@@ -327,6 +331,54 @@ const AddMember = () => {
       Alert.alert('Error', 'Failed to add member, please try again');
       setLoading(false);
     }
+  };
+
+  const requestPermission = async (type) => {
+    let permissionResult;
+
+    if (type === 'camera') {
+      permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    } else {
+      permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+    }
+
+    if (permissionResult.status === 'granted') {
+      return true;
+    } else {
+      Alert.alert(
+        'Permission Denied',
+        `To access the ${type}, enable permissions in your device settings.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ]
+      );
+      return false;
+    }
+  };
+
+  const pickImage = async (source) => {
+    const hasPermission = await requestPermission(source);
+    if (!hasPermission) return;
+
+    let result;
+    if (source === 'camera') {
+      result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        quality: 1,
+      });
+    } else {
+      result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        quality: 1,
+      });
+    }
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+    setModalVisible(false);
   };
 
   return (
@@ -693,6 +745,117 @@ const AddMember = () => {
                       />
                     </View>
                   )}
+
+                  {currentStep === 2 && (
+                    <View>
+                      <View style={styles.imageContainer}>
+                        <TouchableOpacity
+                          onPress={() => setModalVisible(true)}
+                          style={styles.image}>
+                          <View style={styles.iconWrapper}>
+                            <Icon
+                              name="camera"
+                              size={22}
+                              color={COLORS.white}
+                              style={styles.imageIcon}
+                            />
+                          </View>
+                          <Text style={styles.imageText}>
+                            {imageUri ? 'Change Photo' : 'Select Photo'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      {imageUri ? (
+                        <View>
+                          <View style={styles.imagePreviewContainer}>
+                            <Image
+                              source={{ uri: imageUri }}
+                              style={styles.imagePreview}
+                            />
+                          </View>
+                          <Text style={styles.imageDescription}>
+                            This is your selected photo. You can update it
+                            anytime by tapping 'Change Photo'.
+                          </Text>
+                        </View>
+                      ) : (
+                        <View>
+                          <View style={styles.imagePreviewContainer}>
+                            <Image
+                              source={images.noData}
+                              style={styles.imagePreview}
+                            />
+                          </View>
+                          <Text style={styles.imageDescription}>
+                            No image selected. Tap 'Select Photo' to upload an
+                            image.
+                          </Text>
+                        </View>
+                      )}
+
+                      <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={modalVisible}>
+                        <View style={styles.modalContainer}>
+                          <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>
+                              Choose an option
+                            </Text>
+                            <TouchableOpacity
+                              style={styles.modalButton}
+                              onPress={() => pickImage('camera')}>
+                              <Icon
+                                name="camera"
+                                size={22}
+                                color={COLORS.primary}
+                              />
+                              <Text style={styles.modalButtonText}>
+                                Take a Photo
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.modalButton}
+                              onPress={() => pickImage('gallery')}>
+                              <Icon
+                                name="image"
+                                size={22}
+                                color={COLORS.primary}
+                              />
+                              <Text style={styles.modalButtonText}>
+                                Choose from Gallery
+                              </Text>
+                            </TouchableOpacity>
+                            {imageUri && (
+                              <TouchableOpacity
+                                style={styles.modalButton}
+                                onPress={() => {
+                                  setImageUri(null);
+                                  setModalVisible(false);
+                                }}>
+                                <Icon name="trash" size={22} color="red" />
+                                <Text
+                                  style={[
+                                    styles.modalButtonText,
+                                    { color: 'red' },
+                                  ]}>
+                                  Remove Photo
+                                </Text>
+                              </TouchableOpacity>
+                            )}
+                            <TouchableOpacity
+                              style={styles.cancelButton}
+                              onPress={() => setModalVisible(false)}>
+                              <Text style={styles.cancelButtonText}>
+                                Cancel
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </Modal>
+                    </View>
+                  )}
                 </View>
 
                 <View style={styles.buttons}>
@@ -726,12 +889,10 @@ const AddMember = () => {
                             styles.buttonText,
                             { opacity: loading ? 0.5 : 1 },
                           ]}>
-                          Generating...
+                          Saving...
                         </Text>
                       ) : (
-                        <Text style={styles.buttonText}>
-                          Save & Generate Bill
-                        </Text>
+                        <Text style={styles.buttonText}>Save Member</Text>
                       )}
                     </TouchableOpacity>
                   )}
@@ -741,13 +902,13 @@ const AddMember = () => {
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
-      <View style={styles.actionContainer}>
+      {/*<View style={styles.actionContainer}>
         <TouchableOpacity
           style={[styles.actionButton, styles.downloadButton]}
           onPress={() => navigation.goBack()}>
           <Text style={styles.buttonText1}>View Members</Text>
         </TouchableOpacity>
-      </View>
+      </View>*/}
     </SafeAreaView>
   );
 };
@@ -836,6 +997,89 @@ const styles = StyleSheet.create({
     ...FONTS.body4,
     color: COLORS.white,
   },
+  imageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+    justifyContent: 'center',
+  },
+  image: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 50,
+    elevation: 3,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    width: '80%',
+  },
+  iconWrapper: {
+    backgroundColor: COLORS.secondary,
+    padding: 10,
+    borderRadius: 50,
+    marginRight: 12,
+  },
+
+  imageIcon: {
+    marginRight: 0,
+  },
+  imageText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  imagePreviewContainer: {
+    width: 250,
+    height: 250,
+    alignSelf: 'center',
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginHorizontal: SIZES.padding2 - 2,
+    marginVertical: SIZES.padding - 3,
+  },
+  imagePreview: {
+    width: 250,
+    height: 250,
+    borderRadius: SIZES.radius,
+  },
+  imageDescription: {
+    textAlign: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    color: COLORS.white,
+    borderColor: COLORS.lightGray,
+    ...FONTS.body3,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15 },
+  modalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    width: '100%',
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
+  },
+  modalButtonText: { fontSize: 16, marginLeft: 10 },
+  cancelButton: { marginTop: 10, padding: 10 },
+  cancelButtonText: { fontSize: 16, color: 'gray' },
 });
 
 export default AddMember;

@@ -1,5 +1,11 @@
 import React, { useEffect } from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
+
+import 'react-native-gesture-handler';
+import 'react-native-reanimated';
+import { enableScreens } from 'react-native-screens';
+enableScreens();
+
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import BookDetail from './screens/BookDetail';
@@ -25,6 +31,8 @@ import EditPackage from './screens/EditPackage';
 import EditStaff from './screens/EditStaff';
 import EditAsset from './screens/EditAsset';
 import EditInventory from './screens/EditInventory';
+import Settings from './screens/Settings';
+import History from './screens/History';
 
 import {
   StatusBar,
@@ -44,8 +52,6 @@ import {
   DrawerItemList,
 } from '@react-navigation/drawer';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { enableScreens } from 'react-native-screens';
-enableScreens();
 
 const CustomDrawerContent = (props) => {
   const { navigation } = props;
@@ -55,14 +61,13 @@ const CustomDrawerContent = (props) => {
       {/* Profile Header */}
       <View style={styles.profileContainer}>
         <TouchableOpacity
-          onPress={() => navigation.navigate('profile')}
           style={styles.profileTouch}>
           <Image
             source={{ uri: 'https://randomuser.me/api/portraits/men/1.jpg' }}
             style={styles.profileImage}
           />
-          <Text style={styles.profileName}>John Doe</Text>
-          <Text style={styles.profileEmail}>john.doe@example.com</Text>
+          <Text style={styles.profileName}>Chetan Gujar</Text>
+          <Text style={styles.profileEmail}>chetan@cronico.co</Text>
         </TouchableOpacity>
       </View>
 
@@ -100,7 +105,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#0A0D0F',
   },
   profileContainer: {
-    marginTop: Platform.OS === 'ios' ? 0 : 50,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.white,
     backgroundColor: COLORS.lightGray + '20',
@@ -138,7 +142,7 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: '#b23b3b',
     marginHorizontal: 20,
-    marginBottom: 20, // Standardized marginBottom for both platforms
+    marginBottom: 20,
     borderRadius: 8,
   },
   logoutIcon: {
@@ -164,7 +168,7 @@ const theme = {
   },
 };
 
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
 const DrawerNavigator = () => {
@@ -360,8 +364,6 @@ const DrawerNavigator = () => {
 };
 
 const App = () => {
-  const scheme = useColorScheme();
-
   useEffect(() => {
     const handleAppStateChange = (nextAppState) => {
       if (nextAppState === 'active') {
@@ -379,26 +381,15 @@ const App = () => {
   }, []);
 
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
       <NavigationContainer theme={theme}>
         <SafeAreaView style={styles.appContainer}>
           <Stack.Navigator
             screenOptions={{
               headerShown: false,
-              cardStyleInterpolator: ({ current, next, layouts }) => {
-                const opacity = current.progress.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, 1],
-                });
-                return {
-                  cardStyle: {
-                    opacity,
-                  },
-                };
-              },
             }}
-            initialRouteName={'Splash'}>
+            initialRouteName={"Splash"}>
             <Stack.Screen
               name="Splash"
               component={Splash}
@@ -439,6 +430,8 @@ const App = () => {
             <Stack.Screen name="editStaff" component={EditStaff} />
             <Stack.Screen name="editAsset" component={EditAsset} />
             <Stack.Screen name="editInventory" component={EditInventory} />
+            <Stack.Screen name="settings" component={Settings} />
+            <Stack.Screen name="history" component={History} />
             <Stack.Screen
               name="BookDetail"
               component={BookDetail}
@@ -447,7 +440,7 @@ const App = () => {
           </Stack.Navigator>
         </SafeAreaView>
       </NavigationContainer>
-    </>
+    </View>
   );
 };
 

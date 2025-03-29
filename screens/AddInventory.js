@@ -201,13 +201,13 @@ const AddInventory = ({ navigation }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
-      <View style={styles.actionContainer}>
+      {/* <View style={styles.actionContainer}>
         <TouchableOpacity
           style={[styles.actionButton, styles.downloadButton]}
           onPress={() => navigation.goBack()}>
           <Text style={styles.buttonText1}>View Inventory</Text>
         </TouchableOpacity>
-      </View>
+      </View>*/}
     </SafeAreaView>
   );
 };

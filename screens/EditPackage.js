@@ -201,6 +201,7 @@ const EditPackage = ({ route }) => {
                       value={price}
                       onChangeText={setPrice}
                       style={styles.input}
+                      keyboardType="phone-pad"
                     />
                   </View>
 
@@ -217,6 +218,7 @@ const EditPackage = ({ route }) => {
                       value={discount}
                       onChangeText={setDiscount}
                       style={styles.input}
+                      keyboardType="phone-pad"
                     />
                   </View>
 

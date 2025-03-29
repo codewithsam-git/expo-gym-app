@@ -7,6 +7,7 @@ export const gym2 = require("../assets/images/gym2.jpg");
 export const gym3 = require("../assets/images/gym3.jpg");
 export const noData = require("../assets/images/no-data.png");
 export const gymLogo = require("../assets/logo/gym-logo.png");
+export const noNotification = require("../assets/images/no-notification.png");
 
 export default {
     otherWordsForHome,
@@ -17,5 +18,6 @@ export default {
     gym2,
     gym3,
     noData,
-    gymLogo
+    gymLogo,
+    noNotification
 }

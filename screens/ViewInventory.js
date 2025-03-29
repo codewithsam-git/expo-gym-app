@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { COLORS, FONTS, SIZES, icons, images } from '../constants';
 import { useNavigation } from '@react-navigation/native';
@@ -118,9 +119,7 @@ const ViewInventory = () => {
             <View style={styles.itemInfoContainer}>
               <Text style={styles.itemName}>{item.name}</Text>
               <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-                <Animatable.View animation="fadeInRight" duration={700}>
-                  <Icon name="more-vert" size={20} color={COLORS.black} />
-                </Animatable.View>
+                <Icon name="more-vert" size={20} color={COLORS.black} />
               </TouchableOpacity>
             </View>
             <Text style={styles.usedFor}>{item.useFor || 'Inventory'}</Text>
@@ -182,6 +181,11 @@ const ViewInventory = () => {
               <SkeletonMember />
             ) : (
               <ScrollView
+                contentContainerStyle={{
+                  flexGrow: 1,
+                  paddingBottom: Platform.OS === 'ios' ? 120 : 200,
+                }}
+                scrollEnabled={true}
                 onScroll={() =>
                   menuVisibleFor != null && setMenuVisibleFor(null)
                 }>

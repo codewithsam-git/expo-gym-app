@@ -204,6 +204,7 @@ const AddAsset = ({ navigation }) => {
                       value={purchasePrice}
                       onChangeText={setPurchasePrice}
                       style={styles.input}
+                      keyboardType="phone-pad"
                     />
                   </View>
 
@@ -224,13 +225,13 @@ const AddAsset = ({ navigation }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
-      <View style={styles.actionContainer}>
+      {/*<View style={styles.actionContainer}>
         <TouchableOpacity
           style={[styles.actionButton, styles.downloadButton]}
           onPress={() => navigation.goBack()}>
           <Text style={styles.buttonText1}>View Assets</Text>
         </TouchableOpacity>
-      </View>
+      </View>*/}
     </SafeAreaView>
   );
 };

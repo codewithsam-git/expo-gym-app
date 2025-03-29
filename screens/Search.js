@@ -1,40 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  ScrollView,
-  TextInput,
   Platform,
   Keyboard,
-  KeyboardAvoidingView,
   TouchableWithoutFeedback,
-  Image,
+  ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import { COLORS, FONTS, SIZES, icons } from '../constants';
+import { COLORS, FONTS, SIZES } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import Header from '../components/Header';
-import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient'; // Make sure to install expo-linear-gradient
-import Animated, {
-  Easing,
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated'; // For animations
+import BASE_URL from '../Api/commonApi';
+import {LinearGradient} from 'expo-linear-gradient';
 
 const Search = () => {
-  const navigation = useNavigation();
   const [packageName, setPackageName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isDatePickerVisible1, setDatePickerVisibility1] = useState(false);
+  const [packages, setPackages] = useState([]);
+  const [totalRevenue, setTotalRevenue] = useState('0');
+  const fetchPackages = async () => {
+    try {
+      console.log(`${BASE_URL}/packages`);
+      const response = await fetch(`${BASE_URL}/packages`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const packageOptions = data.packages.map((pkg) => ({
+        label: pkg.package_name,
+        value: pkg.package_name,
+      }));
+      setPackages(packageOptions);
+    } catch (err) {
+      console.error('Fetch error:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchPackages();
+  }, []);
 
   const showDatePicker = () => {
     setDatePickerVisibility(true);
@@ -52,102 +67,78 @@ const Search = () => {
     setDatePickerVisibility1(false);
   };
 
+  const formatDate = (dateObj) => {
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    return `${year}-${month}-${day}`;
+  };
+
   const handleConfirm = (date) => {
     if (!date) return;
-
     const startDateObj = new Date(date);
-    const formatDate = (dateObj) => {
-      const day = String(dateObj.getDate()).padStart(2, '0');
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const year = dateObj.getFullYear();
-      return `${day}-${month}-${year}`;
-    };
-
     setStartDate(formatDate(startDateObj));
     hideDatePicker();
   };
 
   const handleConfirm1 = (date) => {
     if (!date) return;
-
     const endDateObj = new Date(date);
-    const formatDate = (dateObj) => {
-      const day = String(dateObj.getDate()).padStart(2, '0');
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const year = dateObj.getFullYear();
-      return `${day}-${month}-${year}`;
-    };
-
     setEndDate(formatDate(endDateObj));
     hideDatePicker1();
   };
 
-  const calculateRevenue = () => {
-    let revenue = 0;
-    let packageDetails = {
-      Silver: { charges: 1000 },
-      Gold: { charges: 2000 },
-      Diamond: { charges: 5000 },
-    };
+  const fetchData = async () => {
+    try {
+      console.log(
+        `${BASE_URL}/revenue?package_name=${packageName}&start_date=${startDate}&end_date=${endDate}`
+      );
+      const response = await fetch(
+        `${BASE_URL}/revenue?package_name=${packageName}&start_date=${startDate}&end_date=${endDate}`
+      );
 
-    if (packageName) {
-      revenue = packageDetails[packageName].charges;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setTotalRevenue(data.totalRevenue);
+    } catch (error) {
+      console.error('Error during API call:', error);
     }
-
-    // Example: If we are calculating for a specific period, you can multiply by months or years.
-    if (startDate && endDate) {
-      const start = new Date(startDate.split('-').reverse().join('-'));
-      const end = new Date(endDate.split('-').reverse().join('-'));
-
-      const diffInTime = end.getTime() - start.getTime();
-      const diffInDays = diffInTime / (1000 * 3600 * 24); // Difference in days
-      const diffInMonths = Math.floor(diffInDays / 30); // Approximate months
-
-      revenue *= diffInMonths; // Calculate revenue for the specified time period.
-    }
-
-    return revenue;
   };
 
-  const revenue = calculateRevenue();
+  useEffect(() => {
+    fetchData();
+  }, [packageName, startDate, endDate]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View
+    <LinearGradient
+        colors={[
+          COLORS.black,
+          COLORS.black,
+          COLORS.black,
+          COLORS.black,
+          COLORS.gray,
+          COLORS.black,
+          COLORS.black,
+          COLORS.black,
+        ]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={{
-          marginTop: Platform.OS === 'ios' ? 20 : 60,
+          flex: 1,
         }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            paddingHorizontal: SIZES.padding,
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.openDrawer()}>
-              <Image
-                source={icons.menu_icon} // You can use any menu icon for the drawer
-                style={styles.menuIcon}
-              />
-            </TouchableOpacity>
-          </View>
-
-          <View>
-            <Text style={styles.header}> </Text>
-          </View>
-
-          <View style={styles.headerSection}>
-            <Text style={styles.header}>Revenue</Text>
-          </View>
-        </View>
+      <View>
+        <Header headerTitle="Revenue" />
       </View>
 
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-        <View style={styles.cardContainer}>
-          <View style={styles.formContainer}>
-            <ScrollView contentContainerStyle={styles.scrollView}>
-              <Text style={styles.title}>Select Plan & Date</Text>
+        <ScrollView>
+          <View style={styles.cardContainer}>
+            <View style={styles.formContainer}>
+              <Text style={styles.title}>Plan & Date</Text>
               <View style={styles.separator}></View>
 
               {/* Package Dropdown */}
@@ -162,11 +153,7 @@ const Search = () => {
                   style={styles.input}
                   placeholderStyle={styles.placeholderStyle}
                   selectedTextStyle={styles.selectedTextStyle}
-                  data={[
-                    { label: 'Silver', value: 'Silver' },
-                    { label: 'Gold', value: 'Gold' },
-                    { label: 'Diamond', value: 'Diamond' },
-                  ]}
+                  data={packages}
                   labelField="label"
                   valueField="value"
                   placeholder="Select Plan"
@@ -241,15 +228,13 @@ const Search = () => {
 
               {/* Selected Filter Section */}
               <View style={styles.revenueContainer}>
-                <Text style={styles.title}>Selected Filter</Text>
+                <Text style={styles.title}>Selected Filters</Text>
                 <View style={styles.separator}></View>
 
                 {/* Selected Package */}
                 <View style={styles.revenueCard}>
                   <Text style={styles.revenueLabel}>Selected Package:</Text>
-                  <Text style={styles.revenueValue}>
-                    {packageName || 'All'}
-                  </Text>
+                  <Text style={styles.revenueValue}>{packageName || 'All'}</Text>
                 </View>
 
                 {/* Start Date */}
@@ -277,17 +262,27 @@ const Search = () => {
                 {/* Total Revenue */}
                 <View style={styles.totalRevenueCard}>
                   <Text style={styles.totalRevenueLabel}>Total Revenue:</Text>
-                  <Text style={styles.totalRevenueValue}>999/-</Text>
+                  <Text style={styles.totalRevenueValue}>
+                    {parseFloat(totalRevenue).toLocaleString('en-IN')}
+                    /-
+                  </Text>
                 </View>
               </View>
-            </ScrollView>
+
+              {/*
+              <TouchableOpacity onPress={fetchData} style={styles.submitButton}>
+                <Text style={styles.submitButtonText}>Submit</Text>
+              </TouchableOpacity>*/}
+            </View>
           </View>
-        </View>
+        </ScrollView>
       </TouchableWithoutFeedback>
+      </LinearGradient>
     </SafeAreaView>
   );
 };
 
+// Add necessary styles for the button and the rest of the components
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -318,7 +313,6 @@ const styles = StyleSheet.create({
     ...FONTS.h2,
     color: COLORS.white,
   },
-
   cardContainer: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -344,11 +338,11 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,    
+    paddingVertical: 10,
     marginBottom: 10,
     padding: 10,
     borderRadius: SIZES.base,
-    backgroundColor: COLORS.secondary
+    backgroundColor: COLORS.secondary,
   },
   inputIcon: {
     marginRight: 10,
@@ -373,7 +367,7 @@ const styles = StyleSheet.create({
   dateInput: {
     flex: 1,
     borderRadius: SIZES.base,
-    backgroundColor: COLORS.secondary
+    backgroundColor: COLORS.secondary,
   },
   touchable: {
     flexDirection: 'row',
@@ -382,7 +376,7 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
   },
   revenueContainer: {
-    marginBottom: 20,
+    marginVertical: 20,
   },
   revenueCard: {
     flexDirection: 'row',
@@ -411,6 +405,18 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: COLORS.primary,
+  },
+  submitButton: {
+    backgroundColor: COLORS.primary,
+    padding: 15,
+    borderRadius: SIZES.base,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  submitButtonText: {
+    color: COLORS.white,
+    fontWeight: 'bold',
+    fontSize: 18,
   },
 });
 

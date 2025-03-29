@@ -8,102 +8,90 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  Platform
+  Dimensions,
 } from 'react-native';
 import { COLORS, FONTS, SIZES, images } from '../constants';
-import Header from '../components/Header';
+import ViewHeader from '../components/ViewHeader';
 import BASE_URL from '../Api/commonApi';
+import * as Animatable from 'react-native-animatable';
+const screenWidth = Dimensions.get('window').width;
 
 const PackageReport = ({ navigation }) => {
-  // const [packages, setPackages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const packages = [
-    {
-      id: '1',
-      packageName: 'Beach Adventure',
-      price: 5000,
-      duration: '3 Days',
-      staff: '2 Guides',
-      totalMembers: 12,
-      imageUrl: 'https://via.placeholder.com/300',
-    },
-    {
-      id: '2',
-      packageName: 'Mountain Trek',
-      price: 7000,
-      duration: '5 Days',
-      staff: '3 Guides',
-      totalMembers: 8,
-      imageUrl: 'https://via.placeholder.com/300',
-    },
-    {
-      id: '3',
-      packageName: 'Jungle Safari',
-      price: 6000,
-      duration: '4 Days',
-      staff: '2 Rangers',
-      totalMembers: 15,
-      imageUrl: 'https://via.placeholder.com/300',
-    },
-  ];
+  const fetchReports = async () => {
+    try {
+      console.log(`${BASE_URL}/report-cards`);
+      const response = await fetch(`${BASE_URL}/report-cards`);
 
-  // useEffect(() => {
-  //   fetch(`${BASE_URL}/get-packages`)
-  //     .then((response) => response.json())
-  //     .then((data) => {
-  //       setPackages(data);
-  //       setLoading(false);
-  //     })
-  //     .catch((error) => {
-  //       console.error('Error fetching packages:', error);
-  //       setLoading(false);
-  //     });
-  // }, []);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
+      const data = await response.json();
+      console.log(data);
+      setReports(data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Fetch error report cards:', err);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  const renderItem = ({ item, index }) => (
+    <Animatable.View
+      animation="fadeInUp" // Animate each card sliding up
+      duration={800}
+      delay={index * 100} // Stagger animation for each card
+      style={styles.card}>
       <View style={styles.imageContainer}>
-        {item.imageUrl && (
-          <Image source={images.gym1} style={styles.packageImage} />
-        )}
+        <Image source={images.gym1} style={styles.packageImage} />
         <View style={styles.membersOverlay}>
-          <Text style={styles.membersCount}>{item.totalMembers}</Text>
+          <Text style={styles.membersCount}>{item.memberCount}</Text>
           <Text style={styles.membersText}>Total Members</Text>
         </View>
       </View>
       <View style={styles.cardData}>
-        <Text style={styles.packageName}>{item.packageName}</Text>
-        <Text style={styles.text}>Price: {item.price}</Text>
-        <Text style={styles.text}>Duration: {item.duration}</Text>
-        <Text style={styles.text}>Staff: {item.staff}</Text>
+        <Text style={styles.packageName}>Package: {item.package_name}</Text>
       </View>
-    </View>
+    </Animatable.View>
   );
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={{ marginTop: Platform.OS === 'ios' ? 20 : 60 }}>
-        <Header />
-      </View>
-      <View style={styles.container}>
-        <Text style={styles.title}>Package Report</Text>
-        {loading ? (
-          <ActivityIndicator size="large" color={COLORS.primary} />
-        ) : (
-          <FlatList
-            data={packages}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={renderItem}
-            contentContainerStyle={{ paddingBottom: 20 }}
-          />
-        )}
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => navigation.navigate('addPackage')}>
-          <Text style={styles.buttonText}>Add New Package</Text>
-        </TouchableOpacity>
-      </View>
+      <Animatable.View animation="fadeInDown" duration={800}>
+        <ViewHeader headerTitle="Package Report" navigateTo="addPackage" />
+      </Animatable.View>
+      {reports.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>
+            No reports available at the moment
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.container}>
+          {loading ? (
+            <ActivityIndicator size="large" color={COLORS.primary} />
+          ) : (
+            <FlatList
+              data={reports}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={renderItem}
+              contentContainerStyle={{ paddingBottom: 20 }}
+            />
+          )}
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.navigate('addPackage')}>
+            <Text style={styles.buttonText}>Add New Package</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -117,6 +105,18 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: SIZES.base,
   },
+  emptyState: {
+    marginTop: screenWidth / 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SIZES.padding,
+  },
+  emptyText: {
+    color: COLORS.lightGray,
+    fontSize: 16,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
   title: {
     ...FONTS.h2,
     color: COLORS.white,
@@ -129,16 +129,13 @@ const styles = StyleSheet.create({
     marginVertical: SIZES.base,
   },
   cardData: {
-    padding: SIZES.radius
+    padding: SIZES.radius,
   },
   packageName: {
     ...FONTS.h3,
     color: COLORS.white,
     marginBottom: 5,
-  },
-  text: {
-    ...FONTS.body3,
-    color: COLORS.lightGray,
+    textAlign: 'left', // Centers the package name
   },
   imageContainer: {
     position: 'relative',
@@ -160,8 +157,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottomLeftRadius: SIZES.radius,
-    borderBottomRightRadius: SIZES.radius,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },

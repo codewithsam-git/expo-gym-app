@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,76 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { COLORS, FONTS, SIZES, images } from '../constants';
-import MemberBill from './MemberBill';
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { COLORS, FONTS, SIZES } from '../constants';
+import { useNavigation } from '@react-navigation/native';
+import BASE_URL from '../Api/commonApi';
+import { useFocusEffect } from '@react-navigation/native';
 
-const Profile = () => {
+const Profile = ({ route }) => {
   const navigation = useNavigation();
+  const { memberId } = route.params;
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [gender, setGender] = useState('');
+  const [birthdate, setBirthdate] = useState('');
+  const [email, setEmail] = useState('');
+  const [mobileNo, setMobileNo] = useState('');
+  const [country, setCountry] = useState('');
+  const [city, setCity] = useState('');
+  const [planName, setPlanName] = useState('');
+  const [charges, setCharges] = useState('123');
+  const [address, setAddress] = useState('');
+  const [discount, setDiscount] = useState('');
+  const [duration, setDuration] = useState('');
+  const [startDate, setStartDate] = useState();
+  const [endDate, setEndDate] = useState('');
+  const [status, setStatus] = useState('');
+  const [imageUri, setImageUri] = useState(null);
+
+  const fetchMemberById = async () => {
+    try {
+      console.log(`${BASE_URL}/edit-members?id=${memberId}`);
+      const response = await fetch(`${BASE_URL}/edit-members?id=${memberId}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const fetchedMember = data.memberDatabyId;
+      setFirstName(fetchedMember.name);
+      setLastName(fetchedMember.surname);
+      setGender(fetchedMember.gender);
+      setBirthdate(fetchedMember.birthdate);
+      setEmail(fetchedMember.email);
+      setMobileNo(fetchedMember.phoneno);
+      setCountry(fetchedMember.country);
+      setCity(fetchedMember.city);
+      setAddress(fetchedMember.address);
+      setPlanName(fetchedMember.package_name);
+      setCharges(fetchedMember.packagePrice.toString());
+      setDiscount(fetchedMember.discountFinalPrice.toString());
+      setDuration(fetchedMember.duration);
+      setStartDate(fetchedMember.start_Date);
+      setEndDate(fetchedMember.end_date);
+      setStatus(fetchedMember.memberStatus);
+      setImageUri(fetchMemberById.profile_image);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setSkeletonLoader(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMemberById();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMemberById();
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -29,11 +93,6 @@ const Profile = () => {
             style={styles.backIconContainer}>
             <Icon name="arrow-back" size={30} color={COLORS.white} />
           </TouchableOpacity>
-          <Image
-            source={require('../assets/images/gym1.jpg')}
-            style={styles.profileImage}
-          />
-          <Text style={styles.userName}>John Doe</Text>
         </View>
 
         <View style={styles.profileContainer}>
@@ -51,12 +110,19 @@ const Profile = () => {
                 alignItems: 'center',
                 justifyContent: 'space-between',
               }}>
-              <Text style={styles.sectionTitle}>Plans</Text>
-              <Icon name="pencil" size={20} color={COLORS.white} />
+              <Text style={styles.sectionTitle}>{firstName}</Text>
+              <Icon
+                name="pencil"
+                size={20}
+                color={COLORS.white}
+                onPress={() =>
+                  navigation.navigate('editMember', { memberId: memberId })
+                }
+              />
             </View>
           </View>
           {/* Social Icons Section */}
-          <View style={styles.iconContainer}>
+          {/*<View style={styles.iconContainer}>
             <TouchableOpacity style={styles.iconWrapper}>
               <Icon name="call" size={30} color={COLORS.white} />
               <Text style={styles.iconLabel}>Call</Text>
@@ -69,7 +135,7 @@ const Profile = () => {
               <Icon name="reload" size={30} color={COLORS.white} />
               <Text style={styles.iconLabel}>Renew</Text>
             </TouchableOpacity>
-          </View>
+          </View>*/}
           <View style={styles.cardContainer}>
             {/* Title Section */}
             <Text style={styles.title}>Personal Info</Text>
@@ -88,7 +154,9 @@ const Profile = () => {
                   />
                   <View style={styles.textContainer}>
                     <Text style={styles.label}>Full Name:</Text>
-                    <Text style={styles.value}>John Doe</Text>
+                    <Text style={styles.value}>
+                      {firstName} {lastName}
+                    </Text>
                   </View>
                 </View>
 
@@ -101,7 +169,7 @@ const Profile = () => {
                   />
                   <View style={styles.textContainer}>
                     <Text style={styles.label}>Gender:</Text>
-                    <Text style={styles.value}>Male</Text>
+                    <Text style={styles.value}>{gender}</Text>
                   </View>
                 </View>
                 <View style={styles.field}>
@@ -113,7 +181,7 @@ const Profile = () => {
                   />
                   <View style={styles.textContainer}>
                     <Text style={styles.label}>Birthdate:</Text>
-                    <Text style={styles.value}>01 Jan 1990</Text>
+                    <Text style={styles.value}>{birthdate}</Text>
                   </View>
                 </View>
               </View>
@@ -129,7 +197,7 @@ const Profile = () => {
                   />
                   <View style={styles.textContainer}>
                     <Text style={styles.label}>Email:</Text>
-                    <Text style={styles.value}>john.doe@example.com</Text>
+                    <Text style={styles.value}>{email}</Text>
                   </View>
                 </View>
 
@@ -142,20 +210,22 @@ const Profile = () => {
                   />
                   <View style={styles.textContainer}>
                     <Text style={styles.label}>Phone No:</Text>
-                    <Text style={styles.value}>8857012009</Text>
+                    <Text style={styles.value}>{mobileNo}</Text>
                   </View>
                 </View>
 
                 <View style={styles.field}>
-                  <Icon
-                    name="time-outline"
+                  <FontAwesome
+                    name="building"
                     size={20}
                     color={COLORS.primary}
                     style={styles.icon}
                   />
                   <View style={styles.textContainer}>
-                    <Text style={styles.label}>Duration:</Text>
-                    <Text style={styles.value}>12 Months</Text>
+                    <Text style={styles.label}>Location: </Text>
+                    <Text style={styles.value}>
+                      {country}, {city}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -175,7 +245,7 @@ const Profile = () => {
                   />
                   <View style={styles.textContainer}>
                     <Text style={styles.label}>Status:</Text>
-                    <Text style={styles.value}>Active</Text>
+                    <Text style={styles.value}>{status}</Text>
                   </View>
                 </View>
               </View>
@@ -195,7 +265,7 @@ const Profile = () => {
                   />
                   <View style={styles.textContainer}>
                     <Text style={styles.label}>Start Date:</Text>
-                    <Text style={styles.value}>01/03/2025</Text>
+                    <Text style={styles.value}>{startDate}</Text>
                   </View>
                 </View>
               </View>
@@ -210,7 +280,7 @@ const Profile = () => {
                   />
                   <View style={styles.textContainer}>
                     <Text style={styles.label}>End Date:</Text>
-                    <Text style={styles.value}>01/04/2025</Text>
+                    <Text style={styles.value}>{endDate}</Text>
                   </View>
                 </View>
               </View>
@@ -230,7 +300,10 @@ const Profile = () => {
                   />
                   <View style={styles.textContainer}>
                     <Text style={styles.label}>Charges:</Text>
-                    <Text style={styles.value}>299/-</Text>
+                    <Text style={styles.value}>
+                      {parseFloat(charges).toLocaleString('en-IN')}
+                      /-
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -245,7 +318,10 @@ const Profile = () => {
                   />
                   <View style={styles.textContainer}>
                     <Text style={styles.label}>Discount:</Text>
-                    <Text style={styles.value}>50</Text>
+                    <Text style={styles.value}>
+                      {parseFloat(discount).toLocaleString('en-IN')}
+                      /-
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -263,9 +339,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.black,
   },
   headerSection: {
-    height: 250,
+    height: 100,
     width: '100%',
-    marginTop: Platform.OS === 'ios' ? 0 : 50,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',

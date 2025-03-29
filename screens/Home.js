@@ -17,19 +17,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { COLORS, FONTS, SIZES, icons, images } from '../constants';
 import { useFocusEffect } from '@react-navigation/native';
-
-const LineDivider = () => {
-  return (
-    <View style={{ width: 1, paddingVertical: 18 }}>
-      <View
-        style={{
-          flex: 1,
-          borderLeftColor: COLORS.lightGray,
-          borderLeftWidth: 1,
-        }}></View>
-    </View>
-  );
-};
+import { LinearGradient } from 'expo-linear-gradient';
 
 const Home = ({ navigation }) => {
   function renderMyBookSection() {
@@ -42,17 +30,29 @@ const Home = ({ navigation }) => {
             justifyContent: 'space-between',
           }}>
           {/* First Row */}
-          <View
+          <LinearGradient
+            colors={[COLORS.secondary, COLORS.gray]} // Gradient from dark gray to a slightly lighter gray
             style={{
-              width: '48%', // 2 boxes per row
-              backgroundColor: COLORS.secondary,
+              width: '48%',
               padding: SIZES.padding,
               borderRadius: 20,
-              elevation: 5,
               marginBottom: SIZES.padding,
               justifyContent: 'center',
               alignItems: 'center',
+              elevation: 8, // Increased elevation for a more pronounced shadow
+              shadowColor: COLORS.black,
+              shadowOffset: { width: 4, height: 8 },
+              shadowOpacity: 1,
+              shadowRadius: 6,
+              borderWidth: 1,
+              borderColor: COLORS.secondary, // Subtle border with primary color
             }}>
+            <FontAwesome
+              name="users"
+              size={24}
+              color={COLORS.primary} // Using primary color for the icon
+              style={{ marginBottom: SIZES.base }}
+            />
             <Text
               style={{
                 ...FONTS.h3,
@@ -68,21 +68,33 @@ const Home = ({ navigation }) => {
                 color: COLORS.white,
                 fontWeight: 'bold',
               }}>
-              {totalCount.membersCount}
+              {totalCount.membersCount || 0}
             </Text>
-          </View>
+          </LinearGradient>
 
-          <View
+          <LinearGradient
+            colors={[COLORS.secondary, COLORS.gray]} // Gradient from dark gray to a slightly lighter gray
             style={{
               width: '48%',
-              backgroundColor: COLORS.secondary,
               padding: SIZES.padding,
               borderRadius: 20,
-              elevation: 5,
               marginBottom: SIZES.padding,
               justifyContent: 'center',
               alignItems: 'center',
+              elevation: 8, // Increased elevation for a more pronounced shadow
+              shadowColor: COLORS.black,
+              shadowOffset: { width: 2, height: 6 },
+              shadowOpacity: 1,
+              shadowRadius: 6,
+              borderWidth: 1,
+              borderColor: COLORS.secondary, // Subtle border with primary color
             }}>
+            <FontAwesome
+              name="archive"
+              size={24}
+              color={COLORS.primary}
+              style={{ marginBottom: SIZES.base }}
+            />
             <Text
               style={{
                 ...FONTS.h3,
@@ -98,22 +110,34 @@ const Home = ({ navigation }) => {
                 color: COLORS.white,
                 fontWeight: 'bold',
               }}>
-              {totalCount.packageCount}
+              {totalCount.packageCount || 0}
             </Text>
-          </View>
+          </LinearGradient>
 
           {/* Second Row */}
-          <View
+          <LinearGradient
+            colors={[COLORS.secondary, COLORS.gray]} // Gradient from dark gray to a slightly lighter gray
             style={{
               width: '48%',
-              backgroundColor: COLORS.secondary,
               padding: SIZES.padding,
               borderRadius: 20,
-              elevation: 5,
               marginBottom: SIZES.padding,
               justifyContent: 'center',
               alignItems: 'center',
+              elevation: 8, // Increased elevation for a more pronounced shadow
+              shadowColor: COLORS.black,
+              shadowOffset: { width: 2, height: 6 },
+              shadowOpacity: 1,
+              shadowRadius: 6,
+              borderWidth: 1,
+              borderColor: COLORS.secondary, // Subtle border with primary color
             }}>
+            <FontAwesome
+              name="rupee"
+              size={24}
+              color={COLORS.primary}
+              style={{ marginBottom: SIZES.base }}
+            />
             <Text
               style={{
                 ...FONTS.h3,
@@ -129,21 +153,34 @@ const Home = ({ navigation }) => {
                 color: COLORS.white,
                 fontWeight: 'bold',
               }}>
-              {totalCount.collectionCount}
+              ₹ {parseFloat(totalCount.collectionCount).toLocaleString('en-IN') ||
+                0}
             </Text>
-          </View>
+          </LinearGradient>
 
-          <View
+          <LinearGradient
+            colors={[COLORS.secondary, COLORS.gray]} // Gradient from dark gray to a slightly lighter gray
             style={{
               width: '48%',
-              backgroundColor: COLORS.secondary,
               padding: SIZES.padding,
               borderRadius: 20,
-              elevation: 5,
               marginBottom: SIZES.padding,
               justifyContent: 'center',
               alignItems: 'center',
+              elevation: 8, // Increased elevation for a more pronounced shadow
+              shadowColor: COLORS.black,
+              shadowOffset: { width: 2, height: 6 },
+              shadowOpacity: 1,
+              shadowRadius: 6,
+              borderWidth: 1,
+              borderColor: COLORS.secondary, // Subtle border with primary color
             }}>
+            <FontAwesome
+              name="cubes"
+              size={24}
+              color={COLORS.primary}
+              style={{ marginBottom: SIZES.base }}
+            />
             <Text
               style={{
                 ...FONTS.h3,
@@ -159,9 +196,9 @@ const Home = ({ navigation }) => {
                 color: COLORS.white,
                 fontWeight: 'bold',
               }}>
-              {totalCount.assetsTotal}
+              ₹ {parseFloat(totalCount.assetsTotal).toLocaleString('en-IN') || 0}
             </Text>
-          </View>
+          </LinearGradient>
         </View>
       </View>
     );
@@ -251,7 +288,7 @@ const Home = ({ navigation }) => {
             style={{ marginRight: 8 }}
           />
           <Text style={{ fontSize: 16, color: 'white', fontWeight: '600' }}>
-            Members with Expiring Plans
+            New Members
           </Text>
         </View>
 
@@ -281,7 +318,7 @@ const Home = ({ navigation }) => {
       }
 
       const data = await response.json();
-      setMembers(data.getFilterMembers);
+      setMembers(data.latestMembers);
       setTotalCount(data);
     } catch (err) {
       console.error('Fetch error:', err);
@@ -350,98 +387,113 @@ const Home = ({ navigation }) => {
     );
   }
 
-  const screenWidth = Dimensions.get('window').width;
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.black }}>
-      <View
+      <LinearGradient
+        colors={[
+          COLORS.black,
+          COLORS.black,
+          COLORS.black,
+          COLORS.black,
+          COLORS.gray,
+          COLORS.black,
+          COLORS.black,
+          COLORS.black,
+        ]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={{
-          marginTop: Platform.OS === 'ios' ? 10 : 50,
+          flex: 1,
         }}>
-        <Header />
-      </View>
-
-      <ScrollView
-        style={{ margin: SIZES.radius }}
-        showsVerticalScrollIndicator={false}>
-        <View>{renderMyBookSection()}</View>
-
         <View>
-          <View>{renderPackagesTitleSection()}</View>
-          <View style={styles.container}>
-            {packages.length === 0 ? (
-              <Text style={styles.emptyText}>
-                No packages available at the moment
-              </Text>
-            ) : (
-              <FlatList
-                data={packages}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.packageItem}
-                    activeOpacity={0.8}
-                    onPress={() => {
-                      navigation.navigate('editPackage', {
-                        packageId: item.id,
-                      });
-                    }}>
-                    <View style={styles.packageContainer}>
-                      <Image
-                        source={images.gym1}
-                        style={styles.itemImage}
-                        resizeMode="cover"
-                      />
-                      <View style={styles.packageContent}>
-                        <Text
-                          style={styles.packageTitle}
-                          numberOfLines={1}
-                          ellipsizeMode="tail">
-                          {item.package_name || 'Premium Package'}
-                        </Text>
-                        <Text style={styles.packageSubtitle}>
-                          Amount: {item.package_amount || 'Membership Benefits'}
-                          /-
-                        </Text>
-                        {item.price && (
-                          <Text style={styles.packagePrice}>
-                            ${item.price}/month
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                )}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.flatListContent}
-              />
-            )}
-          </View>
+          <Header headerTitle="Dashboard" />
         </View>
 
-        <View>
-          <View>{renderMemberExpiryTitleSection()}</View>
+        <ScrollView
+          style={{ margin: SIZES.radius }}
+          showsVerticalScrollIndicator={false}>
+          <View>{renderMyBookSection()}</View>
+
           <View>
-            {members.length === 0 && (
-              <Text style={styles.emptyText}>
-                No members available at the moment
-              </Text>
-            )}
-            <ScrollView
-              contentContainerStyle={{ flexGrow: 1 }}
-              scrollEnabled={true}>
-              {members.map((member, index) => (
-                <TouchableOpacity
-                  key={member.id}
-                  onPress={() => navigation.navigate('updatePlan')}>
-                  <View>{renderMemberCard(member)}</View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <View>{renderPackagesTitleSection()}</View>
+            <View style={styles.container}>
+              {packages.length === 0 ? (
+                <Text style={styles.emptyText}>
+                  No packages available at the moment
+                </Text>
+              ) : (
+                <FlatList
+                  data={packages}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.packageItem}
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        navigation.navigate('editPackage', {
+                          packageId: item.id,
+                        });
+                      }}>
+                      <View style={styles.packageContainer}>
+                        <Image
+                          source={images.gym1}
+                          style={styles.itemImage}
+                          resizeMode="cover"
+                        />
+                        <View style={styles.packageContent}>
+                          <Text
+                            style={styles.packageTitle}
+                            numberOfLines={1}
+                            ellipsizeMode="tail">
+                            {item.package_name || 'Premium Package'}
+                          </Text>
+                          <Text style={styles.packageSubtitle}>
+                            Amount:{' '}
+                            {item.package_amount || 'Membership Benefits'}
+                            /-
+                          </Text>
+                          {item.price && (
+                            <Text style={styles.packagePrice}>
+                              ${item.price}/month
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.flatListContent}
+                />
+              )}
+            </View>
           </View>
-        </View>
-      </ScrollView>
+
+          <View>
+            <View>{renderMemberExpiryTitleSection()}</View>
+            <View>
+              {members.length === 0 && (
+                <Text style={styles.emptyText}>
+                  No members available at the moment
+                </Text>
+              )}
+              <ScrollView
+                contentContainerStyle={{ flexGrow: 1 }}
+                scrollEnabled={true}>
+                {members.map((member, index) => (
+                  <TouchableOpacity
+                    key={member.id}
+                    onPress={() =>
+                      navigation.navigate('profile', { memberId: member.id })
+                    }>
+                    <View>{renderMemberCard(member)}</View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </ScrollView>
+      </LinearGradient>
     </SafeAreaView>
   );
 };
@@ -503,36 +555,30 @@ const styles = StyleSheet.create({
   },
   packageItem: {
     marginRight: 20,
-    borderRadius: 12,
-    overflow: 'hidden',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderRadius: 12
   },
   packageContainer: {
     width: 240,
-    backgroundColor: '#fff',
   },
   itemImage: {
     width: '100%',
     height: 150,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
   },
   packageContent: {
     padding: 15,
     alignItems: 'center',
   },
   packageTitle: {
-    color: COLORS.black,
+    color: COLORS.white,
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 5,
   },
   packageSubtitle: {
-    color: COLORS.gray,
+    color: COLORS.lightGray4,
     fontSize: 14,
     marginBottom: 8,
   },

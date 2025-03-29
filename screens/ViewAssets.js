@@ -10,6 +10,7 @@ import {
   Image,
   Alert,
   Dimensions,
+  Platform
 } from 'react-native';
 import { COLORS, FONTS, SIZES, icons, images } from '../constants';
 import BASE_URL from '../Api/commonApi';
@@ -154,7 +155,9 @@ const ViewAssets = () => {
           onPress: async () => {
             try {
               console.log(`${BASE_URL}/delete-assets?id=${id}`);
-              const response = await fetch(`${BASE_URL}/delete-assets?id=${id}`);
+              const response = await fetch(
+                `${BASE_URL}/delete-assets?id=${id}`
+              );
 
               if (!response.ok) {
                 throw new Error(
@@ -186,9 +189,9 @@ const ViewAssets = () => {
     return (
       <TouchableOpacity onPress={() => setMenuVisibleFor(false)}>
         <Animatable.View
-          animation="fadeInUp" // Animate each card sliding up
+          animation="fadeInUp"
           duration={800}
-          delay={index * 100} // Stagger animation for each card
+          delay={index * 100}
           style={styles.memberCard}>
           {/* Avatar Section */}
 
@@ -212,9 +215,7 @@ const ViewAssets = () => {
           </Animatable.View>
 
           <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-            <Animatable.View animation="fadeInUp" duration={1000}>
               <Icon name="more-vert" size={20} color={COLORS.lightGray2} />
-            </Animatable.View>
           </TouchableOpacity>
 
           {/* Contextual Menu */}
@@ -253,7 +254,7 @@ const ViewAssets = () => {
   }
 
   return (
-    <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
+    <TouchableWithoutFeedback onPress={() => setMenuVisibleFor(false)}>
       <SafeAreaView style={styles.safeArea}>
         <Animatable.View animation="fadeInDown" duration={800}>
           <ViewHeader headerTitle="Asset" navigateTo="addAsset" />
@@ -273,11 +274,14 @@ const ViewAssets = () => {
                 ''
               ) : (
                 <ScrollView
-                  contentContainerStyle={{ flexGrow: 1 }}
+                  contentContainerStyle={{
+                    flexGrow: 1,
+                    paddingBottom: Platform.OS === 'ios' ? 120 : 200,
+                  }}
                   scrollEnabled={true}>
                   {members.map((member, index) => (
                     <View key={member.id}>
-                      {renderMemberCard(member, navigation)}
+                      {renderMemberCard(member, index)}
                       {index < members.length - 1 && (
                         <View style={styles.separator} />
                       )}

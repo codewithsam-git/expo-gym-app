@@ -1,47 +1,32 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { COLORS, FONTS, SIZES, icons, images } from '../constants';
+import { COLORS, FONTS, SIZES, icons } from '../constants'; // Make sure these constants are properly defined.
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation
-import Icon from 'react-native-vector-icons/FontAwesome';
 
-function Header() {
-
+function Header({ headerTitle }) {
   const navigation = useNavigation();
-  
+
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        paddingHorizontal: SIZES.padding,
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.openDrawer()}>
-          <Image source={icons.menu_icon} style={styles.menuIcon} />
-        </TouchableOpacity>
+    <View style={styles.container}>
+      <TouchableOpacity onPress={() => navigation.openDrawer()}>
+        <Image source={icons.menu_icon} style={styles.menuIcon} />
+      </TouchableOpacity>
 
-        <View style={{ marginLeft: SIZES.padding }}>
-          <View style={{ marginRight: SIZES.padding }}>
-            <Text style={{ ...FONTS.h3, color: COLORS.white }}>Hello,</Text>
-            <Text style={{ ...FONTS.h2, color: COLORS.white }}>Admin</Text>
-          </View>
-        </View>
+      <View style={styles.centerSection}>
+        <Text style={styles.headerTitle}>{headerTitle}</Text>
       </View>
 
-      <View style={styles.iconContainer}>
-        <Icon name="user" size={40} color={COLORS.white} />
-      </View>
+      {/* Right section removed to have nothing on the right */}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
+  container: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginRight: 20,
+    paddingHorizontal: SIZES.font,
     alignItems: 'center',
+    justifyContent: 'space-between',
     height: 60,
   },
   menuIcon: {
@@ -49,10 +34,18 @@ const styles = StyleSheet.create({
     height: 30,
     tintColor: COLORS.white,
   },
-  iconContainer: {
-    justifyContent: 'center',
+  centerSection: {
+    flex: 1,
     alignItems: 'center',
-  }
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    ...FONTS.h2,
+    marginRight: SIZES.padding,
+    color: COLORS.white,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
 });
 
 export default Header;
