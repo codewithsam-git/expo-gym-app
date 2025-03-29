@@ -16,8 +16,10 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "This app requires access to your camera to take photos.",
-        "NSPhotoLibraryUsageDescription": "This app requires access to your gallery to upload images."
-      }
+        "NSPhotoLibraryUsageDescription": "This app requires access to your gallery to upload images.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.codewithsamexpo.snack2d750b5721b6479e938fb34fb5084fa2"
     },
     "android": {
       "adaptiveIcon": {
@@ -38,6 +40,7 @@
       "eas": {
         "projectId": "5ae1041b-4cfe-4eed-985e-10d99d7ae31f"
       }
-    }
+    },
+    "owner": "codewithsam-expo"
   }
 }

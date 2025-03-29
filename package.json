@@ -41,7 +41,8 @@
     "react-native-step-indicator": "*",
     "react-native-svg": "15.8.0",
     "react-native-toast-message": "*",
-    "react-native-vector-icons": "*"
+    "react-native-vector-icons": "*",
+    "expo-dev-client": "~5.0.15"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
