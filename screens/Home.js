@@ -379,7 +379,7 @@ const Home = ({ navigation }) => {
           <View style={styles.expiryContainer}>
             <View></View>
             <View>
-              <Text style={styles.expiryDate}>{member.end_date}</Text>
+              <Text style={styles.createdDate}>{member.start_Date}</Text>
             </View>
           </View>
         </View>
@@ -449,7 +449,7 @@ const Home = ({ navigation }) => {
                           </Text>
                           <Text style={styles.packageSubtitle}>
                             Amount:{' '}
-                            {item.package_amount || 'Membership Benefits'}
+                            {item.discount || 'Membership Benefits'}
                             /-
                           </Text>
                           {item.price && (
@@ -537,9 +537,9 @@ const styles = StyleSheet.create({
     right: 0,
     top: 6,
   },
-  expiryDate: {
+  createdDate: {
     fontSize: 12,
-    color: COLORS.lightRed, // Expiry date in red
+    color: COLORS.lightGreen, // Expiry date in red
     fontWeight: 'bold',
   },
   container: {
@@ -578,8 +578,9 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   packageSubtitle: {
-    color: COLORS.lightGray4,
-    fontSize: 14,
+    color: COLORS.primary,
+    fontSize: 16,
+    fontWeight: 600,
     marginBottom: 8,
   },
   packagePrice: {

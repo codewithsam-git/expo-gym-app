@@ -52,21 +52,20 @@ const Offers = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ image: 'img.png' }),
+        body: JSON.stringify(),
       });
 
-      console.log(response);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.ok) {
+        Alert.alert(
+          'Success',
+          'Offer created successfully!',
+          [{ text: 'OK'}],
+          { cancelable: false }
+        );
+        fetchOffers();
+      } else {
+        throw new Error('Failed to add offer');
       }
-
-      Alert.alert('Success', 'Offer added successfully!', {
-        cancelable: false,
-      });
-      fetchOffers();
-      setOfferDescription('');
-      setImageUrl(null);
     } catch (error) {
       console.error('Error submitting data:', error);
       Alert.alert('Error', 'Failed to add offer, please try again');
@@ -428,7 +427,7 @@ const styles = StyleSheet.create({
   offersContainer: {
     marginTop: SIZES.padding2,
   },
-   titleContainer: {
+  titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

@@ -97,7 +97,7 @@ const Notification = ({ navigation }) => {
           <View style={styles.expiryContainer}>
             <View></View>
             <View>
-              <Text style={styles.expiryDate}>{member.end_date}</Text>
+              <Text style={styles.expiryDate}>Expired</Text>
             </View>
           </View>
         </View>

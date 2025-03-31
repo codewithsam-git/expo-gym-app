@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
 
-import 'react-native-gesture-handler';
-import 'react-native-reanimated';
 import { enableScreens } from 'react-native-screens';
 enableScreens();
 

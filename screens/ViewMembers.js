@@ -12,6 +12,7 @@ import {
   Alert,
   Dimensions,
   TextInput,
+  FlatList
 } from 'react-native';
 import { COLORS, FONTS, SIZES, icons, images } from '../constants';
 import Header from '../components/Header';
@@ -22,6 +23,7 @@ import SkeletonMember from '../components/SkeletonMember';
 import { useFocusEffect } from '@react-navigation/native';
 import ViewHeader from '../components/ViewHeader';
 import * as Animatable from 'react-native-animatable';
+import RNPickerSelect from 'react-native-picker-select';
 
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
@@ -33,10 +35,48 @@ const ViewMembers = () => {
   const [skeletonLoader, setSkeletonLoader] = useState(true);
   const [menuVisibleFor, setMenuVisibleFor] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showActivatedOnly, setShowActivatedOnly] = useState(false);
+  const [showDeactivatedOnly, setShowDeactivatedOnly] = useState(false);
 
-  const filteredMembers = members.filter((member) =>
-    member.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filtering logic
+  const filteredMembers = members.filter((member) => {
+    const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // Separate filter logic for activated and deactivated
+    const matchesActivated = showActivatedOnly ? member.memberStatus === 'Active' : true;
+    const matchesDeactivated = showDeactivatedOnly ? member.memberStatus === 'Inactive' : true;
+
+    return matchesSearch && matchesActivated && matchesDeactivated;
+  });
+
+  // Options for the horizontal FlatList (filter buttons)
+  const filterOptions = [
+    { label: 'All Members', type: 'All' },
+    { label: 'Active Members', type: 'Active' },
+    { label: 'Inactive Members', type: 'Inactive' },
+  ];
+
+  // Handle filter option selection
+  const handleFilterSelect = (type) => {
+    if (type === 'Active') {
+      setShowActivatedOnly(true);
+      setShowDeactivatedOnly(false);
+    } else if (type === 'Inactive') {
+      setShowActivatedOnly(false);
+      setShowDeactivatedOnly(true);
+    } else {
+      setShowActivatedOnly(false);
+      setShowDeactivatedOnly(false);
+    }
+  };
+
+
+  const formatDate = (birthdate) => {
+    const day = String(birthdate.getDate()).padStart(2, '0');
+    const month = String(birthdate.getMonth() + 1).padStart(2, '0');
+    const year = birthdate.getFullYear();
+    return `${year}/${month}/${day}`;
+  };
 
   const fetchMembers = async () => {
     try {
@@ -65,10 +105,6 @@ const ViewMembers = () => {
       fetchMembers();
     }, [])
   );
-
-  const handleDelete = (id) => {
-    console.log(`Member with ID ${id} deleted.`);
-  };
 
   const handleStatusChange = async (member) => {
     console.log('member: ', member.id);
@@ -200,8 +236,8 @@ const ViewMembers = () => {
                     color={COLORS.primary}
                   />
                   <Text style={styles.infoText}>
-                    {new Date(member.start_Date).toLocaleDateString()} -{' '}
-                    {new Date(member.end_date).toLocaleDateString()}
+                    {formatDate(new Date(member.start_Date))} -{' '}
+                    {formatDate(new Date(member.end_date))}
                   </Text>
                 </View>
 
@@ -302,31 +338,67 @@ const ViewMembers = () => {
           <ViewHeader headerTitle="Members" navigateTo="addMember" />
         </Animatable.View>
 
+        <Animatable.View animation="fadeInDown" duration={800} style={styles.filterContainer}>
+          <FlatList
+            data={filterOptions}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.type}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => handleFilterSelect(item.type)}
+                style={[
+                  styles.filterButton,
+                  {
+                    backgroundColor:
+                      (item.type === 'Active' && showActivatedOnly) ||
+                        (item.type === 'Inactive' && showDeactivatedOnly)
+                        ? COLORS.primary
+                        : (showActivatedOnly === false && showDeactivatedOnly === false && item.type === 'All')
+                          ? COLORS.primary
+                          : COLORS.lightGray4,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.filterButtonText,
+                    {
+                      color:
+                        (item.type === 'Active' && showActivatedOnly) ||
+                          (item.type === 'Inactive' && showDeactivatedOnly)
+                          ? COLORS.white
+                          : (showActivatedOnly === false && showDeactivatedOnly === false && item.type === 'All')
+                            ? COLORS.white
+                            : COLORS.gray
+                    },
+                  ]}
+                >
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </Animatable.View>
+
         {filteredMembers && !skeletonLoader && (
-          <Animatable.View
-            animation="fadeInDown"
-            duration={800}
-            style={styles.searchContainer}>
+          <Animatable.View animation="fadeInLeft" duration={800} style={styles.searchContainer}>
             <TextInput
               style={styles.searchInput}
               placeholder="Search by name..."
               placeholderTextColor={COLORS.lightGray4}
               value={searchQuery}
-              onChangeText={setSearchQuery} // Update search query as user types
+              onChangeText={setSearchQuery}
             />
           </Animatable.View>
         )}
 
+        {/* Member List */}
         <View style={{ marginTop: SIZES.font }}>
           {filteredMembers.length === 0 && !skeletonLoader ? (
-            <Animatable.View
-              animation="zoomIn"
-              duration={800}
-              style={styles.emptyState}>
+            <Animatable.View animation="zoomIn" duration={800} style={styles.emptyState}>
               <Image source={images.noData} style={styles.noDataImage} />
-              <Text style={styles.emptyText}>
-                No members available at the moment
-              </Text>
+              <Text style={styles.emptyText}>No members available at the moment</Text>
             </Animatable.View>
           ) : (
             <View>
@@ -339,14 +411,11 @@ const ViewMembers = () => {
                     paddingBottom: Platform.OS === 'ios' ? 120 : 200,
                   }}
                   scrollEnabled={true}
-                  onScroll={() =>
-                    menuVisibleFor != null && setMenuVisibleFor(null)
-                  }
-                  scrollEventThrottle={16}>
+                  onScroll={() => menuVisibleFor != null && setMenuVisibleFor(null)}
+                  scrollEventThrottle={16}
+                >
                   {filteredMembers.map((member, index) => (
-                    <View key={member.id}>
-                      {renderMemberCard(member, index, navigation)}
-                    </View>
+                    <View key={member.id}>{renderMemberCard(member, index, navigation)}</View>
                   ))}
                 </ScrollView>
               )}
@@ -365,6 +434,29 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     padding: SIZES.font,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+    paddingHorizontal: SIZES.font,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#005f56', // Match the color of other filters
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    marginRight: SIZES.base,
+    borderRadius: 8,
+  },
+  filterButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  filterIcon: {
+    marginLeft: 8,
   },
   searchInput: {
     height: 40,
@@ -393,7 +485,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   cardContainer: {
-    marginVertical: SIZES.base,
     marginHorizontal: SIZES.font,
   },
   memberCard: {
@@ -406,6 +497,7 @@ const styles = StyleSheet.create({
     elevation: 8,
     borderWidth: 1,
     borderColor: COLORS.gray,
+    marginBottom: SIZES.font,
   },
   topRow: {
     flexDirection: 'row',

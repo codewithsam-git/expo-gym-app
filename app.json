@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "gym-app",
+    "name": "One Hour",
     "slug": "snack-2d750b57-21b6-479e-938f-b34fb5084fa2",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/gym-logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/gym-logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -23,7 +23,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/gym-logo.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.codewithsamexpo.snack2d750b5721b6479e938fb34fb5084fa2",

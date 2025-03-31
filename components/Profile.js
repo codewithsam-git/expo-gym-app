@@ -38,6 +38,13 @@ const Profile = ({ route }) => {
   const [status, setStatus] = useState('');
   const [imageUri, setImageUri] = useState(null);
 
+  const formatDate = (birthdate) => {
+    const day = String(birthdate.getDate()).padStart(2, '0');
+    const month = String(birthdate.getMonth() + 1).padStart(2, '0');
+    const year = birthdate.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
   const fetchMemberById = async () => {
     try {
       console.log(`${BASE_URL}/edit-members?id=${memberId}`);
@@ -52,7 +59,7 @@ const Profile = ({ route }) => {
       setFirstName(fetchedMember.name);
       setLastName(fetchedMember.surname);
       setGender(fetchedMember.gender);
-      setBirthdate(fetchedMember.birthdate);
+      setBirthdate(formatDate(new Date(fetchedMember.birthdate)));
       setEmail(fetchedMember.email);
       setMobileNo(fetchedMember.phoneno);
       setCountry(fetchedMember.country);
@@ -93,6 +100,10 @@ const Profile = ({ route }) => {
             style={styles.backIconContainer}>
             <Icon name="arrow-back" size={30} color={COLORS.white} />
           </TouchableOpacity>
+          <Image
+            source={require('../assets/images/gym1.jpg')}
+            style={styles.profileImage}
+          />
         </View>
 
         <View style={styles.profileContainer}>
@@ -110,7 +121,7 @@ const Profile = ({ route }) => {
                 alignItems: 'center',
                 justifyContent: 'space-between',
               }}>
-              <Text style={styles.sectionTitle}>{firstName}</Text>
+              <Text style={styles.sectionTitle}>{firstName} {lastName}</Text>
               <Icon
                 name="pencil"
                 size={20}
@@ -231,28 +242,9 @@ const Profile = ({ route }) => {
               </View>
             </View>
           </View>
+
           <View style={styles.cardContainer}>
-            <Text style={styles.title}>Status</Text>
-            <View style={styles.separator}></View>
-            <View style={styles.row}>
-              <View style={styles.column}>
-                <View style={styles.field}>
-                  <Icon
-                    name="alert-circle-outline"
-                    size={20}
-                    color={COLORS.primary}
-                    style={styles.icon}
-                  />
-                  <View style={styles.textContainer}>
-                    <Text style={styles.label}>Status:</Text>
-                    <Text style={styles.value}>{status}</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          </View>
-          <View style={styles.cardContainer}>
-            <Text style={styles.title}>Plan Dates</Text>
+            <Text style={styles.title}>Plan Details</Text>
             <View style={styles.separator}></View>
             <View style={styles.row}>
               <View style={styles.column}>
@@ -285,12 +277,50 @@ const Profile = ({ route }) => {
                 </View>
               </View>
             </View>
+            <View style={styles.row}>
+              <View style={styles.column}>
+                <View style={styles.field}>
+                  <Icon
+                    name="calendar-outline"
+                    size={20}
+                    color={COLORS.primary}
+                    style={styles.icon}
+                  />
+                  <View style={styles.textContainer}>
+                    <Text style={styles.label}>Package:</Text>
+                    <Text style={styles.value}>{planName}</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
           </View>
+
+          <View style={styles.cardContainer}>
+            <Text style={styles.title}>Status</Text>
+            <View style={styles.separator}></View>
+            <View style={styles.row}>
+              <View style={styles.column}>
+                <View style={styles.field}>
+                  <Icon
+                    name="alert-circle-outline"
+                    size={20}
+                    color={COLORS.primary}
+                    style={styles.icon}
+                  />
+                  <View style={styles.textContainer}>
+                    <Text style={styles.label}>Status:</Text>
+                    <Text style={styles.value}>{status}</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+
           <View style={styles.cardContainer}>
             <Text style={styles.title}>Payment Details</Text>
             <View style={styles.separator}></View>
             <View style={styles.row}>
-              <View style={styles.column}>
+              {/*<View style={styles.column}>
                 <View style={styles.field}>
                   <Icon
                     name="cash-outline"
@@ -306,9 +336,9 @@ const Profile = ({ route }) => {
                     </Text>
                   </View>
                 </View>
-              </View>
+              </View>*/}
 
-              <View style={styles.column1}>
+              <View style={styles.column}>
                 <View style={styles.field}>
                   <Icon
                     name="pricetag-outline"
@@ -317,7 +347,7 @@ const Profile = ({ route }) => {
                     style={styles.icon}
                   />
                   <View style={styles.textContainer}>
-                    <Text style={styles.label}>Discount:</Text>
+                    <Text style={styles.label}>Amount Payable:</Text>
                     <Text style={styles.value}>
                       {parseFloat(discount).toLocaleString('en-IN')}
                       /-
@@ -339,7 +369,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.black,
   },
   headerSection: {
-    height: 100,
+    height: 200,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
@@ -350,14 +380,14 @@ const styles = StyleSheet.create({
   },
   backIconContainer: {
     position: 'absolute',
-    top: 10, // Position it at the top of the image
-    left: 10, // Position it to the left of the image
-    zIndex: 1, // Make sure the icon is above the image
+    top: 10,
+    left: 10,
+    zIndex: 1,
   },
   profileHeader: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -60,
+    marginTop: -40,
   },
   profileImage: {
     position: 'absolute',

@@ -31,8 +31,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.black,
   },
   logo: {
-    width: 250,
-    height: 250,
+    width: 350,
+    height: 350,
     marginBottom: 60
   },
 });

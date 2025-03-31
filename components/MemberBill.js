@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,136 +12,180 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { COLORS, FONTS, SIZES } from '../constants';
+import * as FileSystem from 'expo-file-system';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { useNavigation } from '@react-navigation/native';
+import BASE_URL from '../Api/commonApi';
 
-
-const MemberBill = ({ memberData }) => {
+const MemberBill = ({ route }) => {
+  const { num } = route.params;
   const navigation = useNavigation();
+
+  const [name, setName] = useState('');
+  const [surname, setSurname] = useState('');
+  const [email, setEmail] = useState('');
+  const [phoneno, setPhoneNo] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [packagePrice, setPackagePrice] = useState('');
+  const [discount, setDiscount] = useState('');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [totalAmount, setTotalAmount] = useState('');
+  const [address, setAddress] = useState('');
+  const [packageName, setPackageName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Default member data if none is passed
-  const member = memberData || {
-    fullName: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '8857012009',
-    planStart: '01/03/2025',
-    planEnd: '01/04/2025',
-    charges: 299,
-    discount: 50,
+  const fetchBillData = async () => {
+    try {
+      console.log(`${BASE_URL}/bill-details?num=${num}`);
+      const response = await fetch(`${BASE_URL}/bill-details?num=${num}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setName(data.billData.member.name);
+      setSurname(data.billData.member.surname);
+      setPhoneNo(data.billData.member.phoneno);
+      setEmail(data.billData.member.email);
+      setAddress(data.billData.member.address);
+      setInvoiceNumber(data.billData.invoice_number);
+      setStartDate(data.billData.start_Date);
+      setEndDate(data.billData.end_date);
+      setPackagePrice(data.billData.packagePrice.toString());
+      setDiscount(data.billData.discountFinalPrice.toString());
+      setTotalAmount(
+        data.billData.packagePrice - data.billData.discountFinalPrice
+      );
+      setPackageName(data.billData.package_name);
+    } catch (err) {
+      console.error('Fetch error:', err);
+    }
   };
 
-  // Calculate total amount
-  const totalAmount = member.charges - member.discount;
-
-  // Generate a unique invoice number
-  const invoiceNumber = `BILL-${Date.now().toString().slice(-6)}`;
-
-  // Current date for the bill
-  const currentDate = new Date().toLocaleDateString();
+  useEffect(() => {
+    fetchBillData();
+  }, []);
 
   // HTML content for bill
   const generateHTML = () => {
     return `
-      <html>
-        <head>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
-          <style>
-            body {
-              font-family: 'Helvetica', sans-serif;
-              color: #333;
-              margin: 0;
-              padding: 20px;
-            }
-            .header {
-              text-align: center;
-              margin-bottom: 30px;
-            }
-            .header h1 {
-              margin: 5px 0;
-              color: #1a73e8;
-            }
-            .info-section {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 30px;
-            }
-            .info-box {
-              width: 45%;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin: 20px 0;
-            }
-            th, td {
-              border: 1px solid #ddd;
-              padding: 12px;
-              text-align: left;
-            }
-            th {
-              background-color: #f2f2f2;
-            }
-            .total-row {
-              font-weight: bold;
-              background-color: #f8f9fa;
-            }
-            .footer {
-              margin-top: 40px;
-              text-align: center;
-              font-size: 12px;
-              color: #666;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>One Hour Fitness Club</h1>
-            <p>123 Fitness Street, Pimpri-Chinchwad</p>
-            <p>Email: info@onehourfitnessclub.com | Phone: +91 7788996655</p>
-          </div>
-          
-          <div class="info-section">
-            <div class="info-box">
-              <h3>Bill To:</h3>
-              <p><strong>Name:</strong> ${member.fullName}</p>
-              <p><strong>Email:</strong> ${member.email}</p>
-              <p><strong>Phone:</strong> ${member.phone}</p>
+       <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .invoice-container {
+            max-width: 800px;
+            margin: auto;
+            border: 1px solid #ddd;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+            font-weight: bold;
+        }
+        .details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .details div {
+            width: 48%;
+        }
+        .details h3 {
+            margin-bottom: 5px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        .table th {
+            background: #f8f8f8;
+        }
+        .summary {
+            margin-top: 20px;
+            text-align: right;
+        }
+        .summary p {
+            margin: 5px 0;
+        }
+        .notes {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <div class="header">
+            <div>Invoice</div>
+            <div>Date: ${new Date().toLocaleDateString('en-GB')}</div>
+            <div>Status: Completed</div>
+        </div>
+        <div class="details">
+            <div>
+                <h3>From:</h3>
+                <strong>One Hour Fitness Club</strong><br>
+                402, Mone Complex, Guruwar Peth<br>
+                Satara, 415002<br>
+                Email: onehourfitness@gmail.com<br>
+                Phone: +9423107707
             </div>
-            <div class="info-box">
-              <h3>Bill Details:</h3>
-              <p><strong>Bill Number:</strong> ${invoiceNumber}</p>
-              <p><strong>Date:</strong> ${currentDate}</p>
-              <p><strong>Membership Period:</strong> ${member.planStart} to ${member.planEnd}</p>
+            <div>
+                <h3>To:</h3>
+                <strong>Gaurav Jaiswal</strong><br>
+                ${address}
             </div>
-          </div>
-          
-          <table>
+        </div>
+        <table class="table">
             <tr>
-              <th>Description</th>
-              <th>Amount (₹)</th>
-            </tr>
-            <tr>
-              <td>Gym Membership Fees</td>
-              <td>${member.charges}/-</td>
+                <th>#</th>
+                <th>Plan Name</th>
+                <th>Plan Start Date</th>
+                <th>Plan End Date</th>
+                <th>Package Cost</th>
             </tr>
             <tr>
-              <td>Discount</td>
-              <td>-${member.discount}/-</td>
+                <td>1</td>
+                <td>${packageName}/td>
+                <td>${startDate}</td>
+                <td>${endDate}</td>
+                <td>${packagePrice}</td>
             </tr>
-            <tr class="total-row">
-              <td>Total Amount</td>
-              <td>${totalAmount}/-</td>
-            </tr>
-          </table>
-          
-          <div class="footer">
-            <p>Thank you for being a member of Fitness Gym!</p>
-            <p>This is a computer-generated invoice and does not require a signature.</p>
-          </div>
-        </body>
-      </html>
+        </table>
+        <div class="summary">
+            <p><strong>Price After Discount:</strong> ${discount}</p>
+            <p><strong>Other Fees:</strong> -</p>
+            <p><strong>Amount Payable:</strong>₹ ${discount}</p>
+        </div>
+        <div class="notes">
+            <h3>Points To Note:</h3>
+            <p>- Fees once paid are non-refundable.</p>
+            <p>- Membership is non-transferable.</p>
+        </div>
+    </div>
+</body>
+</html>
     `;
   };
 
@@ -154,10 +198,20 @@ const MemberBill = ({ memberData }) => {
         base64: false,
       });
 
+      const date = new Date().toLocaleDateString('en-GB').replace(/\//g, '-'); // Replace / with -
+      const fileName = `Invoice_${name}_${surname}_${date}.pdf`;
+      const newUri = FileSystem.documentDirectory + fileName;
+
+      await FileSystem.moveAsync({
+        from: uri,
+        to: newUri,
+      });
+
+
       if (Platform.OS === 'ios' || Platform.OS === 'android') {
         const isAvailable = await Sharing.isAvailableAsync();
         if (isAvailable) {
-          await Sharing.shareAsync(uri);
+          await Sharing.shareAsync(newUri);
         } else {
           Alert.alert("Sharing isn't available on your platform");
         }
@@ -173,13 +227,6 @@ const MemberBill = ({ memberData }) => {
     }
   };
 
-  const handleWebPreview = () => {
-    const html = generateHTML();
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
-  };
-
   const handleBack = () => {
     navigation.goBack();
   };
@@ -191,7 +238,7 @@ const MemberBill = ({ memberData }) => {
           <TouchableOpacity onPress={handleBack}>
             <Icon name="arrow-back" size={24} color={COLORS.white} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Member Billing</Text>
+          <Text style={styles.headerTitle}>Member Bill</Text>
           <View style={styles.headerSpacer} />
         </View>
 
@@ -199,12 +246,14 @@ const MemberBill = ({ memberData }) => {
           {/* Invoice Info */}
           <View style={styles.invoiceInfo}>
             <View>
-              <Text style={styles.invoiceLabel}>Bill Number</Text>
+              <Text style={styles.invoiceLabel}>Invoice Number</Text>
               <Text style={styles.invoiceValue}>{invoiceNumber}</Text>
             </View>
             <View>
               <Text style={styles.invoiceLabel}>Date</Text>
-              <Text style={styles.invoiceValue}>{currentDate}</Text>
+              <Text style={styles.invoiceValue}>
+                {new Date().toLocaleDateString('en-GB')}
+              </Text>
             </View>
           </View>
 
@@ -213,15 +262,17 @@ const MemberBill = ({ memberData }) => {
             <Text style={styles.sectionTitle}>Member Information</Text>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Name:</Text>
-              <Text style={styles.infoValue}>{member.fullName}</Text>
+              <Text style={styles.infoValue}>
+                {name} {surname}
+              </Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Email:</Text>
-              <Text style={styles.infoValue}>{member.email}</Text>
+              <Text style={styles.infoValue}>{email}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Phone:</Text>
-              <Text style={styles.infoValue}>{member.phone}</Text>
+              <Text style={styles.infoValue}>{phoneno}</Text>
             </View>
           </View>
 
@@ -230,11 +281,11 @@ const MemberBill = ({ memberData }) => {
             <Text style={styles.sectionTitle}>Membership Details</Text>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Start Date:</Text>
-              <Text style={styles.infoValue}>{member.planStart}</Text>
+              <Text style={styles.infoValue}>{startDate}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>End Date:</Text>
-              <Text style={styles.infoValue}>{member.planEnd}</Text>
+              <Text style={styles.infoValue}>{endDate}</Text>
             </View>
           </View>
 
@@ -242,20 +293,18 @@ const MemberBill = ({ memberData }) => {
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Billing Details</Text>
             <View style={styles.billingRow}>
-              <Text style={styles.billingLabel}>Membership Fee</Text>
-              <Text style={styles.billingValue}>{member.charges}/-</Text>
+              <Text style={styles.billingLabel}>Package Price</Text>
+              <Text style={styles.billingValue}>{packagePrice}/-</Text>
             </View>
             <View style={styles.billingRow}>
-              <Text style={styles.billingLabel}>Discount</Text>
-              <Text style={styles.billingValue}>-{member.discount}/-</Text>
+              <Text style={styles.billingLabel}>Price after discount</Text>
+              <Text style={styles.billingValue}>{discount}/-</Text>
             </View>
             <View style={styles.separator} />
             <View style={styles.billingRow}>
-              <Text style={[styles.billingLabel, styles.totalLabel]}>
-                Total Amount
-              </Text>
+              <Text style={styles.totalLabel}>Amount Payable</Text>
               <Text style={[styles.billingValue, styles.totalValue]}>
-                {totalAmount}/-
+                {discount}/-
               </Text>
             </View>
           </View>
@@ -317,7 +366,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: SIZES.padding,
+    padding: SIZES.base,
   },
   invoiceInfo: {
     flexDirection: 'row',
@@ -345,7 +394,8 @@ const styles = StyleSheet.create({
   },
   infoRow: {
     flexDirection: 'row',
-    marginBottom: SIZES.base / 2,
+    justifyContent: 'space-between',
+    paddingVertical: SIZES.base,
   },
   infoLabel: {
     ...FONTS.body4,
@@ -355,7 +405,6 @@ const styles = StyleSheet.create({
   infoValue: {
     ...FONTS.body4,
     color: COLORS.white,
-    flex: 1,
   },
   billingRow: {
     flexDirection: 'row',
@@ -364,7 +413,8 @@ const styles = StyleSheet.create({
   },
   billingLabel: {
     ...FONTS.body4,
-    color: COLORS.white,
+    color: COLORS.lightGray,
+    width: '35%',
   },
   billingValue: {
     ...FONTS.body4,
@@ -377,6 +427,8 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     ...FONTS.h4,
+    color: COLORS.white,
+    width: '35%',
   },
   totalValue: {
     ...FONTS.h4,

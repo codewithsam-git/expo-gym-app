@@ -73,29 +73,47 @@ const AddInventory = ({ navigation }) => {
     navigation.goBack();
   };
 
-  const pickImage = async () => {
-    // Ask for permission to access the media library (required on iOS)
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (permissionResult.granted === false) {
-      Alert.alert('Permission to access camera roll is required!');
-      return;
-    }
-
-    // Launch the image picker
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaType: ImagePicker.MediaTypeOptions.Images, // Only pick images
-      allowsEditing: true,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri); // Get the URI of the picked image
-    } else {
-      console.log('Image picker was canceled');
-    }
-  };
+   const pickImage = async (source) => {
+      const hasPermission = await requestPermission(source);
+      if (!hasPermission) return;
+  
+      let result;
+      if (source === 'camera') {
+        result = await ImagePicker.launchCameraAsync({
+          allowsEditing: true,
+          quality: 1,
+        });
+      } else {
+        result = await ImagePicker.launchImageLibraryAsync({
+          allowsEditing: true,
+          quality: 1,
+        });
+      }
+  
+      if (!result.canceled) {
+        const uri = result.assets[0].uri;
+        const fileExtension = uri.split('.').pop().toLowerCase();
+  
+        if (['png', 'jpg'].includes(fileExtension)) {
+  
+          const fileSize = result.assets[0].fileSize / 1024 / 1024;
+  
+          if (fileSize <= 2) {
+            setImageUri(uri);
+          } else {
+            Alert.alert('File Too Large', 'The image must be smaller than 2MB.', [
+              { text: 'OK' },
+            ]);
+          }
+        } else {
+          Alert.alert('Invalid File Type', 'Please select a JPG, or PNG image.', [
+            { text: 'OK' },
+          ]);
+        }
+      }
+  
+      setModalVisible(false);
+    };
 
   return (
     <SafeAreaView style={styles.safeArea}>

@@ -106,10 +106,7 @@ const History = ({ route }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Custom Header */}
-      <View
-          style={{
-            marginTop: Platform.OS === 'ios' ? '' : 50,
-          }}>
+      <View>
       <Animatable.View
         animation="fadeInDown"
         duration={800}

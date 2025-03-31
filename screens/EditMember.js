@@ -304,6 +304,20 @@ const EditMember = ({ route }) => {
   console.log(memberData.end_date, memberData.start_Date);
 
   const handleSubmit = async () => {
+
+    if (!memberData.name ||
+      !memberData.surname ||
+      !memberData.gender ||
+      !memberData.birthdate ||
+      !memberData.country ||
+      !memberData.city ||
+      !memberData.address ||
+      !memberData.package_name ||
+      !memberData.start_Date) {
+      Alert.alert('Missing Data', 'All fields are mandatory');
+      return;
+    }
+
     if (!memberData.email) {
       Alert.alert('Missing Data', ' Email is mandatory');
       return;
@@ -410,8 +424,27 @@ const EditMember = ({ route }) => {
     }
 
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+      const uri = result.assets[0].uri;
+      const fileExtension = uri.split('.').pop().toLowerCase();
+
+      if (['png', 'jpg'].includes(fileExtension)) {
+
+        const fileSize = result.assets[0].fileSize / 1024 / 1024;
+
+        if (fileSize <= 2) {
+          setImageUri(uri);
+        } else {
+          Alert.alert('File Too Large', 'The image must be smaller than 2MB.', [
+            { text: 'OK' },
+          ]);
+        }
+      } else {
+        Alert.alert('Invalid File Type', 'Please select a JPG, or PNG image.', [
+          { text: 'OK' },
+        ]);
+      }
     }
+
     setModalVisible(false);
   };
 
