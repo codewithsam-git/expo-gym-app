@@ -9,7 +9,6 @@ import {
   StyleSheet,
   Platform,
   SafeAreaView,
-  Dimensions,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
@@ -32,10 +31,12 @@ const EditStaff = ({ route }) => {
   const [role, setRole] = useState('');
   const [mobNo, setMobNo] = useState('');
   const [imageUri, setImageUri] = useState(null);
+  const [fetchedImg, setFetchedImg] = useState(false);
+  const [fetchedImageUri, setFetchedImageUri] = useState('');
+  const [fetchedImage, setFetchedImage] = useState(false);
 
   const fetchStaffById = async () => {
     try {
-      console.log(`${BASE_URL}/get-staff?id=${staffId}`);
       const response = await fetch(`${BASE_URL}/get-staff?id=${staffId}`);
 
       if (!response.ok) {
@@ -44,11 +45,11 @@ const EditStaff = ({ route }) => {
 
       const data = await response.json();
       const fetchedStaff = data.data;
-      console.log('fetchedStaff: ', fetchedStaff);
       setFullName(fetchedStaff.full_name);
       setRole(fetchedStaff.role);
       setMobNo(fetchedStaff.mob_no.toString());
-      setImageUri(fetchedStaff.profile_photo || 'profile.jpg');
+      setFetchedImageUri(fetchedStaff.profile_photo);
+      setFetchedImage(true);
     } catch (err) {
       console.error('Fetch error:', err);
       setSkeletonLoader(false);
@@ -59,42 +60,52 @@ const EditStaff = ({ route }) => {
     fetchStaffById();
   }, []);
 
-  const staffData = {
-    id: staffId,
-    full_name: fullName,
-    role: role,
-    mob_no: mobNo,
-    profile_photo: imageUri || 'profile.jpg',
-  };
-
   const handleSubmit = async () => {
+    if (!fullName || !role || !mobNo) {
+      Alert.alert('Please fill in all fields');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('full_name', fullName);
+    formData.append('role', role);
+    formData.append('mob_no', mobNo);
+    formData.append('id', staffId);
+
+    if (imageUri) {
+      const uriParts = imageUri.split('.');
+      const fileType = uriParts[uriParts.length - 1];
+
+      const file = {
+        uri: imageUri,
+        type: `image/${fileType}`,
+        name: `staff_image.${fileType}`,
+      };
+      formData.append('profile_photo', file);
+    }
+
     try {
-      console.log(`${BASE_URL}/edit-staff`);
-      console.log('staffData: ', staffData);
       const response = await fetch(`${BASE_URL}/edit-staff`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(staffData),
+        body: formData,
       });
 
-      console.log('response: ', response);
-
-      if (response.status === 200) {
-        Alert.alert(
-          'Success',
-          'staff updated successfully!',
-          [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
-          { cancelable: false }
-        );
+      const result = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Staff updated successfully');
+        setFullName('');
+        setRole('');
+        setMobNo('');
+        setImageUri(null);
         navigation.goBack();
       } else {
-        throw new Error('Failed to add staff');
+        Alert.alert(
+          'Failed to update staff',
+          result.message || 'Please try again.'
+        );
       }
     } catch (error) {
-      console.error('Error submitting data:', error);
-      Alert.alert('Error', 'Failed to add staff, please try again');
+      Alert.alert('Error', 'An error occurred while updating the staff.');
     }
   };
 
@@ -103,7 +114,6 @@ const EditStaff = ({ route }) => {
   };
 
   const pickImage = async () => {
-    // Ask for permission to access the media library (required on iOS)
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -112,15 +122,16 @@ const EditStaff = ({ route }) => {
       return;
     }
 
-    // Launch the image picker
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaType: ImagePicker.MediaTypeOptions.Images, // Only pick images
+      mediaType: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
     });
 
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri); // Get the URI of the picked image
+      setImageUri(result.assets[0].uri);
+      setFetchedImg(true);
+      setFetchedImage(false);
     } else {
       console.log('Image picker was canceled');
     }
@@ -137,7 +148,6 @@ const EditStaff = ({ route }) => {
               <View style={styles.formContainer}>
                 <Text style={styles.title}>Update staff</Text>
                 <View>
-                  {/* Full Name Input */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="user"
@@ -154,7 +164,6 @@ const EditStaff = ({ route }) => {
                     />
                   </View>
 
-                  {/* Role Dropdown */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="briefcase"
@@ -188,7 +197,6 @@ const EditStaff = ({ route }) => {
                     />
                   </View>
 
-                  {/* Mobile Number Input */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="phone"
@@ -214,13 +222,22 @@ const EditStaff = ({ route }) => {
                       style={styles.inputIcon}
                     />
                     <TouchableOpacity onPress={pickImage} style={styles.input}>
-                      <Text style={styles.imagePickerText}>
-                        {imageUri ? 'Change Photo' : 'Select Photo'}
-                      </Text>
+                      <Text style={styles.imagePickerText}>Change Photo</Text>
                     </TouchableOpacity>
                   </View>
 
-                  {imageUri && (
+                  {fetchedImage && (
+                    <View style={styles.imagePreviewContainer}>
+                      <Image
+                        source={{
+                          uri: `https://gym.cronicodigital.com/uploads/staffImage/${fetchedImageUri}`,
+                        }}
+                        style={styles.imagePreview}
+                      />
+                    </View>
+                  )}
+
+                  {fetchedImg && (
                     <View style={styles.imagePreviewContainer}>
                       <Image
                         source={{ uri: imageUri }}
@@ -269,8 +286,8 @@ const styles = StyleSheet.create({
   },
   formContainerWrapper: {
     flex: 1,
-    justifyContent: 'center', // Center vertically
-    alignItems: 'center', // Center horizontally
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   formContainer: {
     width: '90%',

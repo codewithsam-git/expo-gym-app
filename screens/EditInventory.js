@@ -9,16 +9,15 @@ import {
   StyleSheet,
   Platform,
   SafeAreaView,
-  Dimensions,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
   Image,
 } from 'react-native';
-import { COLORS, FONTS, SIZES, icons } from '../constants';
+import { COLORS, FONTS, SIZES } from '../constants';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
-import * as ImagePicker from 'expo-image-picker'; // Import expo-image-picker
+import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import BASE_URL from '../Api/commonApi';
 
@@ -29,11 +28,13 @@ const EditInventory = ({ route }) => {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [useFor, setUseFor] = useState('');
-  const [imageUri, setImageUri] = useState(null);
+  const [imageUri, setImageUri] = useState('');
+  const [fetchedImg, setFetchedImg] = useState(false);
+  const [fetchedImageUri, setFetchedImageUri] = useState('');
+  const [fetchedImage, setFetchedImage] = useState(false);
 
   const fetchInventoryById = async () => {
     try {
-      console.log(`${BASE_URL}/edit-inventory?id=${inventoryId}`);
       const response = await fetch(
         `${BASE_URL}/edit-inventory?id=${inventoryId}`
       );
@@ -47,7 +48,8 @@ const EditInventory = ({ route }) => {
       setName(fetchedInventory.name);
       setPrice(fetchedInventory.price.toString());
       setUseFor(fetchedInventory.useFor);
-      setImageUri(fetchedInventory.image);
+      setFetchedImageUri(fetchedInventory.image);
+      setFetchedImage(true);
     } catch (err) {
       console.error('Fetch error:', err);
       setSkeletonLoader(false);
@@ -58,42 +60,58 @@ const EditInventory = ({ route }) => {
     fetchInventoryById();
   }, []);
 
-  const inventoryData = {
-    id: inventoryId,
-    name: name,
-    price: price,
-    useFor: useFor,
-    image: imageUri || 'inventory.jpg',
-  };
-
   const handleSubmit = async () => {
+    if (!name || !price || !useFor) {
+      Alert.alert('Please fill in all fields');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('price', price);
+    formData.append('useFor', useFor);
+    formData.append('id', inventoryId);
+
+    if (imageUri) {
+      const uriParts = imageUri.split('.');
+      const fileType = uriParts[uriParts.length - 1];
+
+      const file = {
+        uri: imageUri,
+        type: `image/${fileType}`,
+        name: `inventory_image.${fileType}`,
+      };
+      formData.append('image', file);
+    }
+
     try {
-      console.log(`${BASE_URL}/update-inventory`);
-      console.log('inventoryData: ', inventoryData);
       const response = await fetch(`${BASE_URL}/update-inventory`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
-        body: JSON.stringify(inventoryData),
+        body: formData,
       });
 
-      console.log('response: ', response);
-
-      if (response.status === 200) {
-        Alert.alert(
-          'Success',
-          'Inventory item updated successfully!',
-          [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
-          { cancelable: false }
-        );
+      const result = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Inventory item updated successfully');
+        setName('');
+        setPrice('');
+        setUseFor('');
+        setImageUri('');
         navigation.goBack();
       } else {
-        throw new Error('Failed to update inventory');
+        Alert.alert(
+          'Failed to add inventory item',
+          result.message || 'Please try again.'
+        );
       }
     } catch (error) {
-      console.error('Error submitting data:', error);
-      Alert.alert('Error', 'Failed to update inventory, please try again');
+      Alert.alert(
+        'Error',
+        'An error occurred while adding the inventory item.'
+      );
     }
   };
 
@@ -101,46 +119,28 @@ const EditInventory = ({ route }) => {
     navigation.goBack();
   };
 
-  const pickImage = async (source) => {
-    const hasPermission = await requestPermission(source);
-    if (!hasPermission) return;
+  const pickImage = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    let result;
-    if (source === 'camera') {
-      result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        quality: 1,
-      });
-    } else {
-      result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
-        quality: 1,
-      });
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission to access camera roll is required!');
+      return;
     }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaType: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
 
     if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      const fileExtension = uri.split('.').pop().toLowerCase();
-
-      if (['png', 'jpg'].includes(fileExtension)) {
-
-        const fileSize = result.assets[0].fileSize / 1024 / 1024;
-
-        if (fileSize <= 2) {
-          setImageUri(uri);
-        } else {
-          Alert.alert('File Too Large', 'The image must be smaller than 2MB.', [
-            { text: 'OK' },
-          ]);
-        }
-      } else {
-        Alert.alert('Invalid File Type', 'Please select a JPG, or PNG image.', [
-          { text: 'OK' },
-        ]);
-      }
+      setImageUri(result.assets[0].uri);
+      setFetchedImg(true);
+      setFetchedImage(false);
+    } else {
+      console.log('Image picker was canceled');
     }
-
-    setModalVisible(false);
   };
 
   return (
@@ -154,7 +154,6 @@ const EditInventory = ({ route }) => {
               <View style={styles.formContainer}>
                 <Text style={styles.title}>Update Inventory Item</Text>
                 <View>
-                  {/* Name Input */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="tag"
@@ -171,7 +170,6 @@ const EditInventory = ({ route }) => {
                     />
                   </View>
 
-                  {/* Price Input */}
                   <View style={styles.inputContainer}>
                     <MaterialIcon
                       name="currency-rupee"
@@ -189,7 +187,6 @@ const EditInventory = ({ route }) => {
                     />
                   </View>
 
-                  {/* Use For Input */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="rocket"
@@ -203,10 +200,10 @@ const EditInventory = ({ route }) => {
                       value={useFor}
                       onChangeText={setUseFor}
                       style={styles.input}
+                      multiline={true}
                     />
                   </View>
 
-                  {/* Image Picker */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="camera"
@@ -215,13 +212,22 @@ const EditInventory = ({ route }) => {
                       style={styles.inputIcon}
                     />
                     <TouchableOpacity onPress={pickImage} style={styles.input}>
-                      <Text style={styles.imagePickerText}>
-                        {imageUri ? 'Change Photo' : 'Select Photo'}
-                      </Text>
+                      <Text style={styles.imagePickerText}>Change Photo</Text>
                     </TouchableOpacity>
                   </View>
 
-                  {imageUri && (
+                  {fetchedImage && (
+                    <View style={styles.imagePreviewContainer}>
+                      <Image
+                        source={{
+                          uri: `https://gym.cronicodigital.com/uploads/inventory/${fetchedImageUri}`,
+                        }}
+                        style={styles.imagePreview}
+                      />
+                    </View>
+                  )}
+
+                  {fetchedImg && (
                     <View style={styles.imagePreviewContainer}>
                       <Image
                         source={{ uri: imageUri }}
@@ -230,7 +236,6 @@ const EditInventory = ({ route }) => {
                     </View>
                   )}
 
-                  {/* Buttons */}
                   <View style={styles.buttonContainer}>
                     <TouchableOpacity
                       style={styles.cancelButton}
@@ -271,8 +276,8 @@ const styles = StyleSheet.create({
   },
   formContainerWrapper: {
     flex: 1,
-    justifyContent: 'center', // Center vertically
-    alignItems: 'center', // Center horizontally
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   formContainer: {
     width: '90%',

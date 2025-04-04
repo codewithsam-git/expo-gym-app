@@ -36,7 +36,7 @@ const Profile = ({ route }) => {
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState('');
   const [status, setStatus] = useState('');
-  const [imageUri, setImageUri] = useState(null);
+  const [imageUri, setImageUri] = useState('');
 
   const formatDate = (birthdate) => {
     const day = String(birthdate.getDate()).padStart(2, '0');
@@ -47,7 +47,6 @@ const Profile = ({ route }) => {
 
   const fetchMemberById = async () => {
     try {
-      console.log(`${BASE_URL}/edit-members?id=${memberId}`);
       const response = await fetch(`${BASE_URL}/edit-members?id=${memberId}`);
 
       if (!response.ok) {
@@ -72,7 +71,7 @@ const Profile = ({ route }) => {
       setStartDate(fetchedMember.start_Date);
       setEndDate(fetchedMember.end_date);
       setStatus(fetchedMember.memberStatus);
-      setImageUri(fetchMemberById.profile_image);
+      setImageUri(fetchedMember.profile_image);
     } catch (err) {
       console.error('Fetch error:', err);
       setSkeletonLoader(false);
@@ -111,7 +110,7 @@ const Profile = ({ route }) => {
           <View style={styles.profileHeader}>
             <Image
               source={{
-                uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
+                uri: `https://gym.cronicodigital.com/uploads/membersImage/${imageUri}` || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
               }}
               style={styles.profileHeaderImage}
             />
@@ -466,7 +465,9 @@ const styles = StyleSheet.create({
   icon: {
     marginRight: 10,
   },
-  textContainer: {},
+  textContainer: {
+    width: '80%'
+  },
   label: {
     fontSize: 12,
     fontWeight: '600',

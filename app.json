@@ -7,11 +7,6 @@
     "icon": "./assets/gym-logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/gym-logo.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -22,6 +17,7 @@
       "bundleIdentifier": "com.codewithsamexpo.snack2d750b5721b6479e938fb34fb5084fa2"
     },
     "android": {
+      "enableHermes": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/gym-logo.png",
         "backgroundColor": "#ffffff"

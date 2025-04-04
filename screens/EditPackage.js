@@ -14,7 +14,7 @@ import {
   KeyboardAvoidingView,
   Image,
 } from 'react-native';
-import { COLORS, FONTS, SIZES, icons } from '../constants';
+import { COLORS, FONTS, SIZES } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
@@ -25,9 +25,19 @@ import { useNavigation } from '@react-navigation/native';
 const EditPackage = ({ route }) => {
   const { packageId } = route.params;
   const navigation = useNavigation();
+
+  const [isDurationFocus, setIsDurationFocus] = useState(false);
+  const [imageUrl, setImageUrl] = useState(null);
+  const [packageName, setPackageName] = useState('');
+  const [price, setPrice] = useState('');
+  const [discount, setDiscount] = useState('');
+  const [duration, setDuration] = useState('');
+  const [fetchedImg, setFetchedImg] = useState(false);
+  const [fetchedImageUri, setFetchedImageUri] = useState('');
+  const [fetchedImage, setFetchedImage] = useState(false);
+
   const fetchPackageById = async () => {
     try {
-      console.log(`${BASE_URL}/edit-packages?id=${packageId}`);
       const response = await fetch(`${BASE_URL}/edit-packages?id=${packageId}`);
 
       if (!response.ok) {
@@ -36,12 +46,12 @@ const EditPackage = ({ route }) => {
 
       const data = await response.json();
       const fetchedPackage = data.data;
-      console.log(fetchedPackage);
       setPackageName(fetchedPackage.package_name);
       setDuration(fetchedPackage.package_duration);
       setPrice(fetchedPackage.package_amount.toString());
       setDiscount(fetchedPackage.discount.toString());
-      setImageUrl(fetchedPackage.image);
+      setFetchedImageUri(fetchedPackage.image);
+      setFetchedImage(true);
     } catch (err) {
       console.error('Fetch error:', err);
       setSkeletonLoader(false);
@@ -52,50 +62,54 @@ const EditPackage = ({ route }) => {
     fetchPackageById();
   }, []);
 
-  const [isDurationFocus, setIsDurationFocus] = useState(false);
-  const [imageUrl, setImageUrl] = useState(null);
-  const [packageName, setPackageName] = useState('');
-  const [price, setPrice] = useState('');
-  const [discount, setDiscount] = useState('');
-  const [duration, setDuration] = useState('');
-
-  const packageData = {
-    package_name: packageName,
-    package_duration: duration,
-    package_amount: price,
-    discount: discount,
-    image: 'imageUrl.jpg',
-    id: packageId,
-  };
-
   const handleSubmit = async () => {
+    if (!packageName || !duration || !price || !discount) {
+      Alert.alert('Please fill in all fields');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('package_name', packageName);
+    formData.append('package_duration', duration);
+    formData.append('package_amount', price);
+    formData.append('discount', discount);
+    formData.append('id', packageId);
+
+    if (imageUrl) {
+      const uriParts = imageUrl.split('.');
+      const fileType = uriParts[uriParts.length - 1];
+
+      const file = {
+        uri: imageUrl,
+        type: `image/${fileType}`,
+        name: `package_image.${fileType}`,
+      };
+      formData.append('image', file);
+    }
+
     try {
-      console.log(`${BASE_URL}/update-packages`);
-      console.log('packageData: ', packageData);
       const response = await fetch(`${BASE_URL}/update-packages`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(packageData),
+        body: formData,
       });
 
-      console.log('response: ', response);
-
-      if (response.status === 200) {
-        Alert.alert(
-          'Success',
-          'Package Updated successfully!',
-          [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
-          { cancelable: false }
-        );
+      const result = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Package updated successfully');
+        setPackageName('');
+        setDuration('');
+        setPrice('');
+        setDiscount('');
+        setImageUrl(null);
         navigation.goBack();
       } else {
-        throw new Error('Failed to add package');
+        Alert.alert(
+          'Failed to update package',
+          result.message || 'Please try again.'
+        );
       }
     } catch (error) {
-      console.error('Error submitting data:', error);
-      Alert.alert('Error', 'Failed to add package, please try again');
+      Alert.alert('Error', 'An error occurred while updating the package.');
     }
   };
 
@@ -119,7 +133,9 @@ const EditPackage = ({ route }) => {
     });
 
     if (!result.canceled) {
-      setImageUrl(result.assets[0].uri); // Get the URI of the picked image
+      setImageUrl(result.assets[0].uri);
+      setFetchedImg(true);
+      setFetchedImage(false);
     } else {
       console.log('Image picker was canceled');
     }
@@ -136,7 +152,6 @@ const EditPackage = ({ route }) => {
               <View style={styles.formContainer}>
                 <Text style={styles.title}>Update Package</Text>
                 <View>
-                  {/* Price Input */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="tag"
@@ -153,7 +168,6 @@ const EditPackage = ({ route }) => {
                     />
                   </View>
 
-                  {/* Duration Dropdown */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="calendar"
@@ -230,13 +244,22 @@ const EditPackage = ({ route }) => {
                       style={styles.inputIcon}
                     />
                     <TouchableOpacity onPress={pickImage} style={styles.input}>
-                      <Text style={styles.imagePickerText}>
-                        {imageUrl ? 'Change Photo' : 'Select Photo'}
-                      </Text>
+                      <Text style={styles.imagePickerText}>Change Photo</Text>
                     </TouchableOpacity>
                   </View>
 
-                  {imageUrl && (
+                  {fetchedImage && (
+                    <View style={styles.imagePreviewContainer}>
+                      <Image
+                        source={{
+                          uri: `https://gym.cronicodigital.com/uploads/packages/${fetchedImageUri}`,
+                        }}
+                        style={styles.imagePreview}
+                      />
+                    </View>
+                  )}
+
+                  {fetchedImg && (
                     <View style={styles.imagePreviewContainer}>
                       <Image
                         source={{ uri: imageUrl }}
@@ -245,7 +268,6 @@ const EditPackage = ({ route }) => {
                     </View>
                   )}
 
-                  {/* Buttons */}
                   <View style={styles.buttonContainer}>
                     <TouchableOpacity
                       style={styles.cancelButton}
@@ -286,8 +308,8 @@ const styles = StyleSheet.create({
   },
   formContainerWrapper: {
     flex: 1,
-    justifyContent: 'center', // Center vertically
-    alignItems: 'center', // Center horizontally
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   formContainer: {
     width: '90%',
@@ -299,9 +321,9 @@ const styles = StyleSheet.create({
     height: 'auto',
   },
   input: {
-    flex: 1, // Make input field take up the remaining space
+    flex: 1,
     borderBottomWidth: 1,
-    paddingVertical: 12, // Increased padding for better alignment
+    paddingVertical: 12,
     paddingHorizontal: 10,
     marginBottom: 20,
     color: COLORS.white,
@@ -309,7 +331,7 @@ const styles = StyleSheet.create({
     ...FONTS.body3,
   },
   inputIcon: {
-    marginRight: 10, // Space between icon and input field
+    marginRight: 10,
   },
   placeholderStyle: {
     fontSize: 16,

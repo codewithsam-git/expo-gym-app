@@ -8,22 +8,26 @@ import {
   Image,
   Platform,
   TouchableOpacity,
+  Linking,
+  Alert
 } from 'react-native';
 import { COLORS, FONTS, SIZES } from '../constants';
 import BASE_URL from '../Api/commonApi';
 import * as Animatable from 'react-native-animatable';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
+import Ionicon from 'react-native-vector-icons/FontAwesome';
 
 const History = ({ route }) => {
   const { memberId } = route.params;
+  const { whatsappContact } = route.params;
+
   const [billHistory, setBillHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
   const fetchBillHistory = async () => {
     try {
-      console.log(`${BASE_URL}/members-history?id=${memberId}`);
       const response = await fetch(
         `${BASE_URL}/members-history?id=${memberId}`
       );
@@ -63,9 +67,7 @@ const History = ({ route }) => {
             style={styles.profileWrapper}>
             <Image
               source={{
-                uri:
-                  bill.avatarUrl ||
-                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
+                uri: 'https://media.istockphoto.com/id/967495780/vector/history-list-button-icon-design-set-illustration-glyph-style-design.jpg?s=612x612&w=0&k=20&c=u88V8Oion9VomdgL5dKK6hgZle7HRSLIE8zpWeBCnZA='
               }}
               style={styles.profileImage}
               resizeMode="cover"
@@ -76,7 +78,6 @@ const History = ({ route }) => {
           </Animatable.View>
         </View>
 
-        {/* Bill Details */}
         <View style={styles.billDetails}>
           <View style={styles.billRow}>
             <Text style={styles.packageName}>{bill.package_name || 'N/A'}</Text>
@@ -91,39 +92,89 @@ const History = ({ route }) => {
               {new Date(bill.end_date).toLocaleDateString()}
             </Text>
           </View>
-          <TouchableOpacity
-            style={styles.viewBillButton}
-            onPress={() => {
-              navigation.navigate('memberBill', { num: bill.invoice_number });
-            }}>
-            <Text style={styles.viewBillText}>View Bill</Text>
-          </TouchableOpacity>
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.viewBillButton}
+              onPress={() => {
+                navigation.navigate('memberBill', { num: bill.invoice_number });
+              }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.viewBillText}>View Bill</Text>
+                <Icon
+                  name="receipt"
+                  size={20}
+                  color="white"
+                  style={{ marginLeft: 5 }}
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.shareOnWhatsappButton}
+              onPress={() => sendWhatsAppMessage(bill)}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.shareOnWhatsappText}>Share</Text>
+                <Ionicon
+                  name="whatsapp"
+                  size={20}
+                  color="white"
+                  style={{ marginLeft: 5 }}
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
       </Animatable.View>
     );
   }
 
+  const sendWhatsAppMessage = (bill) => {
+    const planName = bill.package_name || 'N/A';
+    const discountPrice = bill.packagePrice || 'N/A';
+    const startDate = new Date(bill.start_Date).toLocaleDateString();
+    const endDate = new Date(bill.end_date).toLocaleDateString();
+    const createDate = new Date().toLocaleDateString();
+
+    const message =
+      `Hello! 👋\n\n` +
+      `I hope you're doing well. 💼\n\n` +
+      `Please check your Membership Details! 📄\n\n` +
+      `📌 *Plan Name:* ${planName}\n` +
+      `💰 *Discount Price:* ₹${discountPrice}\n` +
+      `📅 *Start Date:* ${startDate}\n` +
+      `⏳ *End Date:* ${endDate}\n` +
+      `🗓️ *Created On:* ${createDate}\n\n` +
+      `For any questions, feel free to reach out. We're always here to help! 🤝\n\n` +
+      `Best regards,\n` +
+      `*OneHourGym Team*`;
+
+    const phoneNumber = whatsappContact;
+    const whatsappUrl = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(
+      message
+    )}`;
+
+    Linking.openURL(whatsappUrl).catch(() => {
+      Alert.alert(  'Make sure WhatsApp is installed on your device');
+    });
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Custom Header */}
       <View>
-      <Animatable.View
-        animation="fadeInDown"
-        duration={800}
-        style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color={COLORS.white} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Bill History</Text>
-        <View style={styles.headerSpacer} />
-      </Animatable.View>
+        <Animatable.View
+          animation="fadeInDown"
+          duration={800}
+          style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}>
+            <Icon name="arrow-back" size={24} color={COLORS.white} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Bill History</Text>
+          <View style={styles.headerSpacer} />
+        </Animatable.View>
       </View>
 
       <View style={styles.contentContainer}>
-        {/* Single Continuous Timeline (Non-Scrolling) */}
-
         {loading ? (
           <Text style={styles.loadingText}>Loading...</Text>
         ) : billHistory.length === 0 ? (
@@ -238,7 +289,7 @@ const styles = StyleSheet.create({
     marginBottom: SIZES.base,
   },
   packageName: {
-    ...FONTS.h3, // Slightly smaller than memberNameText
+    ...FONTS.h3,
     color: COLORS.white,
     fontWeight: '600',
     flex: 1,
@@ -265,6 +316,10 @@ const styles = StyleSheet.create({
     color: COLORS.lightGray,
     marginHorizontal: SIZES.base,
   },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'start',
+  },
   viewBillButton: {
     backgroundColor: COLORS.primary,
     paddingVertical: SIZES.base / 2,
@@ -273,6 +328,19 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   viewBillText: {
+    ...FONTS.body4,
+    color: COLORS.white,
+    fontWeight: '600',
+  },
+  shareOnWhatsappButton: {
+    backgroundColor: '#5DBE3F',
+    paddingVertical: SIZES.base / 2,
+    paddingHorizontal: SIZES.base,
+    marginHorizontal: SIZES.base,
+    borderRadius: SIZES.radius,
+    alignSelf: 'flex-start',
+  },
+  shareOnWhatsappText: {
     ...FONTS.body4,
     color: COLORS.white,
     fontWeight: '600',

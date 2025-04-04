@@ -25,7 +25,6 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import BASE_URL from '../Api/commonApi';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { makeMutable } from 'react-native-reanimated';
 
 const AddMember = () => {
   const navigation = useNavigation();
@@ -96,7 +95,6 @@ const AddMember = () => {
 
   const fetchCountries = async () => {
     try {
-      console.log(`https://countriesnow.space/api/v0.1/countries/positions`);
       const response = await fetch(
         `https://countriesnow.space/api/v0.1/countries/positions`
       );
@@ -136,13 +134,12 @@ const AddMember = () => {
   const [duration, setDuration] = useState('');
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState('');
-  const [imageUri, setImageUri] = useState(null);
+  const [imageUri, setImageUri] = useState('');
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
   const fetchPackages = async () => {
     try {
-      console.log(`${BASE_URL}/packages`);
       const response = await fetch(`${BASE_URL}/packages`);
 
       if (!response.ok) {
@@ -183,7 +180,7 @@ const AddMember = () => {
     setDuration('');
     setStartDate('');
     setEndDate('');
-    setImageUri(null);
+    setImageUri('');
   }, []);
 
   const handleStepClick = (stepIndex) => {
@@ -253,11 +250,11 @@ const AddMember = () => {
     start_Date: startDate,
     end_date: endDate,
     memberStatus: 'Active',
-    profile_image: (imageUri || 'profile.jpg').split('/').pop(),
   };
 
   const handleSubmit = async () => {
-    if (!memberData.name ||
+    if (
+      !memberData.name ||
       !memberData.surname ||
       !memberData.gender ||
       !memberData.birthdate ||
@@ -265,13 +262,14 @@ const AddMember = () => {
       !memberData.city ||
       !memberData.address ||
       !memberData.package_name ||
-      !memberData.start_Date) {
+      !memberData.start_Date
+    ) {
       Alert.alert('Missing Data', 'All fields are mandatory');
       return;
     }
 
     if (!memberData.email) {
-      Alert.alert('Missing Data', ' Email is mandatory');
+      Alert.alert('Missing Data', 'Email is mandatory');
       setCurrentStep(0);
       return;
     }
@@ -301,25 +299,34 @@ const AddMember = () => {
       setCurrentStep(0);
       return;
     }
+
     setLoading(true);
+
+    const formData = new FormData();
+
+    for (const key in memberData) {
+      formData.append(key, memberData[key]);
+    }
+
+    if (imageUri) {
+      const imageName = imageUri.split('/').pop();
+      const imageType = imageUri.split('.').pop();
+      formData.append('profile_image', {
+        uri: imageUri,
+        name: imageName,
+        type: `image/${imageType}`,
+      });
+    }
+
     try {
-      console.log(`${BASE_URL}/save-members`);
       const response = await fetch(`${BASE_URL}/save-members`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(memberData),
+        body: formData,
       });
-
-      console.log('response: ', response);
-
-      if (response.status === 200) {
+      if (response.ok) {
         Alert.alert('Success', 'Member added successfully!', [{ text: 'OK' }], {
           cancelable: false,
         });
-        console.log('memberData', memberData);
-
         setFirstName('');
         setLastName('');
         setGender('');
@@ -336,7 +343,7 @@ const AddMember = () => {
         setEndDate('');
         setCurrentStep(0);
         setLoading(false);
-        navigation.navigate('viewMember');
+        navigation.goBack();
       } else {
         throw new Error('Failed to add member');
       }
@@ -353,7 +360,8 @@ const AddMember = () => {
     if (type === 'camera') {
       permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     } else {
-      permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
     }
 
     if (permissionResult.status === 'granted') {
@@ -389,27 +397,8 @@ const AddMember = () => {
     }
 
     if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      const fileExtension = uri.split('.').pop().toLowerCase();
-
-      if (['png', 'jpg'].includes(fileExtension)) {
-
-        const fileSize = result.assets[0].fileSize / 1024 / 1024;
-
-        if (fileSize <= 2) {
-          setImageUri(uri);
-        } else {
-          Alert.alert('File Too Large', 'The image must be smaller than 2MB.', [
-            { text: 'OK' },
-          ]);
-        }
-      } else {
-        Alert.alert('Invalid File Type', 'Please select a JPG, or PNG image.', [
-          { text: 'OK' },
-        ]);
-      }
+      setImageUri(result.assets[0].uri);
     }
-
     setModalVisible(false);
   };
 
@@ -423,7 +412,6 @@ const AddMember = () => {
           <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
             <View style={styles.formContainerWrapper}>
               <View style={styles.formContainer}>
-                {/* Step Indicator */}
                 <StepIndicator
                   customStyles={{
                     stepIndicatorSize: 40,
@@ -432,9 +420,9 @@ const AddMember = () => {
                     currentStepStrokeWidth: 4,
                     stepStrokeWidth: 3,
                     labelColor: COLORS.white,
-                    stepStrokeCurrentColor: '#F1A800', // Light Yellow for current step stroke
-                    stepIndicatorCurrentColor: '#F1A800', // Light Yellow for current step
-                    stepIndicatorColor: '#F1A800', // Light Yellow for inactive steps
+                    stepStrokeCurrentColor: '#F1A800',
+                    stepIndicatorCurrentColor: '#F1A800',
+                    stepIndicatorColor: '#F1A800',
                   }}
                   stepCount={steps.length}
                   currentPosition={currentStep}
@@ -820,7 +808,8 @@ const AddMember = () => {
                             />
                           </View>
                           <Text style={styles.imageDescription}>
-                            Please upload an image in JPG or PNG format, with a maximum size of 2MB.
+                            Please upload an image in JPG or PNG format, with a
+                            maximum size of 2MB.
                           </Text>
                         </View>
                       )}
@@ -890,7 +879,6 @@ const AddMember = () => {
                 </View>
 
                 <View style={styles.buttons}>
-                  {/* Navigation Buttons */}
                   {currentStep === 0 ? (
                     <TouchableOpacity onPress={() => navigation.goBack()}>
                       <Text style={styles.buttonText}>Cancel</Text>
@@ -912,7 +900,6 @@ const AddMember = () => {
                       <Text style={styles.buttonText}>Next</Text>
                     </TouchableOpacity>
                   ) : (
-                    // Displaying the 'Save & Generate Bill' button or 'Generating...' message
                     <TouchableOpacity onPress={handleSubmit} disabled={loading}>
                       {loading ? (
                         <Text
@@ -933,13 +920,6 @@ const AddMember = () => {
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
-      {/*<View style={styles.actionContainer}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.downloadButton]}
-          onPress={() => navigation.goBack()}>
-          <Text style={styles.buttonText1}>View Members</Text>
-        </TouchableOpacity>
-      </View>*/}
     </SafeAreaView>
   );
 };
@@ -951,8 +931,8 @@ const styles = StyleSheet.create({
   },
   formContainerWrapper: {
     flex: 1,
-    justifyContent: 'center', // Center vertically
-    alignItems: 'center', // Center horizontally
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   formContainer: {
     backgroundColor: COLORS.secondary,

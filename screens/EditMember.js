@@ -14,16 +14,16 @@ import {
   KeyboardAvoidingView,
   Modal,
   Image,
-  Linking,
 } from 'react-native';
 import StepIndicator from 'react-native-step-indicator';
-import { COLORS, FONTS, SIZES, images } from '../constants';
+import { COLORS, FONTS, SIZES } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import BASE_URL from '../Api/commonApi';
 import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 
 const EditMember = ({ route }) => {
   const { memberId } = route.params;
@@ -95,7 +95,6 @@ const EditMember = ({ route }) => {
 
   const fetchCountries = async () => {
     try {
-      console.log(`https://countriesnow.space/api/v0.1/countries/positions`);
       const response = await fetch(
         `https://countriesnow.space/api/v0.1/countries/positions`
       );
@@ -138,10 +137,12 @@ const EditMember = ({ route }) => {
   const [imageUri, setImageUri] = useState(null);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [fetchedImg, setFetchedImg] = useState(false);
+  const [fetchedImageUri, setFetchedImageUri] = useState('');
+  const [fetchedImage, setFetchedImage] = useState(false);
 
   const fetchPackages = async () => {
     try {
-      console.log(`${BASE_URL}/packages`);
       const response = await fetch(`${BASE_URL}/packages`);
 
       if (!response.ok) {
@@ -169,7 +170,6 @@ const EditMember = ({ route }) => {
 
   const fetchMemberById = async () => {
     try {
-      console.log(`${BASE_URL}/edit-members?id=${memberId}`);
       const response = await fetch(`${BASE_URL}/edit-members?id=${memberId}`);
 
       if (!response.ok) {
@@ -193,7 +193,8 @@ const EditMember = ({ route }) => {
       setDuration(fetchedMember.duration);
       setStartDate(fetchedMember.start_Date);
       setEndDate(fetchedMember.end_date);
-      setImageUri(fetchMemberById.profile_image);
+      setFetchedImageUri(fetchedMember.profile_image);
+      setFetchedImage(true);
     } catch (err) {
       console.error('Fetch error:', err);
       setSkeletonLoader(false);
@@ -246,7 +247,6 @@ const EditMember = ({ route }) => {
 
     if (!startDate) return;
 
-    console.log('item.duration: ', item.duration);
     let endDateObj = new Date(startDate);
 
     if (item.duration) {
@@ -270,7 +270,6 @@ const EditMember = ({ route }) => {
       return `${year}-${month}-${day}`;
     };
 
-    console.log('formatDate(endDateObj): ', formatDate(endDateObj));
     setEndDate(formatDate(endDateObj));
   };
 
@@ -282,6 +281,7 @@ const EditMember = ({ route }) => {
   };
 
   const memberData = {
+    id: memberId,
     name: firstName,
     surname: lastName,
     gender: gender,
@@ -298,28 +298,11 @@ const EditMember = ({ route }) => {
     start_Date: startDate,
     end_date: endDate,
     memberStatus: 'Active',
-    profile_image: 'img.jpg',
   };
 
-  console.log(memberData.end_date, memberData.start_Date);
-
   const handleSubmit = async () => {
-
-    if (!memberData.name ||
-      !memberData.surname ||
-      !memberData.gender ||
-      !memberData.birthdate ||
-      !memberData.country ||
-      !memberData.city ||
-      !memberData.address ||
-      !memberData.package_name ||
-      !memberData.start_Date) {
-      Alert.alert('Missing Data', 'All fields are mandatory');
-      return;
-    }
-
     if (!memberData.email) {
-      Alert.alert('Missing Data', ' Email is mandatory');
+      Alert.alert('Missing Data', 'Email is mandatory');
       return;
     }
 
@@ -345,34 +328,57 @@ const EditMember = ({ route }) => {
       );
       return;
     }
-    setLoading(true);
-    try {
-      console.log(`${BASE_URL}/edit-membersData?id=${memberId}`);
-      const response = await fetch(
-        `${BASE_URL}/edit-membersData?id=${memberId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(memberData),
-        }
-      );
 
-      console.log('response: ', response);
+    setLoading(true);
+
+    const formData = new FormData();
+
+    for (const key in memberData) {
+      formData.append(key, memberData[key]);
+    }
+
+    if (imageUri) {
+      const imageName = imageUri.split('/').pop();
+      const imageType = imageUri.split('.').pop();
+      formData.append('profile_image', {
+        uri: imageUri,
+        name: imageName,
+        type: `image/${imageType}`,
+      });
+    }
+
+    try {
+      const response = await fetch(`${BASE_URL}/edit-membersData`, {
+        method: 'POST',
+        body: formData,
+      });
 
       if (response.ok) {
         Alert.alert(
           'Success',
-          'Member Updated successfully!',
+          'Member updated successfully!',
           [{ text: 'OK' }],
           {
             cancelable: false,
           }
         );
+        setFirstName('');
+        setLastName('');
+        setGender('');
+        setBirthdate('');
+        setEmail('');
+        setMobileNo('');
+        setCountry('');
+        setCity('');
+        setPlanName('');
+        setCharges('');
+        setDiscount('');
+        setDuration('');
+        setStartDate('');
+        setEndDate('');
         navigation.goBack();
       } else {
-        throw new Error('Failed to add member');
+        throw new Error('Failed to update member');
       }
     } catch (error) {
       console.error('Error submitting data:', error);
@@ -381,70 +387,28 @@ const EditMember = ({ route }) => {
     }
   };
 
-  const requestPermission = async (type) => {
-    let permissionResult;
+  const pickImage = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (type === 'camera') {
-      permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-    } else {
-      permissionResult =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission to access camera roll is required!');
+      return;
     }
 
-    if (permissionResult.status === 'granted') {
-      return true;
-    } else {
-      Alert.alert(
-        'Permission Denied',
-        `To access the ${type}, enable permissions in your device settings.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => Linking.openSettings() },
-        ]
-      );
-      return false;
-    }
-  };
-
-  const pickImage = async (source) => {
-    const hasPermission = await requestPermission(source);
-    if (!hasPermission) return;
-
-    let result;
-    if (source === 'camera') {
-      result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        quality: 1,
-      });
-    } else {
-      result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
-        quality: 1,
-      });
-    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaType: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
 
     if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      const fileExtension = uri.split('.').pop().toLowerCase();
-
-      if (['png', 'jpg'].includes(fileExtension)) {
-
-        const fileSize = result.assets[0].fileSize / 1024 / 1024;
-
-        if (fileSize <= 2) {
-          setImageUri(uri);
-        } else {
-          Alert.alert('File Too Large', 'The image must be smaller than 2MB.', [
-            { text: 'OK' },
-          ]);
-        }
-      } else {
-        Alert.alert('Invalid File Type', 'Please select a JPG, or PNG image.', [
-          { text: 'OK' },
-        ]);
-      }
+      setImageUri(result.assets[0].uri);
+      setFetchedImg(true);
+      setFetchedImage(false);
+    } else {
+      console.log('Image picker was canceled');
     }
-
     setModalVisible(false);
   };
 
@@ -458,7 +422,6 @@ const EditMember = ({ route }) => {
           <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
             <View style={styles.formContainerWrapper}>
               <View style={styles.formContainer}>
-                {/* Step Indicator */}
                 <StepIndicator
                   customStyles={{
                     stepIndicatorSize: 40,
@@ -467,9 +430,9 @@ const EditMember = ({ route }) => {
                     currentStepStrokeWidth: 4,
                     stepStrokeWidth: 3,
                     labelColor: COLORS.white,
-                    stepStrokeCurrentColor: '#F1A800', // Light Yellow for current step stroke
-                    stepIndicatorCurrentColor: '#F1A800', // Light Yellow for current step
-                    stepIndicatorColor: '#F1A800', // Light Yellow for inactive steps
+                    stepStrokeCurrentColor: '#F1A800',
+                    stepIndicatorCurrentColor: '#F1A800',
+                    stepIndicatorColor: '#F1A800',
                   }}
                   stepCount={steps.length}
                   currentPosition={currentStep}
@@ -827,37 +790,27 @@ const EditMember = ({ route }) => {
                               style={styles.imageIcon}
                             />
                           </View>
-                          <Text style={styles.imageText}>
-                            {imageUri ? 'Change Photo' : 'Select Photo'}
-                          </Text>
+                          <Text style={styles.imageText}>Change Photo</Text>
                         </TouchableOpacity>
                       </View>
 
-                      {imageUri ? (
-                        <View>
-                          <View style={styles.imagePreviewContainer}>
-                            <Image
-                              source={{ uri: imageUri }}
-                              style={styles.imagePreview}
-                            />
-                          </View>
-                          <Text style={styles.imageDescription}>
-                            This is your selected photo. You can update it
-                            anytime by tapping 'Change Photo'.
-                          </Text>
+                      {fetchedImage && (
+                        <View style={styles.imagePreviewContainer}>
+                          <Image
+                            source={{
+                              uri: `https://gym.cronicodigital.com/uploads/membersImage/${fetchedImageUri}`,
+                            }}
+                            style={styles.imagePreview}
+                          />
                         </View>
-                      ) : (
-                        <View>
-                          <View style={styles.imagePreviewContainer}>
-                            <Image
-                              source={images.noData}
-                              style={styles.imagePreview}
-                            />
-                          </View>
-                          <Text style={styles.imageDescription}>
-                            No image selected. Tap 'Select Photo' to upload an
-                            image.
-                          </Text>
+                      )}
+
+                      {fetchedImg && (
+                        <View style={styles.imagePreviewContainer}>
+                          <Image
+                            source={{ uri: imageUri }}
+                            style={styles.imagePreview}
+                          />
                         </View>
                       )}
 
@@ -926,7 +879,6 @@ const EditMember = ({ route }) => {
                 </View>
 
                 <View style={styles.buttons}>
-                  {/* Navigation Buttons */}
                   {currentStep === 0 ? (
                     <TouchableOpacity onPress={() => navigation.goBack()}>
                       <Text style={styles.buttonText}>Cancel</Text>
@@ -948,7 +900,6 @@ const EditMember = ({ route }) => {
                       <Text style={styles.buttonText}>Next</Text>
                     </TouchableOpacity>
                   ) : (
-                    // Displaying the 'Save & Generate Bill' button or 'Generating...' message
                     <TouchableOpacity onPress={handleSubmit} disabled={loading}>
                       {loading ? (
                         <Text
@@ -980,8 +931,8 @@ const styles = StyleSheet.create({
   },
   formContainerWrapper: {
     flex: 1,
-    justifyContent: 'center', // Center vertically
-    alignItems: 'center', // Center horizontally
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   formContainer: {
     backgroundColor: COLORS.secondary,

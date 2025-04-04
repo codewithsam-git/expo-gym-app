@@ -79,7 +79,7 @@ const Notification = ({ navigation }) => {
           <View style={styles.avatarContainer}>
             <Image
               source={{
-                uri: 'https://www.shutterstock.com/image-vector/vector-design-avatar-dummy-sign-260nw-1290556063.jpg',
+                uri: `https://gym.cronicodigital.com/uploads/membersImage/${member.profile_image}` || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',                
               }}
               style={styles.avatar}
               resizeMode="cover"
@@ -107,7 +107,6 @@ const Notification = ({ navigation }) => {
 
   const fetchMembers = async () => {
     try {
-      console.log(`${BASE_URL}/dashboard`);
       const response = await fetch(`${BASE_URL}/dashboard`);
 
       if (!response.ok) {

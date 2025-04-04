@@ -1,10 +1,11 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.codewithsamexpo.snack2d750b5721b6479e938fb34fb5084fa2" xmlns:tools="http://schemas.android.com/tools">
+  <uses-permission android:name="android.permission.CAMERA"/>
   <uses-permission android:name="android.permission.INTERNET"/>
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+  <uses-permission android:name="android.permission.RECORD_AUDIO"/>
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-  
   <queries>
     <intent>
       <action android:name="android.intent.action.VIEW"/>
@@ -26,6 +27,7 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="com.codewithsamexpo.snack2d750b5721b6479e938fb34fb5084fa2"/>
+        <data android:scheme="exp+snack-2d750b57-21b6-479e-938f-b34fb5084fa2"/>
       </intent-filter>
     </activity>
   </application>

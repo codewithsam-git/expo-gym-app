@@ -24,7 +24,7 @@ import BASE_URL from '../Api/commonApi';
 
 const UpdatePlan = ({ route }) => {
   const navigation = useNavigation();
-  const { memberId } = route.params;  
+  const { memberId } = route.params;
 
   const [choosePlan, setChoosePlan] = useState([]);
   const [members, setMembers] = useState({});
@@ -50,7 +50,6 @@ const UpdatePlan = ({ route }) => {
 
   const fetchMemberById = async () => {
     try {
-      console.log(`${BASE_URL}/update-plan?id=${memberId}`);
       const response = await fetch(`${BASE_URL}/update-plan?id=${memberId}`);
 
       if (!response.ok) {
@@ -68,7 +67,7 @@ const UpdatePlan = ({ route }) => {
         duration: pkg.package_duration,
       }));
       setChoosePlan(packageOptions);
-      setPlanName(data.updatePlanData.package_name);
+      // setPlanName(data.updatePlanData.package_name);
       setFirstName(fetchedMember.name);
       setLastName(fetchedMember.surname);
       setGender(fetchedMember.gender);
@@ -78,13 +77,12 @@ const UpdatePlan = ({ route }) => {
       setCountry(fetchedMember.country);
       setCity(fetchedMember.city);
       setAddress(fetchedMember.address);
-      setCharges(fetchedMember.packagePrice.toString());
-      setDiscount(fetchedMember.discountFinalPrice.toString());
+      // setCharges(fetchedMember.packagePrice.toString());
+      // setDiscount(fetchedMember.discountFinalPrice.toString());
       setDuration(fetchedMember.duration);
-      setStartDate(fetchedMember.start_Date);
-      setEndDate(fetchedMember.end_date);
-      setImageUri(fetchMemberById.profile_image);
-      console.log("fetchedMember.end_date: ", fetchedMember.end_date);
+      // setStartDate(fetchedMember.start_Date);
+      // setEndDate(fetchedMember.end_date);
+      setImageUri(fetchedMember.profile_image);
     } catch (err) {
       console.error('Fetch error:', err);
     }
@@ -144,7 +142,6 @@ const UpdatePlan = ({ route }) => {
 
     if (!startDate) return;
 
-    console.log('item.duration: ', item.duration);
     let endDateObj = new Date(startDate);
 
     if (item.duration) {
@@ -168,7 +165,6 @@ const UpdatePlan = ({ route }) => {
       return `${year}-${month}-${day}`;
     };
 
-    console.log('formatDate(endDateObj): ', formatDate(endDateObj));
     setEndDate(formatDate(endDateObj));
   };
 
@@ -194,9 +190,17 @@ const UpdatePlan = ({ route }) => {
   };
 
   const handleUpdate = async () => {
-    console.log('membersData: ', memberData);
+    if (!planName) {
+      Alert.alert("Please Select Your Plan");
+      return;
+    }
+
+    if (!startDate) {
+      Alert.alert("Please Select Start Date");
+      return;
+    }
+
     try {
-      console.log(`${BASE_URL}/update-plan-save`);
       const response = await fetch(`${BASE_URL}/update-plan-save`, {
         method: 'POST',
         headers: {
@@ -204,8 +208,6 @@ const UpdatePlan = ({ route }) => {
         },
         body: JSON.stringify(memberData),
       });
-
-      console.log('response: ', response);
 
       if (response.ok) {
         Alert.alert(
@@ -231,7 +233,7 @@ const UpdatePlan = ({ route }) => {
       <View style={styles.profileHeader}>
         <Image
           source={{
-            uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
+            uri: `https://gym.cronicodigital.com/uploads/membersImage/${imageUri}`,
           }}
           style={styles.profileHeaderImage}
         />
@@ -396,6 +398,7 @@ const UpdatePlan = ({ route }) => {
                   value={charges}
                   onChangeText={setCharges}
                   style={styles.input}
+                  editable={false}
                 />
               </View>
 
@@ -412,7 +415,7 @@ const UpdatePlan = ({ route }) => {
                   value={discount}
                   onChangeText={setDiscount}
                   style={styles.input}
-                  keyboardType="numeric"
+                  editable={false}
                 />
               </View>
 
@@ -474,7 +477,6 @@ const UpdatePlan = ({ route }) => {
         <TouchableOpacity
           style={[styles.actionButton, styles.cancelButton]}
           onPress={() => {
-            console.log(navigation);
             navigation.goBack();
           }}>
           <Text style={styles.buttonText}>Back</Text>
@@ -498,7 +500,6 @@ const styles = StyleSheet.create({
   profileHeader: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Platform.OS === 'ios' ? 20 : 60,
   },
   profileHeaderImage: {
     width: 80,
@@ -528,11 +529,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   column: {
-    width: '40%',
+    width: '60%',
     marginRight: 10, // Space between columns
   },
   column1: {
-    width: '60%',
+    width: '40%',
     marginRight: 10, // Space between columns
   },
   field: {

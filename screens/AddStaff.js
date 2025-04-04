@@ -9,13 +9,12 @@ import {
   StyleSheet,
   Platform,
   SafeAreaView,
-  Dimensions,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
   Image,
 } from 'react-native';
-import { COLORS, FONTS, SIZES, icons } from '../constants';
+import { COLORS, FONTS, SIZES } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import * as ImagePicker from 'expo-image-picker';
@@ -29,44 +28,51 @@ const AddStaff = ({ navigation }) => {
   const [mobNo, setMobNo] = useState('');
   const [imageUri, setImageUri] = useState(null);
 
-  const staffData = {
-    full_name: fullName,
-    role: role,
-    mob_no: mobNo,
-    profile_photo: imageUri || 'profile.jpg',
-  };
-
   const handleSubmit = async () => {
+    if (!fullName || !role || !mobNo) {
+      Alert.alert('Please fill in all fields');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('full_name', fullName);
+    formData.append('role', role);
+    formData.append('mob_no', mobNo);
+
+    if (imageUri) {
+      const uriParts = imageUri.split('.');
+      const fileType = uriParts[uriParts.length - 1];
+
+      const file = {
+        uri: imageUri,
+        type: `image/${fileType}`,
+        name: `staff_image.${fileType}`,
+      };
+      formData.append('profile_photo', file);
+    }
+
     try {
-      console.log(`${BASE_URL}/save-staff`);
-      console.log('staffData: ', staffData);
       const response = await fetch(`${BASE_URL}/save-staff`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(staffData),
+        body: formData,
       });
 
-      console.log('response: ', response);
+      const result = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Staff added successfully');
 
-      if (response.status === 200) {
-        Alert.alert(
-          'Success',
-          'staff added successfully!',
-          [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
-          { cancelable: false }
-        );
         setFullName('');
         setRole('');
         setMobNo('');
         setImageUri(null);
       } else {
-        throw new Error('Failed to add staff');
+        Alert.alert(
+          'Failed to add staff',
+          result.message || 'Please try again.'
+        );
       }
     } catch (error) {
-      console.error('Error submitting data:', error);
-      Alert.alert('Error', 'Failed to add staff, please try again');
+      Alert.alert('Error', 'An error occurred while adding the staff.');
     }
   };
 
@@ -75,7 +81,6 @@ const AddStaff = ({ navigation }) => {
   };
 
   const pickImage = async () => {
-    // Ask for permission to access the media library (required on iOS)
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -84,15 +89,14 @@ const AddStaff = ({ navigation }) => {
       return;
     }
 
-    // Launch the image picker
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaType: ImagePicker.MediaTypeOptions.Images, // Only pick images
+      mediaType: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
     });
 
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri); // Get the URI of the picked image
+      setImageUri(result.assets[0].uri);
     } else {
       console.log('Image picker was canceled');
     }
@@ -106,125 +110,114 @@ const AddStaff = ({ navigation }) => {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
             <View style={styles.formContainerWrapper}>
-            <View style={styles.formContainer}>
-              <Text style={styles.title}>Add New staff</Text>
-              <View>
-                {/* Full Name Input */}
-                <View style={styles.inputContainer}>
-                  <Icon
-                    name="user"
-                    size={20}
-                    color={COLORS.primary}
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    placeholder="Full Name"
-                    placeholderTextColor={COLORS.lightGray}
-                    value={fullName}
-                    onChangeText={setFullName}
-                    style={styles.input}
-                  />
-                </View>
-
-                {/* Role Dropdown */}
-                <View style={styles.inputContainer}>
-                  <Icon
-                    name="briefcase"
-                    size={20}
-                    color={COLORS.primary}
-                    style={styles.inputIcon}
-                  />
-                  <Dropdown
-                    style={[styles.input, isRoleFocus]}
-                    placeholderStyle={styles.placeholderStyle}
-                    selectedTextStyle={styles.selectedTextStyle}
-                    inputSearchStyle={styles.inputSearchStyle}
-                    data={[
-                      { label: 'Admin', value: 'Admin' },
-                      { label: 'Manager', value: 'Manager' },
-                      { label: 'Staff', value: 'Staff' },
-                    ]}
-                    search
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    placeholder={!isRoleFocus ? 'Select Role' : '...'}
-                    searchPlaceholder="Search..."
-                    value={role}
-                    onFocus={() => setIsRoleFocus(true)}
-                    onBlur={() => setIsRoleFocus(false)}
-                    onChange={(item) => {
-                      setRole(item.value);
-                      setIsRoleFocus(false);
-                    }}
-                  />
-                </View>
-
-                {/* Mobile Number Input */}
-                <View style={styles.inputContainer}>
-                  <Icon
-                    name="phone"
-                    size={20}
-                    color={COLORS.primary}
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    placeholder="Mobile Number"
-                    placeholderTextColor={COLORS.lightGray}
-                    value={mobNo}
-                    onChangeText={setMobNo}
-                    style={styles.input}
-                    keyboardType="phone-pad"
-                  />
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Icon
-                    name="camera"
-                    size={20}
-                    color={COLORS.primary}
-                    style={styles.inputIcon}
-                  />
-                  <TouchableOpacity onPress={pickImage} style={styles.input}>
-                    <Text style={styles.imagePickerText}>
-                      {imageUri ? 'Change Photo' : 'Select Photo'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                {imageUri && (
-                  <View style={styles.imagePreviewContainer}>
-                    <Image
-                      source={{ uri: imageUri }}
-                      style={styles.imagePreview}
+              <View style={styles.formContainer}>
+                <Text style={styles.title}>Add New staff</Text>
+                <View>
+                  <View style={styles.inputContainer}>
+                    <Icon
+                      name="user"
+                      size={20}
+                      color={COLORS.primary}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      placeholder="Full Name"
+                      placeholderTextColor={COLORS.lightGray}
+                      value={fullName}
+                      onChangeText={setFullName}
+                      style={styles.input}
                     />
                   </View>
-                )}
 
-                {/* Buttons */}
-                <View style={styles.buttonContainer}>
-                  <TouchableOpacity style={styles.button} onPress={onCancel}>
-                    <Text style={styles.buttonText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.button}
-                    onPress={handleSubmit}>
-                    <Text style={styles.buttonText}>Submit</Text>
-                  </TouchableOpacity>
+                  <View style={styles.inputContainer}>
+                    <Icon
+                      name="briefcase"
+                      size={20}
+                      color={COLORS.primary}
+                      style={styles.inputIcon}
+                    />
+                    <Dropdown
+                      style={[styles.input, isRoleFocus]}
+                      placeholderStyle={styles.placeholderStyle}
+                      selectedTextStyle={styles.selectedTextStyle}
+                      inputSearchStyle={styles.inputSearchStyle}
+                      data={[
+                        { label: 'Admin', value: 'Admin' },
+                        { label: 'Manager', value: 'Manager' },
+                        { label: 'Staff', value: 'Staff' },
+                      ]}
+                      search
+                      maxHeight={300}
+                      labelField="label"
+                      valueField="value"
+                      placeholder={!isRoleFocus ? 'Select Role' : '...'}
+                      searchPlaceholder="Search..."
+                      value={role}
+                      onFocus={() => setIsRoleFocus(true)}
+                      onBlur={() => setIsRoleFocus(false)}
+                      onChange={(item) => {
+                        setRole(item.value);
+                        setIsRoleFocus(false);
+                      }}
+                    />
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <Icon
+                      name="phone"
+                      size={20}
+                      color={COLORS.primary}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      placeholder="Mobile Number"
+                      placeholderTextColor={COLORS.lightGray}
+                      value={mobNo}
+                      onChangeText={setMobNo}
+                      style={styles.input}
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <Icon
+                      name="camera"
+                      size={20}
+                      color={COLORS.primary}
+                      style={styles.inputIcon}
+                    />
+                    <TouchableOpacity onPress={pickImage} style={styles.input}>
+                      <Text style={styles.imagePickerText}>
+                        {imageUri ? 'Change Photo' : 'Select Photo'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {imageUri && (
+                    <View style={styles.imagePreviewContainer}>
+                      <Image
+                        source={{ uri: imageUri }}
+                        style={styles.imagePreview}
+                      />
+                    </View>
+                  )}
+
+                  <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={styles.button} onPress={onCancel}>
+                      <Text style={styles.buttonText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.button}
+                      onPress={handleSubmit}>
+                      <Text style={styles.buttonText}>Submit</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
-            </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
-      {/*<View style={styles.actionContainer}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.downloadButton]}
-          onPress={() => navigation.goBack()}>
-          <Text style={styles.buttonText1}>View Staff</Text>
-        </TouchableOpacity>
-      </View>*/}
     </SafeAreaView>
   );
 };
@@ -247,8 +240,8 @@ const styles = StyleSheet.create({
   },
   formContainerWrapper: {
     flex: 1,
-    justifyContent: 'center', // Center vertically
-    alignItems: 'center', // Center horizontally
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   formContainer: {
     width: '90%',

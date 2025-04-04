@@ -35,7 +35,6 @@ const EditAsset = ({ route }) => {
 
   const fetchAssetById = async () => {
     try {
-      console.log(`${BASE_URL}/get-assets?id=${assetId}`);
       const response = await fetch(`${BASE_URL}/get-assets?id=${assetId}`);
 
       if (!response.ok) {
@@ -88,8 +87,6 @@ const EditAsset = ({ route }) => {
 
   const handleSubmit = async () => {
     try {
-      console.log(`${BASE_URL}/update-assets`);
-      console.log('assetData: ', assetData);
       const response = await fetch(`${BASE_URL}/update-assets`, {
         method: 'POST',
         headers: {
@@ -97,8 +94,6 @@ const EditAsset = ({ route }) => {
         },
         body: JSON.stringify(assetData),
       });
-
-      console.log('response: ', response);
 
       if (response.status === 200) {
         Alert.alert(

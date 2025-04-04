@@ -37,7 +37,6 @@ const ViewInventory = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log(data.inventories);
       setInventoryItems(data.inventories);
       setSkeletonLoader(false);
     } catch (err) {
@@ -70,7 +69,6 @@ const ViewInventory = () => {
           text: 'OK',
           onPress: async () => {
             try {
-              console.log(`${BASE_URL}/delete-inventory/${id}`);
               const response = await fetch(
                 `${BASE_URL}/delete-inventory/${id}`
               );
@@ -110,7 +108,7 @@ const ViewInventory = () => {
           delay={index * 100}
           style={styles.card}>
           <Image
-            source={images.gym2}
+            source={{ uri: `https://gym.cronicodigital.com/uploads/inventory/${item.image}` }}
             style={styles.cardImage}
             resizeMode="cover"
           />
@@ -172,7 +170,10 @@ const ViewInventory = () => {
       <ScrollView contentContainerStyle={styles.gridContainer}>
         {inventoryItems.length === 0 ? (
           <View style={styles.emptyState}>
-            <Image source={images.noData} style={styles.noDataImage} />
+            <Image
+              source={images.noData}
+              style={styles.noDataImage}
+            />
             <Text style={styles.emptyText}>No inventory items available</Text>
           </View>
         ) : (

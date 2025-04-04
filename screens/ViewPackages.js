@@ -40,7 +40,6 @@ const ViewPackages = () => {
 
   const fetchMembers = async () => {
     try {
-      console.log(`${BASE_URL}/packages`);
       const response = await fetch(`${BASE_URL}/packages`);
 
       if (!response.ok) {
@@ -48,7 +47,6 @@ const ViewPackages = () => {
       }
 
       const data = await response.json();
-      console.log(data);
       setMembers(data.packages);
       setSkeletonLoader(false);
     } catch (err) {
@@ -81,7 +79,6 @@ const ViewPackages = () => {
           text: 'OK',
           onPress: async () => {
             try {
-              console.log(`${BASE_URL}/delete-package/${id}`);
               const response = await fetch(`${BASE_URL}/delete-package/${id}`);
 
               if (!response.ok) {
@@ -125,7 +122,7 @@ const ViewPackages = () => {
                 animation="zoomIn" // Zoom in effect for avatar
                 duration={600}
                 source={{
-                  uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
+                  uri: `https://gym.cronicodigital.com/uploads/packages/${member.image}` || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
                 }}
                 style={styles.avatar}
                 resizeMode="cover"
@@ -213,7 +210,7 @@ const ViewPackages = () => {
         )}
 
         <View style={{ marginTop: SIZES.font }}>
-          {filteredMembers.length === 0 && !skeletonLoader ? (
+          {filteredMembers.length === 0 ? (
             <Animatable.View
               animation="bounceIn" // Bounce in effect for empty state
               duration={1000}

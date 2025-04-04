@@ -22,7 +22,6 @@ const PackageReport = ({ navigation }) => {
 
   const fetchReports = async () => {
     try {
-      console.log(`${BASE_URL}/report-cards`);
       const response = await fetch(`${BASE_URL}/report-cards`);
 
       if (!response.ok) {
@@ -30,7 +29,6 @@ const PackageReport = ({ navigation }) => {
       }
 
       const data = await response.json();
-      console.log(data);
       setReports(data);
       setLoading(false);
     } catch (err) {

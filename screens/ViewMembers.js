@@ -38,25 +38,23 @@ const ViewMembers = () => {
   const [showActivatedOnly, setShowActivatedOnly] = useState(false);
   const [showDeactivatedOnly, setShowDeactivatedOnly] = useState(false);
 
-  // Filtering logic
   const filteredMembers = members.filter((member) => {
-    const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase());
-
-    // Separate filter logic for activated and deactivated
+    const searchTerms = searchQuery.toLowerCase().split(' ');
+    const matchesSearch = searchTerms.every((term) =>
+      (member.name.toLowerCase().includes(term) || member.surname.toLowerCase().includes(term))
+    );
     const matchesActivated = showActivatedOnly ? member.memberStatus === 'Active' : true;
     const matchesDeactivated = showDeactivatedOnly ? member.memberStatus === 'Inactive' : true;
-
     return matchesSearch && matchesActivated && matchesDeactivated;
   });
 
-  // Options for the horizontal FlatList (filter buttons)
+
   const filterOptions = [
     { label: 'All Members', type: 'All' },
     { label: 'Active Members', type: 'Active' },
     { label: 'Inactive Members', type: 'Inactive' },
   ];
 
-  // Handle filter option selection
   const handleFilterSelect = (type) => {
     if (type === 'Active') {
       setShowActivatedOnly(true);
@@ -80,7 +78,6 @@ const ViewMembers = () => {
 
   const fetchMembers = async () => {
     try {
-      console.log(`${BASE_URL}/members`);
       const response = await fetch(`${BASE_URL}/members`);
 
       if (!response.ok) {
@@ -107,7 +104,6 @@ const ViewMembers = () => {
   );
 
   const handleStatusChange = async (member) => {
-    console.log('member: ', member.id);
     const memberId = member.id;
     Alert.alert(
       'Confirm Deactivate',
@@ -121,7 +117,6 @@ const ViewMembers = () => {
           text: 'OK',
           onPress: async () => {
             try {
-              console.log(`${BASE_URL}/edit-membersData?id=${memberId}`);
               const response = await fetch(
                 `${BASE_URL}/edit-membersData?id=${memberId}`,
                 {
@@ -183,7 +178,7 @@ const ViewMembers = () => {
               <Image
                 source={{
                   uri:
-                    member.avatarUrl ||
+                    `https://gym.cronicodigital.com/uploads/membersImage/${member.profile_image}` ||
                     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
                 }}
                 style={styles.avatar}
@@ -305,7 +300,7 @@ const ViewMembers = () => {
               <TouchableOpacity
                 style={styles.menuItem}
                 onPress={() => {
-                  navigation.navigate('history', { memberId: member.id });
+                  navigation.navigate('history', { memberId: member.id, whatsappContact: member.phoneno });
                   setMenuVisibleFor(null);
                 }}>
                 <Animatable.View animation="bounceIn" delay={200}>
@@ -395,7 +390,7 @@ const ViewMembers = () => {
 
         {/* Member List */}
         <View style={{ marginTop: SIZES.font }}>
-          {filteredMembers.length === 0 && !skeletonLoader ? (
+          {filteredMembers.length === 0 ? (
             <Animatable.View animation="zoomIn" duration={800} style={styles.emptyState}>
               <Image source={images.noData} style={styles.noDataImage} />
               <Text style={styles.emptyText}>No members available at the moment</Text>

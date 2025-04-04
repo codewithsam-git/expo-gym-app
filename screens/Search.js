@@ -17,7 +17,7 @@ import { Dropdown } from 'react-native-element-dropdown';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import Header from '../components/Header';
 import BASE_URL from '../Api/commonApi';
-import {LinearGradient} from 'expo-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const Search = () => {
   const [packageName, setPackageName] = useState('');
@@ -114,7 +114,7 @@ const Search = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-    <LinearGradient
+      <LinearGradient
         colors={[
           COLORS.black,
           COLORS.black,
@@ -130,159 +130,162 @@ const Search = () => {
         style={{
           flex: 1,
         }}>
-      <View>
-        <Header headerTitle="Revenue" />
-      </View>
+        <View>
+          <Header headerTitle="Revenue" />
+        </View>
 
-      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-        <ScrollView>
-          <View style={styles.cardContainer}>
-            <View style={styles.formContainer}>
-              <Text style={styles.title}>Plan & Date</Text>
-              <View style={styles.separator}></View>
-
-              {/* Package Dropdown */}
-              <View style={styles.inputContainer}>
-                <FontAwesome
-                  name="credit-card"
-                  size={20}
-                  color={COLORS.primary}
-                  style={styles.inputIcon}
-                />
-                <Dropdown
-                  style={styles.input}
-                  placeholderStyle={styles.placeholderStyle}
-                  selectedTextStyle={styles.selectedTextStyle}
-                  data={packages}
-                  labelField="label"
-                  valueField="value"
-                  placeholder="Select Plan"
-                  value={packageName}
-                  onChange={(item) => setPackageName(item.value)}
-                />
-              </View>
-
-              {/* Start and End Date Pickers */}
-              <View style={styles.date}>
-                {/* Start Date Picker */}
-                <View style={[styles.dateInput, { marginRight: 5 }]}>
-                  <TouchableOpacity
-                    onPress={() => showDatePicker()}
-                    style={styles.touchable}>
-                    <Icon
-                      name="calendar"
-                      size={20}
-                      color={COLORS.primary}
-                      style={styles.inputIcon}
-                    />
-                    {startDate ? (
-                      <Text style={[styles.input, { color: COLORS.white }]}>
-                        {startDate || 'Select Start Date'}{' '}
-                      </Text>
-                    ) : (
-                      <Text style={[styles.input, { color: COLORS.lightGray4 }]}>
-                        {startDate || 'Select Start Date'}{' '}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-
-                {/* End Date Picker */}
-                <View style={[styles.dateInput, { marginLeft: 5 }]}>
-                  <TouchableOpacity
-                    onPress={() => showDatePicker1()}
-                    style={styles.touchable}>
-                    <Icon
-                      name="calendar"
-                      size={20}
-                      color={COLORS.primary}
-                      style={styles.inputIcon}
-                    />
-                    {endDate ? (
-                      <Text style={[styles.input, { color: COLORS.white }]}>
-                        {endDate || 'Select End Date'}{' '}
-                      </Text>
-                    ) : (
-                      <Text style={[styles.input, { color: COLORS.lightGray4 }]}>
-                        {endDate || 'Select End Date'}{' '}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Date Picker Modal */}
-              <DateTimePickerModal
-                isVisible={isDatePickerVisible}
-                mode="date"
-                onConfirm={handleConfirm}
-                onCancel={hideDatePicker}
-              />
-
-              <DateTimePickerModal
-                isVisible={isDatePickerVisible1}
-                mode="date"
-                onConfirm={handleConfirm1}
-                onCancel={hideDatePicker1}
-              />
-
-              {/* Selected Filter Section */}
-              <View style={styles.revenueContainer}>
-                <Text style={styles.title}>Selected Filters</Text>
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+          <ScrollView>
+            <View style={styles.cardContainer}>
+              <View style={styles.formContainer}>
+                <Text style={styles.title}>Plan & Date</Text>
                 <View style={styles.separator}></View>
 
-                {/* Selected Package */}
-                <View style={styles.revenueCard}>
-                  <Text style={styles.revenueLabel}>Selected Package:</Text>
-                  <Text style={styles.revenueValue}>{packageName || 'All'}</Text>
+                <View style={styles.inputContainer}>
+                  <FontAwesome
+                    name="credit-card"
+                    size={20}
+                    color={COLORS.primary}
+                    style={styles.inputIcon}
+                  />
+                  <Dropdown
+                    style={styles.input}
+                    placeholderStyle={styles.placeholderStyle}
+                    selectedTextStyle={styles.selectedTextStyle}
+                    data={packages}
+                    labelField="label"
+                    valueField="value"
+                    placeholder="Select Plan"
+                    value={packageName}
+                    onChange={(item) => setPackageName(item.value)}
+                  />
                 </View>
 
-                {/* Start Date */}
-                <View style={styles.revenueCard}>
-                  <Text style={styles.revenueLabel}>Start Date:</Text>
-                  <Text style={styles.revenueValue}>
-                    {startDate || 'Not Specified'}
-                  </Text>
+                <View style={styles.date}>
+                  <View style={[styles.dateInput, { marginRight: 5 }]}>
+                    <TouchableOpacity
+                      onPress={() => showDatePicker()}
+                      style={styles.touchable}>
+                      <Icon
+                        name="calendar"
+                        size={20}
+                        color={COLORS.primary}
+                        style={styles.inputIcon}
+                      />
+                      {startDate ? (
+                        <Text style={[styles.input, { color: COLORS.white }]}>
+                          {startDate || 'Select Start Date'}{' '}
+                        </Text>
+                      ) : (
+                        <Text
+                          style={[styles.input, { color: COLORS.lightGray4 }]}>
+                          {startDate || 'Select Start Date'}{' '}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={[styles.dateInput, { marginLeft: 5 }]}>
+                    <TouchableOpacity
+                      onPress={() => showDatePicker1()}
+                      style={styles.touchable}>
+                      <Icon
+                        name="calendar"
+                        size={20}
+                        color={COLORS.primary}
+                        style={styles.inputIcon}
+                      />
+                      {endDate ? (
+                        <Text style={[styles.input, { color: COLORS.white }]}>
+                          {endDate || 'Select End Date'}{' '}
+                        </Text>
+                      ) : (
+                        <Text
+                          style={[styles.input, { color: COLORS.lightGray4 }]}>
+                          {endDate || 'Select End Date'}{' '}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
-                {/* End Date */}
-                <View style={styles.revenueCard}>
-                  <Text style={styles.revenueLabel}>End Date:</Text>
-                  <Text style={styles.revenueValue}>
-                    {endDate || 'Not Specified'}
-                  </Text>
+                {/* Date Picker Modal */}
+                <DateTimePickerModal
+                  isVisible={isDatePickerVisible}
+                  mode="date"
+                  onConfirm={handleConfirm}
+                  onCancel={hideDatePicker}
+                />
+
+                <DateTimePickerModal
+                  isVisible={isDatePickerVisible1}
+                  mode="date"
+                  onConfirm={handleConfirm1}
+                  onCancel={hideDatePicker1}
+                />
+
+                <View style={styles.revenueContainer}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                    }}>
+                    <Text style={styles.title}>Selected Filters</Text>
+                    <Text
+                      style={styles.removeFilterTitle}
+                      onPress={() => {
+                        setPackageName('');
+                        setStartDate('');
+                        setEndDate('');
+                      }}>
+                      Remove Filter
+                    </Text>
+                  </View>
+                  <View style={styles.separator}></View>
+
+                  <View style={styles.revenueCard}>
+                    <Text style={styles.revenueLabel}>Selected Package:</Text>
+                    <Text style={styles.revenueValue}>
+                      {packageName || 'All'}
+                    </Text>
+                  </View>
+
+                  <View style={styles.revenueCard}>
+                    <Text style={styles.revenueLabel}>Start Date:</Text>
+                    <Text style={styles.revenueValue}>
+                      {startDate || 'Not Specified'}
+                    </Text>
+                  </View>
+
+                  <View style={styles.revenueCard}>
+                    <Text style={styles.revenueLabel}>End Date:</Text>
+                    <Text style={styles.revenueValue}>
+                      {endDate || 'Not Specified'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.revenueContainer}>
+                  <Text style={styles.title}>Revenue Calculation</Text>
+                  <View style={styles.separator}></View>
+
+                  <View style={styles.totalRevenueCard}>
+                    <Text style={styles.totalRevenueLabel}>Total Revenue:</Text>
+                    <Text style={styles.totalRevenueValue}>
+                      {parseFloat(totalRevenue).toLocaleString('en-IN')}
+                      /-
+                    </Text>
+                  </View>
                 </View>
               </View>
-
-              {/* Revenue Calculation Section */}
-              <View style={styles.revenueContainer}>
-                <Text style={styles.title}>Revenue Calculation</Text>
-                <View style={styles.separator}></View>
-
-                {/* Total Revenue */}
-                <View style={styles.totalRevenueCard}>
-                  <Text style={styles.totalRevenueLabel}>Total Revenue:</Text>
-                  <Text style={styles.totalRevenueValue}>
-                    {parseFloat(totalRevenue).toLocaleString('en-IN')}
-                    /-
-                  </Text>
-                </View>
-              </View>
-
-              {/*
-              <TouchableOpacity onPress={fetchData} style={styles.submitButton}>
-                <Text style={styles.submitButtonText}>Submit</Text>
-              </TouchableOpacity>*/}
             </View>
-          </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
+          </ScrollView>
+        </TouchableWithoutFeedback>
       </LinearGradient>
     </SafeAreaView>
   );
 };
 
-// Add necessary styles for the button and the rest of the components
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -327,6 +330,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.lightGray4,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  removeFilterTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.lightRed,
     marginTop: 8,
     marginBottom: 8,
   },

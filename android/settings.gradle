@@ -21,7 +21,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
   }
 }
 
-rootProject.name = 'gym-app'
+rootProject.name = 'One Hour'
 
 dependencyResolutionManagement {
   versionCatalogs {

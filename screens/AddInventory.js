@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,63 +9,74 @@ import {
   StyleSheet,
   Platform,
   SafeAreaView,
-  Dimensions,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
   Image,
 } from 'react-native';
-import { COLORS, FONTS, SIZES, icons } from '../constants';
+import { COLORS, FONTS, SIZES } from '../constants';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
-import * as ImagePicker from 'expo-image-picker'; // Import expo-image-picker
+import * as ImagePicker from 'expo-image-picker';
 
 import BASE_URL from '../Api/commonApi';
 
 const AddInventory = ({ navigation }) => {
+  const [imageUri, setImageUri] = useState('');
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [useFor, setUseFor] = useState('');
-  const [imageUri, setImageUri] = useState(null);
-
-  const inventoryData = {
-    name: name,
-    price: price,
-    useFor: useFor,
-    image: imageUri || 'inventory.jpg',
-  };
 
   const handleSubmit = async () => {
+    if (!name || !price || !useFor) {
+      Alert.alert('Please fill in all fields');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('price', price);
+    formData.append('useFor', useFor);
+
+    if (imageUri) {
+      const uriParts = imageUri.split('.');
+      const fileType = uriParts[uriParts.length - 1];
+
+      const file = {
+        uri: imageUri,
+        type: `image/${fileType}`,
+        name: `inventory_image.${fileType}`,
+      };
+      formData.append('image', file);
+    }
+
     try {
-      console.log(`${BASE_URL}/save-inventory`);
-      console.log('inventoryData: ', inventoryData);
       const response = await fetch(`${BASE_URL}/save-inventory`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
-        body: JSON.stringify(inventoryData),
+        body: formData,
       });
 
-      console.log('response: ', response);
-
-      if (response.status === 200) {
-        Alert.alert(
-          'Success',
-          'Inventory item added successfully!',
-          [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
-          { cancelable: false }
-        );
+      const result = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Inventory item added successfully');
         setName('');
         setPrice('');
         setUseFor('');
-        setImageUri(null);
+        setImageUri('');
       } else {
-        throw new Error('Failed to add inventory');
+        Alert.alert(
+          'Failed to add inventory item',
+          result.message || 'Please try again.'
+        );
       }
     } catch (error) {
-      console.error('Error submitting data:', error);
-      Alert.alert('Error', 'Failed to add inventory, please try again');
+      Alert.alert(
+        'Error',
+        'An error occurred while adding the inventory item.'
+      );
     }
   };
 
@@ -73,47 +84,27 @@ const AddInventory = ({ navigation }) => {
     navigation.goBack();
   };
 
-   const pickImage = async (source) => {
-      const hasPermission = await requestPermission(source);
-      if (!hasPermission) return;
-  
-      let result;
-      if (source === 'camera') {
-        result = await ImagePicker.launchCameraAsync({
-          allowsEditing: true,
-          quality: 1,
-        });
-      } else {
-        result = await ImagePicker.launchImageLibraryAsync({
-          allowsEditing: true,
-          quality: 1,
-        });
-      }
-  
-      if (!result.canceled) {
-        const uri = result.assets[0].uri;
-        const fileExtension = uri.split('.').pop().toLowerCase();
-  
-        if (['png', 'jpg'].includes(fileExtension)) {
-  
-          const fileSize = result.assets[0].fileSize / 1024 / 1024;
-  
-          if (fileSize <= 2) {
-            setImageUri(uri);
-          } else {
-            Alert.alert('File Too Large', 'The image must be smaller than 2MB.', [
-              { text: 'OK' },
-            ]);
-          }
-        } else {
-          Alert.alert('Invalid File Type', 'Please select a JPG, or PNG image.', [
-            { text: 'OK' },
-          ]);
-        }
-      }
-  
-      setModalVisible(false);
-    };
+  const pickImage = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission to access camera roll is required!');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaType: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    } else {
+      console.log('Image picker was canceled');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -126,7 +117,6 @@ const AddInventory = ({ navigation }) => {
               <View style={styles.formContainer}>
                 <Text style={styles.title}>Add New Inventory Item</Text>
                 <View>
-                  {/* Name Input */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="tag"
@@ -143,7 +133,6 @@ const AddInventory = ({ navigation }) => {
                     />
                   </View>
 
-                  {/* Price Input */}
                   <View style={styles.inputContainer}>
                     <MaterialIcon
                       name="currency-rupee"
@@ -161,7 +150,6 @@ const AddInventory = ({ navigation }) => {
                     />
                   </View>
 
-                  {/* Use For Input */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="rocket"
@@ -175,10 +163,10 @@ const AddInventory = ({ navigation }) => {
                       value={useFor}
                       onChangeText={setUseFor}
                       style={styles.input}
+                      multiline={true}
                     />
                   </View>
 
-                  {/* Image Picker */}
                   <View style={styles.inputContainer}>
                     <Icon
                       name="camera"
@@ -202,7 +190,6 @@ const AddInventory = ({ navigation }) => {
                     </View>
                   )}
 
-                  {/* Buttons */}
                   <View style={styles.buttonContainer}>
                     <TouchableOpacity style={styles.button} onPress={onCancel}>
                       <Text style={styles.buttonText}>Cancel</Text>
@@ -219,13 +206,6 @@ const AddInventory = ({ navigation }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
-      {/* <View style={styles.actionContainer}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.downloadButton]}
-          onPress={() => navigation.goBack()}>
-          <Text style={styles.buttonText1}>View Inventory</Text>
-        </TouchableOpacity>
-      </View>*/}
     </SafeAreaView>
   );
 };
@@ -248,8 +228,8 @@ const styles = StyleSheet.create({
   },
   formContainerWrapper: {
     flex: 1,
-    justifyContent: 'center', // Center vertically
-    alignItems: 'center', // Center horizontally
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   formContainer: {
     width: '90%',

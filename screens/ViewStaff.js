@@ -12,106 +12,23 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { COLORS, FONTS, SIZES, icons, images } from '../constants';
+import { COLORS, FONTS, SIZES, images } from '../constants';
 import BASE_URL from '../Api/commonApi';
-import SkeletonMember from '../components/SkeletonMember';
 import { useFocusEffect } from '@react-navigation/native';
 import ViewHeader from '../components/ViewHeader';
 import * as Animatable from 'react-native-animatable';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 const screenWidth = Dimensions.get('window').width;
-const screenHeight = Dimensions.get('window').height;
 
 const ViewStaff = () => {
-  const members1 = [
-    {
-      id: 1,
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@email.com',
-      mobileNo: '123-456-7890',
-    },
-    {
-      id: 2,
-      firstName: 'Jane',
-      lastName: 'Smith',
-      email: 'jane.smith@email.com',
-      mobileNo: '987-654-3210',
-    },
-    {
-      id: 3,
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@email.com',
-      mobileNo: '123-456-7890',
-    },
-    {
-      id: 4,
-      firstName: 'Jane',
-      lastName: 'Smith',
-      email: 'jane.smith@email.com',
-      mobileNo: '987-654-3210',
-    },
-    {
-      id: 5,
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@email.com',
-      mobileNo: '123-456-7890',
-    },
-    {
-      id: 6,
-      firstName: 'Jane',
-      lastName: 'Smith',
-      email: 'jane.smith@email.com',
-      mobileNo: '987-654-3210',
-    },
-    {
-      id: 7,
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@email.com',
-      mobileNo: '123-456-7890',
-    },
-    {
-      id: 8,
-      firstName: 'Jane',
-      lastName: 'Smith',
-      email: 'jane.smith@email.com',
-      mobileNo: '987-654-3210',
-    },
-    {
-      id: 8,
-      firstName: 'Jane',
-      lastName: 'Smith',
-      email: 'jane.smith@email.com',
-      mobileNo: '987-654-3210',
-    },
-    {
-      id: 8,
-      firstName: 'Jane',
-      lastName: 'Smith',
-      email: 'jane.smith@email.com',
-      mobileNo: '987-654-3210',
-    },
-    {
-      id: 8,
-      firstName: 'Jane',
-      lastName: 'Smith',
-      email: 'jane.smith@email.com',
-      mobileNo: '987-654-3210',
-    },
-  ];
-
   const navigation = useNavigation();
   const [members, setMembers] = useState([]);
-  const [skeletonLoader, setSkeletonLoader] = useState(false);
+  const [skeletonLoader, setSkeletonLoader] = useState(true);
   const [menuVisibleFor, setMenuVisibleFor] = useState(null);
 
   const fetchMembers = async () => {
     try {
-      console.log(`${BASE_URL}/staff`);
       const response = await fetch(`${BASE_URL}/staff`);
 
       if (!response.ok) {
@@ -124,7 +41,7 @@ const ViewStaff = () => {
       setSkeletonLoader(false);
     } catch (err) {
       console.error('Fetch error:', err);
-      // setSkeletonLoader(false);
+      setSkeletonLoader(false);
     }
   };
 
@@ -186,7 +103,6 @@ const ViewStaff = () => {
       <TouchableOpacity
         style={{ marginTop: 10 }}
         onPress={() => setMenuVisibleFor(false)}>
-        {/* Animate the main card view */}
         <Animatable.View
           style={styles.card}
           animation="fadeInUp"
@@ -195,7 +111,7 @@ const ViewStaff = () => {
           <View style={styles.avatarContainer}>
             <Image
               source={{
-                uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
+                uri: `https://gym.cronicodigital.com/uploads/staffImage/${member.profile_photo}`,
               }}
               style={styles.avatar}
               resizeMode="cover"
@@ -213,13 +129,11 @@ const ViewStaff = () => {
           </TouchableOpacity>
         </Animatable.View>
 
-        {/* Animate the menu dropdown when visible */}
         {isMenuVisible && (
           <Animatable.View
             animation="fadeInDown"
             duration={200}
             style={styles.menuDropdown}>
-            {/* Edit Button with bounce effect */}
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
@@ -232,7 +146,6 @@ const ViewStaff = () => {
               <Text style={styles.menuItemText}>Edit</Text>
             </TouchableOpacity>
 
-            {/* Delete Button with bounce effect */}
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
@@ -268,7 +181,9 @@ const ViewStaff = () => {
           ) : (
             <View>
               {skeletonLoader ? (
-                <SkeletonMember />
+                <Text style={{ textAlign: 'center', color: COLORS.lightGray4 }}>
+                  Loading...
+                </Text>
               ) : (
                 <ScrollView
                   contentContainerStyle={{
@@ -341,8 +256,8 @@ const styles = StyleSheet.create({
     padding: SIZES.padding,
   },
   noDataImage: {
-    width: 100, // Adjust the size as needed
-    height: 100, // Adjust the size as needed
+    width: 100,
+    height: 100,
     marginBottom: SIZES.base,
   },
   emptyText: {
@@ -364,7 +279,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gray1,
     borderRadius: 10,
     padding: 15,
-    position: 'relative', // Ensure the parent is positioned for absolute positioning
+    position: 'relative',
   },
   avatarContainer: {
     alignItems: 'center',
@@ -373,7 +288,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 60,
     height: 60,
-    borderRadius: 30, // Circular avatar
+    borderRadius: 30,
   },
   memberDetails: {
     alignItems: 'center',
@@ -393,9 +308,9 @@ const styles = StyleSheet.create({
     color: COLORS.lightGray4,
   },
   menuButton: {
-    position: 'absolute', // Absolute positioning
-    top: 10, // Adjust top to position the menu
-    right: 10, // Adjust left to position the menu
+    position: 'absolute',
+    top: 10,
+    right: 10,
   },
   menuDropdown: {
     position: 'absolute',

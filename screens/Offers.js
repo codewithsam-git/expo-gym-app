@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Platform,
   SafeAreaView,
   Alert,
   Image,
@@ -21,12 +20,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const Offers = () => {
   const [imageUrl, setImageUrl] = useState(null);
-  const [offerDescription, setOfferDescription] = useState('');
   const [offers, setOffers] = useState([]);
 
   const fetchOffers = async () => {
     try {
-      console.log(`${BASE_URL}/offers`);
       const response = await fetch(`${BASE_URL}/offers`);
 
       if (!response.ok) {
@@ -46,26 +43,29 @@ const Offers = () => {
 
   const handleSubmit = async () => {
     try {
-      console.log(`${BASE_URL}/offers`);
+      const formData = new FormData();
+      if (imageUrl) {
+        formData.append('image', {
+          uri: imageUrl,
+          type: 'image/jpeg',
+          name: 'offer_image.jpg',
+        });
+      }
+
       const response = await fetch(`${BASE_URL}/offers`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(),
+        body: formData,
       });
-
-      if (response.ok) {
-        Alert.alert(
-          'Success',
-          'Offer created successfully!',
-          [{ text: 'OK'}],
-          { cancelable: false }
-        );
-        fetchOffers();
-      } else {
-        throw new Error('Failed to add offer');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      Alert.alert('Success', 'Offer created successfully!', {
+        cancelable: false,
+      });
+      fetchOffers();
+      setImageUrl(null);
     } catch (error) {
       console.error('Error submitting data:', error);
       Alert.alert('Error', 'Failed to add offer, please try again');
@@ -86,7 +86,6 @@ const Offers = () => {
           text: 'OK',
           onPress: async () => {
             try {
-              console.log(`${BASE_URL}/delete-offer?id=${id}`);
               const response = await fetch(`${BASE_URL}/delete-offer?id=${id}`);
 
               if (!response.ok) {
@@ -256,7 +255,9 @@ const Offers = () => {
                   style={styles.offerCard}
                   key={item.id}>
                   <Image
-                    source={images.gym1}
+                    source={{
+                      uri: `https://gym.cronicodigital.com/uploads/offers/${item.image}`,
+                    }}
                     style={styles.offerImage}
                     resizeMode="cover"
                   />

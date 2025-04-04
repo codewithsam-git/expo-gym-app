@@ -58,8 +58,6 @@ const AddAsset = ({ navigation }) => {
 
   const handleSubmit = async () => {
     try {
-      console.log(`${BASE_URL}/save-asset`);
-      console.log('assetData: ', assetData);
       const response = await fetch(`${BASE_URL}/save-assets`, {
         method: 'POST',
         headers: {
@@ -68,7 +66,6 @@ const AddAsset = ({ navigation }) => {
         body: JSON.stringify(assetData),
       });
 
-      console.log('response: ', response);
 
       if (response.status === 200) {
         Alert.alert(
