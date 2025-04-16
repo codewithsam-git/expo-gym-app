@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Platform,
   SafeAreaView,
   Alert,
   Image,
@@ -17,10 +18,22 @@ import Header from '../components/Header';
 import BASE_URL from '../Api/commonApi';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo-linear-gradient';
+import IMAGES_URL from '../Api/ImagesUrl';
 
 const Offers = () => {
   const [imageUrl, setImageUrl] = useState(null);
   const [offers, setOffers] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const OfferImage = React.memo(({ uri, style }) => {
+    return (
+      <Image
+        source={{ uri }}
+        style={style}
+        resizeMode="cover"
+      />
+    );
+  });
 
   const fetchOffers = async () => {
     try {
@@ -42,33 +55,57 @@ const Offers = () => {
   }, []);
 
   const handleSubmit = async () => {
-    try {
-      const formData = new FormData();
-      if (imageUrl) {
-        formData.append('image', {
-          uri: imageUrl,
-          type: 'image/jpeg',
-          name: 'offer_image.jpg',
-        });
-      }
+    if (!imageUrl) {
+      Alert.alert('Please select a offer image.');
+      return;
+    }
 
+    const formData = new FormData();
+    if (imageUrl) {
+      const uriParts = imageUrl.split('.');
+      const fileType = uriParts[uriParts.length - 1];
+
+      const file = {
+        uri: imageUrl,
+        type: `image/${fileType}`,
+        name: `offer_image.${fileType}`,
+      };
+      formData.append('image', file);
+    }
+
+    setLoading(true);
+    try {
       const response = await fetch(`${BASE_URL}/offers`, {
         method: 'POST',
         body: formData,
       });
-      
-      if (!response.ok) {
+
+      if (response.ok) {
+        Alert.alert(
+          'Success',
+          'Offer created successfully!',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                fetchOffers();
+                setImageUrl(null);
+              },
+            },
+          ],
+          { cancelable: false }
+        );
+      } else {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      Alert.alert('Success', 'Offer created successfully!', {
-        cancelable: false,
-      });
-      fetchOffers();
-      setImageUrl(null);
     } catch (error) {
-      console.error('Error submitting data:', error);
-      Alert.alert('Error', 'Failed to add offer, please try again');
+      Alert.alert(
+        'Error',
+        'Failed to add offer, please try again',
+        error.message
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,6 +134,7 @@ const Offers = () => {
               setOffers((prevOffer) =>
                 prevOffer.filter((offer) => offer.id !== id)
               );
+              fetchOffers();
             } catch (err) {
               console.error('Delete error:', err);
               alert('Failed to delete the offer. Please try again.');
@@ -111,16 +149,16 @@ const Offers = () => {
   const pickImage = async () => {
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
+
     if (permissionResult.granted === false) {
       Alert.alert('Permission to access camera roll is required!');
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaType: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
-      aspect: [4, 3],
     });
 
     if (!result.canceled) {
@@ -214,12 +252,21 @@ const Offers = () => {
               </View>
             )}
 
-            {/* Save Button */}
-            <TouchableOpacity
-              onPress={handleSubmit}
-              style={styles.submitButton}>
-              <Text style={styles.submitButtonText}>Save Offer</Text>
-            </TouchableOpacity>
+            {loading ? (
+              <TouchableOpacity
+                onPress={handleSubmit}
+                style={styles.submitButton}
+                disabled={loading}
+              >
+                <Text style={styles.submitButtonText}>Saving...</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={handleSubmit}
+                style={styles.submitButton}>
+                <Text style={styles.submitButtonText}>Save Offer</Text>
+              </TouchableOpacity>
+            )}
           </Animatable.View>
 
           <View style={styles.offersContainer}>
@@ -254,12 +301,9 @@ const Offers = () => {
                   delay={index * 200}
                   style={styles.offerCard}
                   key={item.id}>
-                  <Image
-                    source={{
-                      uri: `https://gym.cronicodigital.com/uploads/offers/${item.image}`,
-                    }}
+                  <OfferImage
+                    uri={`${IMAGES_URL}/offers/${item.image}`}
                     style={styles.offerImage}
-                    resizeMode="cover"
                   />
                   <View style={styles.offerContent}>
                     <TouchableOpacity
@@ -360,15 +404,20 @@ const styles = StyleSheet.create({
     borderColor: COLORS.white,
   },
   submitButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: SIZES.base,
     marginTop: SIZES.base,
     borderRadius: SIZES.radius,
   },
+
   submitButtonText: {
     ...FONTS.h2,
-    textAlign: 'center',
     color: COLORS.white,
-    fontWeight: '700',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
+
   emptyState: {
     marginTop: SIZES.base,
     justifyContent: 'center',
@@ -388,6 +437,8 @@ const styles = StyleSheet.create({
   offerCard: {
     width: 280,
     marginRight: SIZES.padding * 1.5,
+    borderWidth: 1,
+    borderColor: COLORS.white,
     borderRadius: SIZES.radius * 1.5,
     backgroundColor: COLORS.secondary,
     overflow: 'hidden',
@@ -400,8 +451,8 @@ const styles = StyleSheet.create({
   offerImage: {
     width: '100%',
     height: 160,
-    borderTopLeftRadius: SIZES.radius * 1.5,
-    borderTopRightRadius: SIZES.radius * 1.5,
+    borderTopLeftRadius: SIZES.radius,
+    borderTopRightRadius: SIZES.radius,
   },
   offerContent: {
     padding: SIZES.font,

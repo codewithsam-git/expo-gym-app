@@ -18,18 +18,19 @@ import { COLORS, FONTS, SIZES } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import * as ImagePicker from 'expo-image-picker';
-
+import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import BASE_URL from '../Api/commonApi';
 
 const AddStaff = ({ navigation }) => {
   const [isRoleFocus, setIsRoleFocus] = useState(false);
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState('');
+  const [salary, setSalary] = useState('');
   const [mobNo, setMobNo] = useState('');
   const [imageUri, setImageUri] = useState(null);
 
   const handleSubmit = async () => {
-    if (!fullName || !role || !mobNo) {
+    if (!fullName || !role || !mobNo || !salary) {
       Alert.alert('Please fill in all fields');
       return;
     }
@@ -37,6 +38,7 @@ const AddStaff = ({ navigation }) => {
     const formData = new FormData();
     formData.append('full_name', fullName);
     formData.append('role', role);
+    formData.append('salary', salary);
     formData.append('mob_no', mobNo);
 
     if (imageUri) {
@@ -63,6 +65,7 @@ const AddStaff = ({ navigation }) => {
 
         setFullName('');
         setRole('');
+        setSalary('');
         setMobNo('');
         setImageUri(null);
       } else {
@@ -159,6 +162,23 @@ const AddStaff = ({ navigation }) => {
                         setRole(item.value);
                         setIsRoleFocus(false);
                       }}
+                    />
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <MaterialIcon
+                      name="currency-rupee"
+                      size={20}
+                      color={COLORS.primary}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      placeholder="Staff Salary"
+                      placeholderTextColor={COLORS.lightGray}
+                      value={salary}
+                      onChangeText={setSalary}
+                      style={styles.input}
+                      keyboardType="phone-pad"
                     />
                   </View>
 

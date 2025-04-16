@@ -19,6 +19,7 @@ import ViewHeader from '../components/ViewHeader';
 import * as Animatable from 'react-native-animatable';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
+import IMAGES_URL from '../Api/ImagesUrl';
 const screenWidth = Dimensions.get('window').width;
 
 const ViewStaff = () => {
@@ -36,7 +37,6 @@ const ViewStaff = () => {
       }
 
       const data = await response.json();
-      console.log(data);
       setMembers(data.staffData);
       setSkeletonLoader(false);
     } catch (err) {
@@ -69,7 +69,6 @@ const ViewStaff = () => {
           text: 'OK',
           onPress: async () => {
             try {
-              console.log(`${BASE_URL}/delete-staff/${id}`);
               const response = await fetch(`${BASE_URL}/delete-staff/${id}`);
 
               if (!response.ok) {
@@ -111,7 +110,7 @@ const ViewStaff = () => {
           <View style={styles.avatarContainer}>
             <Image
               source={{
-                uri: `https://gym.cronicodigital.com/uploads/staffImage/${member.profile_photo}`,
+                uri: `${IMAGES_URL}/staffImage/${member.profile_photo}`,
               }}
               style={styles.avatar}
               resizeMode="cover"
@@ -122,6 +121,7 @@ const ViewStaff = () => {
             <Text style={styles.memberName}>{member.full_name}</Text>
             <Text style={styles.memberEmail}>{member.mob_no}</Text>
             <Text style={styles.memberPlan}>Role: {member.role}</Text>
+            <Text style={styles.memberPlan}>Salary: {member.salary || 0}/-</Text>
           </View>
 
           <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
@@ -171,7 +171,7 @@ const ViewStaff = () => {
         </Animatable.View>
 
         <View style={{ marginTop: SIZES.font }}>
-          {members.length === 0 ? (
+          {(members.length === 0 && !skeletonLoader) ? (
             <View style={styles.emptyState}>
               <Image source={images.noData} style={styles.noDataImage} />
               <Text style={styles.emptyText}>
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   },
   memberName: {
     marginVertical: 5,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.white,
   },

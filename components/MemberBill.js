@@ -18,6 +18,7 @@ import * as Sharing from 'expo-sharing';
 import { useNavigation } from '@react-navigation/native';
 import BASE_URL from '../Api/commonApi';
 import { ActivityIndicator } from 'react-native';
+import IMAGES_URL from '../Api/ImagesUrl';
 
 const MemberBill = ({ route }) => {
   const { num } = route.params;
@@ -75,183 +76,200 @@ const MemberBill = ({ route }) => {
   // HTML content for bill
   const generateHTML = () => {
     return `
-        <!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Invoice</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
+      body {
+        font-family: 'Arial', sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #fff;
+        color: #000;
+      }
+  
+      .invoice-container {
+        width: 90%;
+        max-width: 900px;
+        margin: 40px auto;
+        border: 1px solid #eee;
+        padding: 30px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      }
+  
+      .top-bar {
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        margin-bottom: 30px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #ddd;
+      }
+  
+      .top-bar .center {
+        text-align: center;
+        flex: 1;
+        font-weight: bold;
+      }
+  
+      
+    .details {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      align-items: flex-start;
+    }
 
-        .invoice-container {
-            max-width: 900px;
-            margin: 30px auto;
-            padding: 30px;
-            background-color: #ffffff;
-        }
+    .info{
+      color:  #888;
+    }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 15px;
-            margin-bottom: 30px;
-        }
+    .details .to {
+    }
 
-        .header div {
-            font-weight: bold;
-            font-size: 16px;
-        }
+    .details div {
+      width: 48%;
+    }
 
-        .details {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            align-items: flex-start;
-        }
+    .details h3 {
+      margin-bottom: 8px;
+      font-size: 16px;
+      font-weight: bold;
+    }
 
-        .details div {
-            width: 48%;
-        }
-
-        .details h3 {
-            margin-bottom: 8px;
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .details p {
-            margin: 5px 0;
-            font-size: 14px;
-        }
-
-        .details img {
-            width: 120px;
-            height: auto;
-            margin-left: 20px;
-            object-fit: contain;
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .table th,
-        .table td {
-            border: 1px solid #ddd;
-            padding: 12px 15px;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        .table th {
-            background: #f8f8f8;
-            font-weight: bold;
-        }
-
-        .table td {
-            background-color: #fafafa;
-        }
-
-        .summary {
-            margin-top: 20px;
-            text-align: right;
-        }
-
-        .summary p {
-            margin: 5px 0;
-            font-size: 16px;
-        }
-
-        .notes {
-            margin-top: 20px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .footer {
-            margin-top: 30px;
-            text-align: center;
-            font-size: 12px;
-            color: #888;
-        }
+    .details p {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+  
+      .details .logo {
+        width: 120px;
+      }
+  
+      .details img {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+      }
+  
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+      }
+  
+      .table th, .table td {
+        padding: 12px 15px;
+        text-align: left;
+        font-size: 14px;
+        border: none;
+      }
+  
+      .table thead tr,
+      .table tbody tr {
+        border-bottom: 1px solid #ddd;       
+      }
+  
+      .summary {
+        width: 300px;
+        margin-left: auto;
+      }
+  
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 14px;
+        border-bottom: 1px solid #ddd;
+      }
+  
+      .summary-row:last-child {
+        font-weight: bold;
+      }
+  
+      .footer {
+        margin-top: 40px;
+        text-align: center;
+        font-size: 12px;
+        color: #888;
+      }
     </style>
-</head>
-
-<body>
+  </head>
+  <body>
     <div class="invoice-container">
-        <div class="header">
-            <div>Invoice</div>
-            <div>Date: <span id="invoiceDate">${new Date().toLocaleDateString('en-GB')}</span></div>
-            <div>Payment Status: Completed</div>
+      <div class="top-bar">
+        <div>Invoice : INV_2</div>
+        <div class="center">${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}</div>
+        <div>Status: Completed</div>
+      </div>
+  
+      <div class="details">
+        <div>
+          <p>From: </p>
+          <p><strong>One Hour fitness Club</strong></p>
+          <p class="info">402, Mone Complex, Guruwar Peth</p>
+          <p class="info">Satara. 415002</p>
+          <p class="info">Email: onehourfitness@gmail.com</p>
+          <p class="info">Phone: +9423107707</p>
         </div>
-
-        <div class="details">
-            <div>
-                <h3>From:</h3>
-                <p><strong>One Hour Fitness Club</strong></p>
-                <p>402, Mone Complex, Guruwar Peth</p>
-                <p>Satara, 415002</p>
-                <p>Email: onehourfitness@gmail.com</p>
-                <p>Phone: +9423107707</p>
-            </div>
-            <div>
-                <h3>To:</h3>
-                <p><strong>Gaurav Jaiswal</strong></p>
-                <p id="clientAddress">${address}</p>
-            </div>
-            <div>
-                <img src="../assets/logo/gym-logo.png" alt="Gym Logo" />
-            </div>
+        <div class="to">
+          <p>To : </p>
+          <p><strong>${name} ${surname}</strong></p>
+          <p class="info">${address}</p>
         </div>
-
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Plan Name</th>
-                    <th>Plan Start Date</th>
-                    <th>Plan End Date</th>
-                    <th>Package Cost</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1</td>
-                    <td id="planName">${packageName}</td>
-                    <td id="startDate">${startDate}</td>
-                    <td id="endDate">${endDate}</td>
-                    <td id="packagePrice">${packagePrice}</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="summary">
-            <p><strong>Price After Discount:</strong> ₹<span id="discount">${discount}</span></p>
-            <p><strong>Other Fees:</strong> ₹0</p>
-            <p><strong>Amount Payable:</strong> ₹<span id="amountPayable">${discount}</span></p>
+        <div class="logo">
+          <img src="${IMAGES_URL}/logo/gym-logo.png" alt="One Hour Fitness Club" />
         </div>
-
-        <div class="footer">
-            <p>Thank you for choosing One Hour Fitness Club! We look forward to serving you again.</p>
+      </div>
+  
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Plan Name</th>
+            <th>Plan StartDate</th>
+            <th>Plan EndDate</th>
+            <th>Package Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="info">1</td>
+            <td class="info">${packageName}</td>
+            <td class="info">${startDate}</td>
+            <td class="info">${endDate}</td>
+            <td class="info">${packagePrice} ₹</td>
+          </tr>
+        </tbody>
+      </table>
+  
+      <div class="summary">
+        <div class="summary-row">
+          <div>Price After Discount</div>
+          <div class="info">${discount}</div>
         </div>
+        <div class="summary-row">
+          <div>Other Fees</div>
+          <div class="info">-</div>
+        </div>
+        <div class="summary-row">
+          <div>Amount payable</div>
+          <div>${discount} ₹</div>
+        </div>
+      </div>
+  
+      <div class="footer">
+        Thank you for choosing One Hour Fitness Club!
+      </div>
     </div>
-</body>
-
-</html>
-
+  </body>
+  </html>
     `;
   };
+  
 
   const generatePDF = async () => {
     try {
@@ -263,7 +281,7 @@ const MemberBill = ({ route }) => {
       });
 
       const date = new Date().toLocaleDateString('en-GB').replace(/\//g, '-'); // Replace / with -
-      const fileName = `Invoice_${name}_${surname}_${date}.pdf`;
+      const fileName = `${num}_${name}_${surname}.pdf`;
       const newUri = FileSystem.documentDirectory + fileName;
 
       await FileSystem.moveAsync({

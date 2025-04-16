@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,12 +12,14 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, FONTS, SIZES } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import Header from '../components/Header';
 import BASE_URL from '../Api/commonApi';
 import { LinearGradient } from 'expo-linear-gradient';
+import { setStatusBarStyle } from 'expo-status-bar';
 
 const Search = () => {
   const [packageName, setPackageName] = useState('');
@@ -29,7 +31,6 @@ const Search = () => {
   const [totalRevenue, setTotalRevenue] = useState('0');
   const fetchPackages = async () => {
     try {
-      console.log(`${BASE_URL}/packages`);
       const response = await fetch(`${BASE_URL}/packages`);
 
       if (!response.ok) {
@@ -90,9 +91,6 @@ const Search = () => {
 
   const fetchData = async () => {
     try {
-      console.log(
-        `${BASE_URL}/revenue?package_name=${packageName}&start_date=${startDate}&end_date=${endDate}`
-      );
       const response = await fetch(
         `${BASE_URL}/revenue?package_name=${packageName}&start_date=${startDate}&end_date=${endDate}`
       );
@@ -111,6 +109,15 @@ const Search = () => {
   useEffect(() => {
     fetchData();
   }, [packageName, startDate, endDate]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+      setPackageName('');
+      setStartDate('');
+      setEndDate('');
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>

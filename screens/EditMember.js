@@ -24,6 +24,7 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import BASE_URL from '../Api/commonApi';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import IMAGES_URL from '../Api/ImagesUrl';
 
 const EditMember = ({ route }) => {
   const { memberId } = route.params;
@@ -56,14 +57,9 @@ const EditMember = ({ route }) => {
   const handleConfirm = (date) => {
     if (!date) return;
     setStartDate(date);
-    const formatDate = (dateObj) => {
-      const day = String(dateObj.getDate()).padStart(2, '0');
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const year = dateObj.getFullYear();
-      return `${year}-${month}-${day}`;
-    };
 
     const startDateFormatted = formatDate(date);
+    setDisplayStartDate(formatDisplayDate(date));
     setStartDate(startDateFormatted);
 
     let endDateObj = new Date(date);
@@ -82,11 +78,13 @@ const EditMember = ({ route }) => {
       }
     }
 
+    setDisplayEndDate(formatDisplayDate(endDateObj));
     setEndDate(formatDate(endDateObj));
     hideDatePicker();
   };
 
   const handleConfirm2 = (date) => {
+    setDisplayBirthDate(formatDisplayDate(date));
     setBirthdate(formatDate(date));
     hideDatePicker2();
   };
@@ -134,6 +132,9 @@ const EditMember = ({ route }) => {
   const [duration, setDuration] = useState('');
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState('');
+  const [displayStartDate, setDisplayStartDate] = useState();
+  const [displayEndDate, setDisplayEndDate] = useState();
+  const [displayBirthDate, setDisplayBirthDate] = useState();
   const [imageUri, setImageUri] = useState(null);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -168,6 +169,11 @@ const EditMember = ({ route }) => {
     fetchPackages();
   }, []);
 
+  const formatFetchedDate = (dateStr) => {
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
+  };
+
   const fetchMemberById = async () => {
     try {
       const response = await fetch(`${BASE_URL}/edit-members?id=${memberId}`);
@@ -181,7 +187,10 @@ const EditMember = ({ route }) => {
       setFirstName(fetchedMember.name);
       setLastName(fetchedMember.surname);
       setGender(fetchedMember.gender);
+
       setBirthdate(fetchedMember.birthdate);
+      setDisplayBirthDate(formatFetchedDate(fetchedMember.birthdate));
+
       setEmail(fetchedMember.email);
       setMobileNo(fetchedMember.phoneno);
       setCountry(fetchedMember.country);
@@ -191,8 +200,13 @@ const EditMember = ({ route }) => {
       setCharges(fetchedMember.packagePrice.toString());
       setDiscount(fetchedMember.discountFinalPrice.toString());
       setDuration(fetchedMember.duration);
+
       setStartDate(fetchedMember.start_Date);
+      setDisplayStartDate(formatFetchedDate(fetchedMember.start_Date));
+
       setEndDate(fetchedMember.end_date);
+      setDisplayEndDate(formatFetchedDate(fetchedMember.end_date));
+
       setFetchedImageUri(fetchedMember.profile_image);
       setFetchedImage(true);
     } catch (err) {
@@ -270,6 +284,7 @@ const EditMember = ({ route }) => {
       return `${year}-${month}-${day}`;
     };
 
+    setDisplayEndDate(formatDisplayDate(endDateObj));
     setEndDate(formatDate(endDateObj));
   };
 
@@ -278,6 +293,13 @@ const EditMember = ({ route }) => {
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
     const year = dateObj.getFullYear();
     return `${year}-${month}-${day}`;
+  };
+
+  const formatDisplayDate = (dateObj) => {
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const memberData = {
@@ -387,27 +409,52 @@ const EditMember = ({ route }) => {
     }
   };
 
-  const pickImage = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const requestPermission = async (type) => {
+    let permissionResult;
 
-    if (permissionResult.granted === false) {
-      Alert.alert('Permission to access camera roll is required!');
-      return;
+    if (type === 'camera') {
+      permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    } else {
+      permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaType: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 1,
-    });
+    if (permissionResult.status === 'granted') {
+      return true;
+    } else {
+      Alert.alert(
+        'Permission Denied',
+        `To access the ${type}, enable permissions in your device settings.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ]
+      );
+      return false;
+    }
+  };
+
+  const pickImage = async (source) => {
+    const hasPermission = await requestPermission(source);
+    if (!hasPermission) return;
+
+    let result;
+    if (source === 'camera') {
+      result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        quality: 1,
+      });
+    } else {
+      result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        quality: 1,
+      });
+    }
 
     if (!result.canceled) {
       setImageUri(result.assets[0].uri);
       setFetchedImg(true);
       setFetchedImage(false);
-    } else {
-      console.log('Image picker was canceled');
     }
     setModalVisible(false);
   };
@@ -509,6 +556,37 @@ const EditMember = ({ route }) => {
                       </View>
 
                       <View style={styles.inputContainer}>
+                        <Icon
+                          name="globe"
+                          size={20}
+                          color={COLORS.primary}
+                          style={styles.inputIcon}
+                        />
+                        <Dropdown
+                          style={[styles.input, isCountryFocus]}
+                          placeholderStyle={styles.placeholderStyle}
+                          selectedTextStyle={styles.selectedTextStyle}
+                          inputSearchStyle={styles.inputSearchStyle}
+                          data={countries}
+                          search
+                          maxHeight={300}
+                          labelField="label"
+                          valueField="value"
+                          placeholder={
+                            !isCountryFocus ? 'Select Country' : '...'
+                          }
+                          searchPlaceholder="Search..."
+                          value={country}
+                          onFocus={() => setIsCountryFocus(true)}
+                          onBlur={() => setIsCountryFocus(false)}
+                          onChange={(item) => {
+                            setCountry(item.value);
+                            setIsCountryFocus(false);
+                          }}
+                        />
+                      </View>
+
+                      <View style={styles.inputContainer}>
                         <TouchableOpacity
                           onPress={showDatePicker2}
                           style={{
@@ -524,7 +602,7 @@ const EditMember = ({ route }) => {
                           {birthdate ? (
                             <Text
                               style={[styles.input, { color: COLORS.white }]}>
-                              {birthdate || 'Select Birth Date'}{' '}
+                              {displayBirthDate || 'Birth Date (dd/mm/yyyy)'}{' '}
                             </Text>
                           ) : (
                             <Text
@@ -532,7 +610,7 @@ const EditMember = ({ route }) => {
                                 styles.input,
                                 { color: COLORS.lightGray },
                               ]}>
-                              {birthdate || 'Select Birth Date'}{' '}
+                              {displayBirthDate || 'Birth Date (dd/mm/yyyy)'}{' '}
                             </Text>
                           )}
                         </TouchableOpacity>
@@ -579,36 +657,6 @@ const EditMember = ({ route }) => {
                         />
                       </View>
 
-                      <View style={styles.inputContainer}>
-                        <Icon
-                          name="globe"
-                          size={20}
-                          color={COLORS.primary}
-                          style={styles.inputIcon}
-                        />
-                        <Dropdown
-                          style={[styles.input, isCountryFocus]}
-                          placeholderStyle={styles.placeholderStyle}
-                          selectedTextStyle={styles.selectedTextStyle}
-                          inputSearchStyle={styles.inputSearchStyle}
-                          data={countries}
-                          search
-                          maxHeight={300}
-                          labelField="label"
-                          valueField="value"
-                          placeholder={
-                            !isCountryFocus ? 'Select Country' : '...'
-                          }
-                          searchPlaceholder="Search..."
-                          value={country}
-                          onFocus={() => setIsCountryFocus(true)}
-                          onBlur={() => setIsCountryFocus(false)}
-                          onChange={(item) => {
-                            setCountry(item.value);
-                            setIsCountryFocus(false);
-                          }}
-                        />
-                      </View>
                     </View>
                   )}
 
@@ -643,6 +691,7 @@ const EditMember = ({ route }) => {
                           value={address}
                           onChangeText={setAddress}
                           style={styles.input}
+                          multiline={true}
                         />
                       </View>
 
@@ -724,7 +773,7 @@ const EditMember = ({ route }) => {
                           {startDate ? (
                             <Text
                               style={[styles.input, { color: COLORS.white }]}>
-                              {startDate || 'Select Start Date'}{' '}
+                              {displayStartDate || 'Start Date (dd/mm/yyyy)'}{' '}
                             </Text>
                           ) : (
                             <Text
@@ -732,7 +781,7 @@ const EditMember = ({ route }) => {
                                 styles.input,
                                 { color: COLORS.lightGray },
                               ]}>
-                              {startDate || 'Select Start Date'}{' '}
+                              {displayStartDate || 'Start Date (dd/mm/yyyy)'}{' '}
                             </Text>
                           )}
                         </TouchableOpacity>
@@ -753,7 +802,7 @@ const EditMember = ({ route }) => {
                           {endDate ? (
                             <Text
                               style={[styles.input, { color: COLORS.white }]}>
-                              {endDate || 'Select End Date'}{' '}
+                              {displayEndDate || 'End Date (dd/mm/yyyy)'}{' '}
                             </Text>
                           ) : (
                             <Text
@@ -761,7 +810,7 @@ const EditMember = ({ route }) => {
                                 styles.input,
                                 { color: COLORS.lightGray },
                               ]}>
-                              {endDate || 'Select End Date'}{' '}
+                              {displayEndDate || 'End Date (dd/mm/yyyy)'}{' '}
                             </Text>
                           )}
                         </TouchableOpacity>
@@ -790,7 +839,7 @@ const EditMember = ({ route }) => {
                               style={styles.imageIcon}
                             />
                           </View>
-                          <Text style={styles.imageText}>Change Photo</Text>
+                          <Text style={styles.imageText}>Change Profile</Text>
                         </TouchableOpacity>
                       </View>
 
@@ -798,10 +847,10 @@ const EditMember = ({ route }) => {
                         <View style={styles.imagePreviewContainer}>
                           <Image
                             source={{
-                              uri: `https://gym.cronicodigital.com/uploads/membersImage/${fetchedImageUri}`,
+                              uri: `${IMAGES_URL}/membersImage/${fetchedImageUri}`,
                             }}
                             style={styles.imagePreview}
-                          />
+                          />                          
                         </View>
                       )}
 

@@ -49,10 +49,7 @@ const History = ({ route }) => {
     fetchBillHistory();
   }, []);
 
-  function renderBillItem(bill, index) {
-    const statusColor =
-      bill.memberStatus === 'Active' ? '#5DBE3F' : COLORS.lightRed;
-
+  function renderBillItem(bill, index) {   
     return (
       <Animatable.View
         animation="fadeInUp"
@@ -71,9 +68,6 @@ const History = ({ route }) => {
               }}
               style={styles.profileImage}
               resizeMode="cover"
-            />
-            <View
-              style={[styles.statusDot, { backgroundColor: statusColor }]}
             />
           </Animatable.View>
         </View>
@@ -148,7 +142,7 @@ const History = ({ route }) => {
       `*OneHourGym Team*`;
 
     const phoneNumber = whatsappContact;
-    const whatsappUrl = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(
+    const whatsappUrl = `whatsapp://send?phone=+91${phoneNumber}&text=${encodeURIComponent(
       message
     )}`;
 
@@ -264,16 +258,6 @@ const styles = StyleSheet.create({
     borderRadius: 23,
     borderWidth: 2,
     borderColor: COLORS.white,
-  },
-  statusDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: COLORS.white,
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
   },
   billDetails: {
     flex: 1,

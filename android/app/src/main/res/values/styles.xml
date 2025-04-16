@@ -13,6 +13,6 @@
     <item name="android:textColor">@android:color/black</item>
   </style>
   <style name="Theme.App.SplashScreen" parent="AppTheme">
-    <item name="android:windowBackground">@drawable/ic_launcher_background</item>
-  </style>
+  <item name="android:windowBackground">@android:color/transparent</item>
+</style>
 </resources>

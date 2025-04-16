@@ -18,8 +18,10 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { COLORS, FONTS, SIZES, icons, images } from '../constants';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import IMAGES_URL from '../Api/ImagesUrl';
 
 const Home = ({ navigation }) => {
+
   function renderMyBookSection() {
     return (
       <View style={{ flex: 1 }}>
@@ -47,10 +49,11 @@ const Home = ({ navigation }) => {
               borderWidth: 1,
               borderColor: COLORS.secondary, // Subtle border with primary color
             }}>
+              
             <FontAwesome
               name="users"
               size={24}
-              color={COLORS.primary} // Using primary color for the icon
+              color={COLORS.primary}
               style={{ marginBottom: SIZES.base }}
             />
             <Text
@@ -58,8 +61,9 @@ const Home = ({ navigation }) => {
                 ...FONTS.h3,
                 color: COLORS.white,
                 fontWeight: 'bold',
-                marginBottom: SIZES.base,
-              }}>
+                marginBottom: SIZES.base,                
+              }}
+              >
               Total Members
             </Text>
             <Text
@@ -68,7 +72,7 @@ const Home = ({ navigation }) => {
                 color: COLORS.white,
                 fontWeight: 'bold',
               }}>
-              {totalCount.membersCount || 0}
+              {loader ? '•••' : totalCount.membersCount || 0}
             </Text>
           </LinearGradient>
 
@@ -110,7 +114,7 @@ const Home = ({ navigation }) => {
                 color: COLORS.white,
                 fontWeight: 'bold',
               }}>
-              {totalCount.packageCount || 0}
+              {loader ? '•••' : totalCount.packageCount || 0}
             </Text>
           </LinearGradient>
 
@@ -153,8 +157,13 @@ const Home = ({ navigation }) => {
                 color: COLORS.white,
                 fontWeight: 'bold',
               }}>
-              ₹ {parseFloat(totalCount.collectionCount).toLocaleString('en-IN') ||
-                0}
+              {loader
+                ? '•••'
+                : '₹ ' + (
+                  isNaN(parseFloat(totalCount.collectionCount))
+                    ? 0
+                    : parseFloat(totalCount.collectionCount).toLocaleString('en-IN')
+                )}
             </Text>
           </LinearGradient>
 
@@ -196,7 +205,13 @@ const Home = ({ navigation }) => {
                 color: COLORS.white,
                 fontWeight: 'bold',
               }}>
-              ₹ {parseFloat(totalCount.assetsTotal).toLocaleString('en-IN') || 0}
+              {loader
+                ? '•••'
+                : '₹ ' + (
+                  isNaN(parseFloat(totalCount.assetsTotal))
+                    ? 0
+                    : parseFloat(totalCount.assetsTotal).toLocaleString('en-IN')
+                )}
             </Text>
           </LinearGradient>
         </View>
@@ -307,6 +322,7 @@ const Home = ({ navigation }) => {
   const [members, setMembers] = useState([]);
   const [packages, setPackages] = useState([]);
   const [totalCount, setTotalCount] = useState([]);
+  const [loader, setLoader] = useState(true);
 
   const fetchMembers = async () => {
     try {
@@ -319,8 +335,10 @@ const Home = ({ navigation }) => {
       const data = await response.json();
       setMembers(data.latestMembers);
       setTotalCount(data);
+      setLoader(false);
     } catch (err) {
       console.error('Fetch error:', err);
+      setLoader(false);
     }
   };
 
@@ -358,7 +376,7 @@ const Home = ({ navigation }) => {
           <View style={styles.avatarContainer}>
             <Image
               source={{
-                uri: `https://gym.cronicodigital.com/uploads/membersImage/${member.profile_image}` || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
+                uri: `${IMAGES_URL}/membersImage/${member.profile_image}` || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
               }}
               style={styles.avatar}
               resizeMode="cover"
@@ -433,7 +451,9 @@ const Home = ({ navigation }) => {
                       }}>
                       <View style={styles.packageContainer}>
                         <Image
-                          source={images.gym1}
+                          source={{
+                            uri: `${IMAGES_URL}/packages/${item.image}`
+                          }}
                           style={styles.itemImage}
                           resizeMode="cover"
                         />

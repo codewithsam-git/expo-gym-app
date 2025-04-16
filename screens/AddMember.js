@@ -65,7 +65,7 @@ const AddMember = () => {
 
     const startDateFormatted = formatDate(date);
     setStartDate(startDateFormatted);
-
+    setDisplayStartDate(formatDisplayDate(date));
     let endDateObj = new Date(date);
 
     if (duration) {
@@ -82,11 +82,13 @@ const AddMember = () => {
       }
     }
 
+    setDisplayEndDate(formatDisplayDate(endDateObj));
     setEndDate(formatDate(endDateObj));
     hideDatePicker();
   };
 
   const handleConfirm2 = (date) => {
+    setDisplayBirthDate(formatDisplayDate(date));
     setBirthdate(formatDate(date));
     hideDatePicker2();
   };
@@ -134,6 +136,9 @@ const AddMember = () => {
   const [duration, setDuration] = useState('');
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState('');
+  const [displayStartDate, setDisplayStartDate] = useState();
+  const [displayEndDate, setDisplayEndDate] = useState();
+  const [displayBirthDate, setDisplayBirthDate] = useState();
   const [imageUri, setImageUri] = useState('');
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -222,7 +227,7 @@ const AddMember = () => {
         }
       }
     }
-
+    setDisplayEndDate(formatDisplayDate(endDateObj));
     setEndDate(formatDate(endDateObj));
   };
 
@@ -231,6 +236,13 @@ const AddMember = () => {
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
     const year = dateObj.getFullYear();
     return `${year}-${month}-${day}`;
+  };
+
+  const formatDisplayDate = (dateObj) => {
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const memberData = {
@@ -250,9 +262,11 @@ const AddMember = () => {
     start_Date: startDate,
     end_date: endDate,
     memberStatus: 'Active',
+    proxy_id: 1,
   };
 
   const handleSubmit = async () => {
+
     if (
       !memberData.name ||
       !memberData.surname ||
@@ -300,6 +314,11 @@ const AddMember = () => {
       return;
     }
 
+    if (!imageUri) {
+      Alert.alert('Please Select Profile Image');
+      return;
+    }
+
     setLoading(true);
 
     const formData = new FormData();
@@ -323,6 +342,10 @@ const AddMember = () => {
         method: 'POST',
         body: formData,
       });
+
+      const resData = await response.json();
+      const memberId = resData.data.id;
+
       if (response.ok) {
         Alert.alert('Success', 'Member added successfully!', [{ text: 'OK' }], {
           cancelable: false,
@@ -343,7 +366,7 @@ const AddMember = () => {
         setEndDate('');
         setCurrentStep(0);
         setLoading(false);
-        navigation.goBack();
+        navigation.navigate('history', { memberId: memberId });
       } else {
         throw new Error('Failed to add member');
       }
@@ -498,6 +521,38 @@ const AddMember = () => {
                         />
                       </View>
 
+
+                      <View style={styles.inputContainer}>
+                        <Icon
+                          name="globe"
+                          size={20}
+                          color={COLORS.primary}
+                          style={styles.inputIcon}
+                        />
+                        <Dropdown
+                          style={[styles.input, isCountryFocus]}
+                          placeholderStyle={styles.placeholderStyle}
+                          selectedTextStyle={styles.selectedTextStyle}
+                          inputSearchStyle={styles.inputSearchStyle}
+                          data={countries}
+                          search
+                          maxHeight={300}
+                          labelField="label"
+                          valueField="value"
+                          placeholder={
+                            !isCountryFocus ? 'Select Country' : '...'
+                          }
+                          searchPlaceholder="Search..."
+                          value={country}
+                          onFocus={() => setIsCountryFocus(true)}
+                          onBlur={() => setIsCountryFocus(false)}
+                          onChange={(item) => {
+                            setCountry(item.value);
+                            setIsCountryFocus(false);
+                          }}
+                        />
+                      </View>
+
                       <View style={styles.inputContainer}>
                         <TouchableOpacity
                           onPress={showDatePicker2}
@@ -514,7 +569,7 @@ const AddMember = () => {
                           {birthdate ? (
                             <Text
                               style={[styles.input, { color: COLORS.white }]}>
-                              {birthdate || 'Select Birth Date'}{' '}
+                              {displayBirthDate || 'Birth Date (dd/mm/yyyy)'}{' '}
                             </Text>
                           ) : (
                             <Text
@@ -522,7 +577,7 @@ const AddMember = () => {
                                 styles.input,
                                 { color: COLORS.lightGray },
                               ]}>
-                              {birthdate || 'Select Birth Date'}{' '}
+                              {displayBirthDate || 'Birth Date (dd/mm/yyyy)'}{' '}
                             </Text>
                           )}
                         </TouchableOpacity>
@@ -569,36 +624,6 @@ const AddMember = () => {
                         />
                       </View>
 
-                      <View style={styles.inputContainer}>
-                        <Icon
-                          name="globe"
-                          size={20}
-                          color={COLORS.primary}
-                          style={styles.inputIcon}
-                        />
-                        <Dropdown
-                          style={[styles.input, isCountryFocus]}
-                          placeholderStyle={styles.placeholderStyle}
-                          selectedTextStyle={styles.selectedTextStyle}
-                          inputSearchStyle={styles.inputSearchStyle}
-                          data={countries}
-                          search
-                          maxHeight={300}
-                          labelField="label"
-                          valueField="value"
-                          placeholder={
-                            !isCountryFocus ? 'Select Country' : '...'
-                          }
-                          searchPlaceholder="Search..."
-                          value={country}
-                          onFocus={() => setIsCountryFocus(true)}
-                          onBlur={() => setIsCountryFocus(false)}
-                          onChange={(item) => {
-                            setCountry(item.value);
-                            setIsCountryFocus(false);
-                          }}
-                        />
-                      </View>
                     </View>
                   )}
 
@@ -633,6 +658,7 @@ const AddMember = () => {
                           value={address}
                           onChangeText={setAddress}
                           style={styles.input}
+                          multiline={true}
                         />
                       </View>
 
@@ -714,7 +740,7 @@ const AddMember = () => {
                           {startDate ? (
                             <Text
                               style={[styles.input, { color: COLORS.white }]}>
-                              {startDate || 'Select Start Date'}{' '}
+                              {displayStartDate || 'Start Date (dd/mm/yyyy)'}{' '}
                             </Text>
                           ) : (
                             <Text
@@ -722,7 +748,7 @@ const AddMember = () => {
                                 styles.input,
                                 { color: COLORS.lightGray },
                               ]}>
-                              {startDate || 'Select Start Date'}{' '}
+                              {displayStartDate || 'Start Date (dd/mm/yyyy)'}{' '}
                             </Text>
                           )}
                         </TouchableOpacity>
@@ -743,7 +769,7 @@ const AddMember = () => {
                           {endDate ? (
                             <Text
                               style={[styles.input, { color: COLORS.white }]}>
-                              {endDate || 'Select End Date'}{' '}
+                              {displayEndDate || 'End Date (dd/mm/yyyy)'}{' '}
                             </Text>
                           ) : (
                             <Text
@@ -751,7 +777,7 @@ const AddMember = () => {
                                 styles.input,
                                 { color: COLORS.lightGray },
                               ]}>
-                              {endDate || 'Select End Date'}{' '}
+                              {displayEndDate || 'End Date (dd/mm/yyyy)'}{' '}
                             </Text>
                           )}
                         </TouchableOpacity>
@@ -781,7 +807,7 @@ const AddMember = () => {
                             />
                           </View>
                           <Text style={styles.imageText}>
-                            {imageUri ? 'Change Photo' : 'Select Photo'}
+                            {imageUri ? 'Change Profile Image' : 'Select Profile Image'}
                           </Text>
                         </TouchableOpacity>
                       </View>
@@ -796,7 +822,7 @@ const AddMember = () => {
                           </View>
                           <Text style={styles.imageDescription}>
                             This is your selected photo. You can update it
-                            anytime by tapping 'Change Photo'.
+                            anytime by tapping 'Change Profile Image'.
                           </Text>
                         </View>
                       ) : (
@@ -806,11 +832,7 @@ const AddMember = () => {
                               source={images.noData}
                               style={styles.imagePreview}
                             />
-                          </View>
-                          <Text style={styles.imageDescription}>
-                            Please upload an image in JPG or PNG format, with a
-                            maximum size of 2MB.
-                          </Text>
+                          </View>                          
                         </View>
                       )}
 
@@ -1011,6 +1033,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginVertical: 20,
     marginVertical: 20,
     justifyContent: 'center',
   },

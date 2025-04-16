@@ -17,10 +17,12 @@ import {
 import { COLORS, FONTS, SIZES, icons } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 
 import BASE_URL from '../Api/commonApi';
+import IMAGES_URL from '../Api/ImagesUrl';
 
 const EditStaff = ({ route }) => {
   const { staffId } = route.params;
@@ -29,6 +31,7 @@ const EditStaff = ({ route }) => {
   const [isRoleFocus, setIsRoleFocus] = useState(false);
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState('');
+  const [salary, setSalary] = useState('');
   const [mobNo, setMobNo] = useState('');
   const [imageUri, setImageUri] = useState(null);
   const [fetchedImg, setFetchedImg] = useState(false);
@@ -47,6 +50,7 @@ const EditStaff = ({ route }) => {
       const fetchedStaff = data.data;
       setFullName(fetchedStaff.full_name);
       setRole(fetchedStaff.role);
+      setSalary(fetchedStaff.salary);
       setMobNo(fetchedStaff.mob_no.toString());
       setFetchedImageUri(fetchedStaff.profile_photo);
       setFetchedImage(true);
@@ -61,7 +65,7 @@ const EditStaff = ({ route }) => {
   }, []);
 
   const handleSubmit = async () => {
-    if (!fullName || !role || !mobNo) {
+    if (!fullName || !role || !mobNo ||!salary) {
       Alert.alert('Please fill in all fields');
       return;
     }
@@ -69,6 +73,7 @@ const EditStaff = ({ route }) => {
     const formData = new FormData();
     formData.append('full_name', fullName);
     formData.append('role', role);
+    formData.append('salary', salary);
     formData.append('mob_no', mobNo);
     formData.append('id', staffId);
 
@@ -90,11 +95,11 @@ const EditStaff = ({ route }) => {
         body: formData,
       });
 
-      const result = await response.json();
       if (response.ok) {
         Alert.alert('Success', 'Staff updated successfully');
         setFullName('');
         setRole('');
+        setSalary('');
         setMobNo('');
         setImageUri(null);
         navigation.goBack();
@@ -198,6 +203,23 @@ const EditStaff = ({ route }) => {
                   </View>
 
                   <View style={styles.inputContainer}>
+                    <MaterialIcon
+                      name="currency-rupee"
+                      size={20}
+                      color={COLORS.primary}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      placeholder="Staff Salary"
+                      placeholderTextColor={COLORS.lightGray}
+                      value={salary}
+                      onChangeText={setSalary}
+                      style={styles.input}
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+
+                  <View style={styles.inputContainer}>
                     <Icon
                       name="phone"
                       size={20}
@@ -230,7 +252,7 @@ const EditStaff = ({ route }) => {
                     <View style={styles.imagePreviewContainer}>
                       <Image
                         source={{
-                          uri: `https://gym.cronicodigital.com/uploads/staffImage/${fetchedImageUri}`,
+                          uri: `${IMAGES_URL}/staffImage/${fetchedImageUri}`,
                         }}
                         style={styles.imagePreview}
                       />

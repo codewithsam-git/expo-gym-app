@@ -32,6 +32,11 @@ const AddInventory = ({ navigation }) => {
       Alert.alert('Please fill in all fields');
       return;
     }
+    
+    if(!imageUri){      
+      Alert.alert('Please Select Image');
+      return;
+    }
 
     const formData = new FormData();
     formData.append('name', name);
@@ -39,15 +44,13 @@ const AddInventory = ({ navigation }) => {
     formData.append('useFor', useFor);
 
     if (imageUri) {
-      const uriParts = imageUri.split('.');
-      const fileType = uriParts[uriParts.length - 1];
-
-      const file = {
+      const imageName = imageUri.split('/').pop();
+      const imageType = imageUri.split('.').pop();
+      formData.append('image', {
         uri: imageUri,
-        type: `image/${fileType}`,
-        name: `inventory_image.${fileType}`,
-      };
-      formData.append('image', file);
+        name: imageName,
+        type: `image/${imageType}`,
+      });
     }
 
     try {
@@ -59,7 +62,7 @@ const AddInventory = ({ navigation }) => {
         body: formData,
       });
 
-      const result = await response.json();
+
       if (response.ok) {
         Alert.alert('Success', 'Inventory item added successfully');
         setName('');
@@ -94,7 +97,6 @@ const AddInventory = ({ navigation }) => {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaType: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
     });
@@ -158,7 +160,7 @@ const AddInventory = ({ navigation }) => {
                       style={styles.inputIcon}
                     />
                     <TextInput
-                      placeholder="Use For (e.g., Food, Clothing, Electronics)"
+                      placeholder="Use For"
                       placeholderTextColor={COLORS.lightGray}
                       value={useFor}
                       onChangeText={setUseFor}

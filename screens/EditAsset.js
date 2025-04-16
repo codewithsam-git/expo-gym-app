@@ -30,8 +30,21 @@ const EditAsset = ({ route }) => {
   const [assetName, setAssetName] = useState('');
   const [assetType, setAssetType] = useState('');
   const [purchaseDate, setPurchaseDate] = useState('');
+  const [displayPurchaseDate, setDisplayPurchaseDate] = useState('');
   const [purchasePrice, setPurchasePrice] = useState('');
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+
+  const formatFetchedDate = (dateStr) => {
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatDisplayDate = (dateObj) => {
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
   const fetchAssetById = async () => {
     try {
@@ -45,6 +58,7 @@ const EditAsset = ({ route }) => {
       const fetchedAsset = data.data;
       setAssetName(fetchedAsset.asset_name);
       setAssetType(fetchedAsset.asset_type);
+      setDisplayPurchaseDate(formatFetchedDate(fetchedAsset.purchase_date));
       setPurchaseDate(fetchedAsset.purchase_date);
       setPurchasePrice(fetchedAsset.purchase_price.toString());
     } catch (err) {
@@ -81,6 +95,7 @@ const EditAsset = ({ route }) => {
   };
 
   const handleConfirm = (date) => {
+    setDisplayPurchaseDate(formatDisplayDate(date));
     setPurchaseDate(formatDate(date));
     hideDatePicker();
   };
@@ -158,9 +173,12 @@ const EditAsset = ({ route }) => {
                       selectedTextStyle={styles.selectedTextStyle}
                       inputSearchStyle={styles.inputSearchStyle}
                       data={[
-                        { label: 'Furniture', value: 'Furniture' },
+                        { label: 'Machinery', value: 'Machinery' },                        
                         { label: 'Electronics', value: 'Electronics' },
-                        { label: 'Vehicles', value: 'Vehicles' },
+                        { label: 'Furniture', value: 'Furniture' },
+                        { label: 'Software', value: 'Software' },                        
+                        { label: 'Lang & Buildings', value: 'Lang & Buildings' },                        
+                        { label: 'Others', value: 'Others' },                        
                       ]}
                       search
                       maxHeight={300}
@@ -193,12 +211,12 @@ const EditAsset = ({ route }) => {
                       />
                       {purchaseDate ? (
                         <Text style={[styles.input, { color: COLORS.white }]}>
-                          {purchaseDate || 'Select Purchase Date'}{' '}
+                          {displayPurchaseDate || 'Purchase Date (dd/mm/yyyy)'}{' '}
                         </Text>
                       ) : (
                         <Text
                           style={[styles.input, { color: COLORS.lightGray }]}>
-                          {purchaseDate || 'Select Purchase Date'}{' '}
+                          {displayPurchaseDate || 'Purchase Date (dd/mm/yyyy)'}{' '}
                         </Text>
                       )}
                     </TouchableOpacity>

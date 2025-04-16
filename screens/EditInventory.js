@@ -20,6 +20,7 @@ import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import BASE_URL from '../Api/commonApi';
+import IMAGES_URL from '../Api/ImagesUrl';
 
 const EditInventory = ({ route }) => {
   const { inventoryId } = route.params;
@@ -28,7 +29,7 @@ const EditInventory = ({ route }) => {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [useFor, setUseFor] = useState('');
-  const [imageUri, setImageUri] = useState('');
+  const [imageUri, setImageUri] = useState(null);
   const [fetchedImg, setFetchedImg] = useState(false);
   const [fetchedImageUri, setFetchedImageUri] = useState('');
   const [fetchedImage, setFetchedImage] = useState(false);
@@ -99,7 +100,7 @@ const EditInventory = ({ route }) => {
         setName('');
         setPrice('');
         setUseFor('');
-        setImageUri('');
+        setImageUri(null);
         navigation.goBack();
       } else {
         Alert.alert(
@@ -195,7 +196,7 @@ const EditInventory = ({ route }) => {
                       style={styles.inputIcon}
                     />
                     <TextInput
-                      placeholder="Use For (e.g., Food, Clothing, Electronics)"
+                      placeholder="Use For"
                       placeholderTextColor={COLORS.lightGray}
                       value={useFor}
                       onChangeText={setUseFor}
@@ -220,7 +221,7 @@ const EditInventory = ({ route }) => {
                     <View style={styles.imagePreviewContainer}>
                       <Image
                         source={{
-                          uri: `https://gym.cronicodigital.com/uploads/inventory/${fetchedImageUri}`,
+                          uri: `${IMAGES_URL}/inventory/${fetchedImageUri}`,
                         }}
                         style={styles.imagePreview}
                       />

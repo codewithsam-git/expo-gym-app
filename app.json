@@ -17,11 +17,7 @@
       "bundleIdentifier": "com.codewithsamexpo.snack2d750b5721b6479e938fb34fb5084fa2"
     },
     "android": {
-      "enableHermes": true,
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/gym-logo.png",
-        "backgroundColor": "#ffffff"
-      },
+      "enableHermes": true,      
       "package": "com.codewithsamexpo.snack2d750b5721b6479e938fb34fb5084fa2",
       "permissions": [
         "CAMERA",

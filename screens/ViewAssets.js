@@ -30,6 +30,11 @@ const ViewAssets = () => {
   const [skeletonLoader, setSkeletonLoader] = useState(true);
   const [menuVisibleFor, setMenuVisibleFor] = useState(null);
 
+  const formatFetchedDate = (dateStr) => {
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
+  };
+
   const fetchMembers = async () => {
     try {
       const response = await fetch(`${BASE_URL}/assets-details`);
@@ -39,7 +44,6 @@ const ViewAssets = () => {
       }
 
       const data = await response.json();
-      console.log(data);
       setMembers(data.accounts);
       setSkeletonLoader(false);
     } catch (err) {
@@ -120,10 +124,10 @@ const ViewAssets = () => {
               Type: {member.asset_type}
             </Animatable.Text>
             <Animatable.Text delay={200} style={styles.memberPlan}>
-              Date: {member.purchase_date}
+              Date: {formatFetchedDate(member.purchase_date)}
             </Animatable.Text>
             <Animatable.Text delay={200} style={styles.memberPlan}>
-              Price: {member.purchase_price}
+              Price: {member.purchase_price}/-
             </Animatable.Text>
           </Animatable.View>
 
@@ -173,7 +177,7 @@ const ViewAssets = () => {
         </Animatable.View>
 
         <View style={{ marginTop: SIZES.font }}>
-          {members.length === 0 ? (
+          {(members.length === 0 && !skeletonLoader) ? (
             <View style={styles.emptyState}>
               <Image source={images.noData} style={styles.noDataImage} />
               <Text style={styles.emptyText}>

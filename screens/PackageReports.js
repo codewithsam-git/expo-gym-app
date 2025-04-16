@@ -14,6 +14,7 @@ import { COLORS, FONTS, SIZES, images } from '../constants';
 import ViewHeader from '../components/ViewHeader';
 import BASE_URL from '../Api/commonApi';
 import * as Animatable from 'react-native-animatable';
+import SkeletonMember from '../components/SkeletonMember';
 const screenWidth = Dimensions.get('window').width;
 
 const PackageReport = ({ navigation }) => {
@@ -41,29 +42,34 @@ const PackageReport = ({ navigation }) => {
     fetchReports();
   }, []);
 
-  const renderItem = ({ item, index }) => (
-    <Animatable.View
-      animation="fadeInUp" // Animate each card sliding up
-      duration={800}
-      delay={index * 100} // Stagger animation for each card
-      style={styles.card}>
-      <View style={styles.imageContainer}>
-        <Image source={images.gym1} style={styles.packageImage} />
-        <View style={styles.membersOverlay}>
-          <Text style={styles.membersCount}>{item.memberCount}</Text>
-          <Text style={styles.membersText}>Total Members</Text>
+
+  const imageList = [images.gym1, images.gym2, images.gym3];
+  const renderItem = ({ item, index }) => {
+    const selectedImage = imageList[index % imageList.length];
+    return (
+      <Animatable.View
+        animation="fadeInUp"
+        duration={800}
+        delay={index * 100}
+        style={styles.card}>
+        <View style={styles.imageContainer}>
+          <Image source={selectedImage} style={styles.packageImage} />
+          <View style={styles.membersOverlay}>
+            <Text style={styles.membersCount}>{item.memberCount}</Text>
+            <Text style={styles.membersText}>Total Members</Text>
+          </View>
         </View>
-      </View>
-      <View style={styles.cardData}>
-        <Text style={styles.packageName}>Package: {item.package_name}</Text>
-      </View>
-    </Animatable.View>
-  );
+        <View style={styles.cardData}>
+          <Text style={styles.packageName}>Package: {item.package_name}</Text>
+        </View>
+      </Animatable.View>
+    )
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <Animatable.View animation="fadeInDown" duration={800}>
-        <ViewHeader headerTitle="Package Report" navigateTo="addPackage" />
+        <ViewHeader headerTitle="Reports" navigateTo="addPackage" />
       </Animatable.View>
       {reports.length === 0 ? (
         <View style={styles.emptyState}>

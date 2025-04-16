@@ -14,8 +14,7 @@ import {
   TextInput,
   FlatList
 } from 'react-native';
-import { COLORS, FONTS, SIZES, icons, images } from '../constants';
-import Header from '../components/Header';
+import { COLORS, FONTS, SIZES, images } from '../constants';
 import BASE_URL from '../Api/commonApi';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -23,10 +22,9 @@ import SkeletonMember from '../components/SkeletonMember';
 import { useFocusEffect } from '@react-navigation/native';
 import ViewHeader from '../components/ViewHeader';
 import * as Animatable from 'react-native-animatable';
-import RNPickerSelect from 'react-native-picker-select';
+import IMAGES_URL from '../Api/ImagesUrl';
 
 const screenWidth = Dimensions.get('window').width;
-const screenHeight = Dimensions.get('window').height;
 
 const ViewMembers = () => {
   const navigation = useNavigation();
@@ -37,14 +35,35 @@ const ViewMembers = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showActivatedOnly, setShowActivatedOnly] = useState(false);
   const [showDeactivatedOnly, setShowDeactivatedOnly] = useState(false);
+  const [expiredMembers, setExpiredMembers] = useState([]);
+  const [showExpiredOnly, setShowExpiredOnly] = useState(false);
 
-  const filteredMembers = members.filter((member) => {
+  const fetchExpiredMembers = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/members?expired=true`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setExpiredMembers(data.memberData);
+      setSkeletonLoader(false);
+    } catch (err) {
+      console.error('Expired fetch error:', err);
+      setSkeletonLoader(false);
+    }
+  };
+
+  const membersToShow = showExpiredOnly ? expiredMembers : members;
+
+  const filteredMembers = membersToShow.filter((member) => {
     const searchTerms = searchQuery.toLowerCase().split(' ');
     const matchesSearch = searchTerms.every((term) =>
       (member.name.toLowerCase().includes(term) || member.surname.toLowerCase().includes(term))
     );
+
     const matchesActivated = showActivatedOnly ? member.memberStatus === 'Active' : true;
     const matchesDeactivated = showDeactivatedOnly ? member.memberStatus === 'Inactive' : true;
+
     return matchesSearch && matchesActivated && matchesDeactivated;
   });
 
@@ -53,27 +72,35 @@ const ViewMembers = () => {
     { label: 'All Members', type: 'All' },
     { label: 'Active Members', type: 'Active' },
     { label: 'Inactive Members', type: 'Inactive' },
+    { label: 'Expired Members', type: 'Expired' },
   ];
 
   const handleFilterSelect = (type) => {
     if (type === 'Active') {
       setShowActivatedOnly(true);
       setShowDeactivatedOnly(false);
+      setShowExpiredOnly(false);
     } else if (type === 'Inactive') {
       setShowActivatedOnly(false);
       setShowDeactivatedOnly(true);
-    } else {
+      setShowExpiredOnly(false);
+    } else if (type === 'Expired') {
       setShowActivatedOnly(false);
       setShowDeactivatedOnly(false);
+      setShowExpiredOnly(true);
+      fetchExpiredMembers(); // load expired members when selected
+    } else {
+      // All selected
+      setShowActivatedOnly(false);
+      setShowDeactivatedOnly(false);
+      setShowExpiredOnly(false);
     }
   };
 
 
-  const formatDate = (birthdate) => {
-    const day = String(birthdate.getDate()).padStart(2, '0');
-    const month = String(birthdate.getMonth() + 1).padStart(2, '0');
-    const year = birthdate.getFullYear();
-    return `${year}/${month}/${day}`;
+  const formatFetchedDate = (dateStr) => {
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
   };
 
   const fetchMembers = async () => {
@@ -170,23 +197,21 @@ const ViewMembers = () => {
           delay={index * 100}
           style={styles.memberCard}>
           {/* Top Row - Avatar, Name, and Package */}
-          <Animatable.View style={styles.topRow}>
-            <Animatable.View
+          <View style={styles.topRow}>
+            <View
               animation="bounceIn"
               duration={800}
               style={styles.avatarWrapper}>
               <Image
                 source={{
                   uri:
-                    `https://gym.cronicodigital.com/uploads/membersImage/${member.profile_image}` ||
+                    `${IMAGES_URL}/membersImage/${member.profile_image}` ||
                     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
                 }}
                 style={styles.avatar}
                 resizeMode="cover"
               />
-              <Animatable.View
-                animation="pulse"
-                iterationCount="infinite"
+              <View
                 style={[
                   styles.statusDot,
                   {
@@ -197,9 +222,9 @@ const ViewMembers = () => {
                   },
                 ]}
               />
-            </Animatable.View>
+            </View>
 
-            <Animatable.View
+            <View
               animation="fadeIn"
               duration={700}
               style={styles.namePackageContainer}>
@@ -207,12 +232,12 @@ const ViewMembers = () => {
                 {member.name} {member.surname}
               </Text>
               <Text style={styles.packageText}>{member.package_name}</Text>
-            </Animatable.View>
+            </View>
 
             <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
               <Icon name="more-vert" size={20} color={COLORS.lightGray2} />
             </TouchableOpacity>
-          </Animatable.View>
+          </View>
 
           {/* Details Section */}
           <View style={styles.detailsSection}>
@@ -231,8 +256,8 @@ const ViewMembers = () => {
                     color={COLORS.primary}
                   />
                   <Text style={styles.infoText}>
-                    {formatDate(new Date(member.start_Date))} -{' '}
-                    {formatDate(new Date(member.end_date))}
+                    {formatFetchedDate(member.start_Date)} -{' '}
+                    {formatFetchedDate(member.end_date)}
                   </Text>
                 </View>
 
@@ -347,11 +372,12 @@ const ViewMembers = () => {
                   {
                     backgroundColor:
                       (item.type === 'Active' && showActivatedOnly) ||
-                        (item.type === 'Inactive' && showDeactivatedOnly)
+                        (item.type === 'Inactive' && showDeactivatedOnly) ||
+                        (item.type === 'Expired' && showExpiredOnly) ||
+                        (item.type === 'All' && !showActivatedOnly && !showDeactivatedOnly && !showExpiredOnly)
                         ? COLORS.primary
-                        : (showActivatedOnly === false && showDeactivatedOnly === false && item.type === 'All')
-                          ? COLORS.primary
-                          : COLORS.lightGray4,
+                        : COLORS.lightGray4,
+
                   },
                 ]}
               >
@@ -361,11 +387,12 @@ const ViewMembers = () => {
                     {
                       color:
                         (item.type === 'Active' && showActivatedOnly) ||
-                          (item.type === 'Inactive' && showDeactivatedOnly)
+                          (item.type === 'Inactive' && showDeactivatedOnly) ||
+                          (item.type === 'Expired' && showExpiredOnly) ||
+                          (item.type === 'All' && !showActivatedOnly && !showDeactivatedOnly && !showExpiredOnly)
                           ? COLORS.white
-                          : (showActivatedOnly === false && showDeactivatedOnly === false && item.type === 'All')
-                            ? COLORS.white
-                            : COLORS.gray
+                          : COLORS.gray,
+
                     },
                   ]}
                 >
@@ -377,7 +404,7 @@ const ViewMembers = () => {
         </Animatable.View>
 
         {filteredMembers && !skeletonLoader && (
-          <Animatable.View animation="fadeInLeft" duration={800} style={styles.searchContainer}>
+          <View style={styles.searchContainer}>
             <TextInput
               style={styles.searchInput}
               placeholder="Search by name..."
@@ -385,12 +412,12 @@ const ViewMembers = () => {
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
-          </Animatable.View>
+          </View>
         )}
 
         {/* Member List */}
         <View style={{ marginTop: SIZES.font }}>
-          {filteredMembers.length === 0 ? (
+          {(filteredMembers.length === 0 && !skeletonLoader) ? (
             <Animatable.View animation="zoomIn" duration={800} style={styles.emptyState}>
               <Image source={images.noData} style={styles.noDataImage} />
               <Text style={styles.emptyText}>No members available at the moment</Text>

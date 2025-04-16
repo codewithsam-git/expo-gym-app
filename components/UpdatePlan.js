@@ -16,11 +16,13 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS, FONTS, SIZES } from '../constants';
 import { Dropdown } from 'react-native-element-dropdown';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useNavigation } from '@react-navigation/native';
 import BASE_URL from '../Api/commonApi';
+import IMAGES_URL from '../Api/ImagesUrl';
 
 const UpdatePlan = ({ route }) => {
   const navigation = useNavigation();
@@ -47,6 +49,11 @@ const UpdatePlan = ({ route }) => {
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
   const [imageUri, setImageUri] = useState(null);
+
+  const formatFetchedDate = (dateStr) => {
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
+  };
 
   const fetchMemberById = async () => {
     try {
@@ -233,12 +240,12 @@ const UpdatePlan = ({ route }) => {
       <View style={styles.profileHeader}>
         <Image
           source={{
-            uri: `https://gym.cronicodigital.com/uploads/membersImage/${imageUri}`,
+            uri: `${IMAGES_URL}/membersImage/${imageUri}`,
           }}
           style={styles.profileHeaderImage}
         />
         <View>
-          <Text style={styles.sectionTitle}>Samarth Bhandare</Text>
+          <Text style={styles.sectionTitle}>{members.name} {members.surname}</Text>
         </View>
       </View>
 
@@ -285,7 +292,7 @@ const UpdatePlan = ({ route }) => {
                 />
                 <View style={styles.textContainer}>
                   <Text style={styles.label}>Start Date:</Text>
-                  <Text style={styles.value}>{members.start_Date}</Text>
+                  <Text style={styles.value}>{formatFetchedDate(members.start_Date)}</Text>
                 </View>
               </View>
             </View>
@@ -340,7 +347,7 @@ const UpdatePlan = ({ route }) => {
                 />
                 <View style={styles.textContainer}>
                   <Text style={styles.label}>End Date:</Text>
-                  <Text style={styles.value}>{members.end_date}</Text>
+                  <Text style={styles.value}>{formatFetchedDate(members.end_date)}</Text>
                 </View>
               </View>
             </View>
@@ -386,8 +393,8 @@ const UpdatePlan = ({ route }) => {
               </View>
 
               <View style={styles.inputContainer}>
-                <FontAwesome
-                  name="dollar"
+                <MaterialIcon
+                  name="currency-rupee"
                   size={20}
                   color={COLORS.primary}
                   style={styles.inputIcon}

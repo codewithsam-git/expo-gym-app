@@ -21,6 +21,7 @@ import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import BASE_URL from '../Api/commonApi';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
+import IMAGES_URL from '../Api/ImagesUrl';
 
 const EditPackage = ({ route }) => {
   const { packageId } = route.params;
@@ -84,6 +85,7 @@ const EditPackage = ({ route }) => {
         type: `image/${fileType}`,
         name: `package_image.${fileType}`,
       };
+      console.log("file file", file);
       formData.append('image', file);
     }
 
@@ -93,7 +95,6 @@ const EditPackage = ({ route }) => {
         body: formData,
       });
 
-      const result = await response.json();
       if (response.ok) {
         Alert.alert('Success', 'Package updated successfully');
         setPackageName('');
@@ -252,7 +253,7 @@ const EditPackage = ({ route }) => {
                     <View style={styles.imagePreviewContainer}>
                       <Image
                         source={{
-                          uri: `https://gym.cronicodigital.com/uploads/packages/${fetchedImageUri}`,
+                          uri: `${IMAGES_URL}/packages/${fetchedImageUri}`,
                         }}
                         style={styles.imagePreview}
                       />

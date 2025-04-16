@@ -22,6 +22,7 @@ import { useNavigation } from '@react-navigation/native';
 import SkeletonMember from '../components/SkeletonMember';
 import { useFocusEffect } from '@react-navigation/native';
 import ViewHeader from '../components/ViewHeader';
+import IMAGES_URL from '../Api/ImagesUrl';
 
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
@@ -116,13 +117,13 @@ const ViewPackages = () => {
           delay={index * 100} // Stagger animation for each card
           style={styles.memberCard}>
           {/* Avatar Section */}
-          <Animatable.View activeOpacity={0.8}>
+          <View activeOpacity={0.8}>
             <View style={styles.avatarContainer}>
-              <Animatable.Image
+              <Image
                 animation="zoomIn" // Zoom in effect for avatar
                 duration={600}
                 source={{
-                  uri: `https://gym.cronicodigital.com/uploads/packages/${member.image}` || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
+                  uri: `${IMAGES_URL}/packages/${member.image}` || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
                 }}
                 style={styles.avatar}
                 resizeMode="cover"
@@ -131,22 +132,22 @@ const ViewPackages = () => {
                 }
               />
             </View>
-          </Animatable.View>
+          </View>
 
           {/* Member Details Section */}
-          <Animatable.View style={styles.memberDetails} activeOpacity={0.7}>
-            <Animatable.Text
+          <View style={styles.memberDetails} activeOpacity={0.7}>
+            <Text
               style={styles.memberName}
               numberOfLines={1}
               ellipsizeMode="tail">
               {member.package_name}
-            </Animatable.Text>
-            <Animatable.Text delay={200} style={styles.memberPlan}>
+            </Text>
+            <Text delay={200} style={styles.memberPlan}>
               Amount: ₹
               {parseFloat(member.package_amount).toLocaleString('en-IN')}
               /-
-            </Animatable.Text>
-          </Animatable.View>
+            </Text>
+          </View>
 
           <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
             <Icon name="more-vert" size={20} color={COLORS.lightGray2} />
@@ -195,9 +196,7 @@ const ViewPackages = () => {
         </Animatable.View>
 
         {filteredMembers && !skeletonLoader && (
-          <Animatable.View
-            animation="fadeInDown" // Animate search bar sliding down
-            duration={800}
+          <View
             style={styles.searchContainer}>
             <TextInput
               style={styles.searchInput}
@@ -206,11 +205,11 @@ const ViewPackages = () => {
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
-          </Animatable.View>
+          </View>
         )}
 
         <View style={{ marginTop: SIZES.font }}>
-          {filteredMembers.length === 0 ? (
+          {(filteredMembers.length === 0 && !skeletonLoader) ? (
             <Animatable.View
               animation="bounceIn" // Bounce in effect for empty state
               duration={1000}

@@ -26,6 +26,7 @@ const AddAsset = ({ navigation }) => {
   const [assetName, setAssetName] = useState('');
   const [assetType, setAssetType] = useState('');
   const [purchaseDate, setPurchaseDate] = useState('');
+  const [displayPurchaseDate, setDisplayPurchaseDate] = useState('');
   const [purchasePrice, setPurchasePrice] = useState('');
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
@@ -34,6 +35,13 @@ const AddAsset = ({ navigation }) => {
     asset_type: assetType,
     purchase_date: purchaseDate,
     purchase_price: purchasePrice,
+  };
+
+  const formatDisplayDate = (dateObj) => {
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const showDatePicker = () => {
@@ -52,6 +60,7 @@ const AddAsset = ({ navigation }) => {
   };
 
   const handleConfirm = (date) => {
+    setDisplayPurchaseDate(formatDisplayDate(date));
     setPurchaseDate(formatDate(date));
     hideDatePicker();
   };
@@ -134,9 +143,12 @@ const AddAsset = ({ navigation }) => {
                       selectedTextStyle={styles.selectedTextStyle}
                       inputSearchStyle={styles.inputSearchStyle}
                       data={[
-                        { label: 'Furniture', value: 'Furniture' },
+                        { label: 'Machinery', value: 'Machinery' },
                         { label: 'Electronics', value: 'Electronics' },
-                        { label: 'Vehicles', value: 'Vehicles' },
+                        { label: 'Furniture', value: 'Furniture' },
+                        { label: 'Software', value: 'Software' },
+                        { label: 'Lang & Buildings', value: 'Lang & Buildings' },
+                        { label: 'Others', value: 'Others' },
                       ]}
                       search
                       maxHeight={300}
@@ -169,12 +181,12 @@ const AddAsset = ({ navigation }) => {
                       />
                       {purchaseDate ? (
                         <Text style={[styles.input, { color: COLORS.white }]}>
-                          {purchaseDate || 'Select Purchase Date'}{' '}
+                          {displayPurchaseDate || 'Select Purchase Date'}{' '}
                         </Text>
                       ) : (
                         <Text
                           style={[styles.input, { color: COLORS.lightGray }]}>
-                          {purchaseDate || 'Select Purchase Date'}{' '}
+                          {displayPurchaseDate || 'Select Purchase Date'}{' '}
                         </Text>
                       )}
                     </TouchableOpacity>

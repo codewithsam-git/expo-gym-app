@@ -15,6 +15,7 @@ import { COLORS, FONTS, SIZES, icons, images } from '../constants';
 import { useNavigation } from '@react-navigation/native';
 import SkeletonMember from '../components/SkeletonMember';
 import BASE_URL from '../Api/commonApi';
+import IMAGES_URL from '../Api/ImagesUrl';
 import { useFocusEffect } from '@react-navigation/native';
 import ViewHeader from '../components/ViewHeader';
 import * as Animatable from 'react-native-animatable';
@@ -108,7 +109,7 @@ const ViewInventory = () => {
           delay={index * 100}
           style={styles.card}>
           <Image
-            source={{ uri: `https://gym.cronicodigital.com/uploads/inventory/${item.image}` }}
+            source={{ uri: `${IMAGES_URL}/inventory/${item.image}` }}
             style={styles.cardImage}
             resizeMode="cover"
           />
@@ -168,7 +169,7 @@ const ViewInventory = () => {
       </Animatable.View>
 
       <ScrollView contentContainerStyle={styles.gridContainer}>
-        {inventoryItems.length === 0 ? (
+        {(inventoryItems.length === 0 && !skeletonLoader) ? (
           <View style={styles.emptyState}>
             <Image
               source={images.noData}

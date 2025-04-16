@@ -16,6 +16,7 @@ import { COLORS, FONTS, SIZES } from '../constants';
 import { useNavigation } from '@react-navigation/native';
 import BASE_URL from '../Api/commonApi';
 import { useFocusEffect } from '@react-navigation/native';
+import IMAGES_URL from '../Api/ImagesUrl';
 
 const Profile = ({ route }) => {
   const navigation = useNavigation();
@@ -110,7 +111,7 @@ const Profile = ({ route }) => {
           <View style={styles.profileHeader}>
             <Image
               source={{
-                uri: `https://gym.cronicodigital.com/uploads/membersImage/${imageUri}` || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
+                uri: `${IMAGES_URL}/membersImage/${imageUri}` || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
               }}
               style={styles.profileHeaderImage}
             />

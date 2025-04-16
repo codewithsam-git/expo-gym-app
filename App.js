@@ -50,6 +50,7 @@ import {
   DrawerItemList,
 } from '@react-navigation/drawer';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import IMAGES_URL from './Api/ImagesUrl';
 
 const CustomDrawerContent = (props) => {
   const { navigation } = props;
@@ -61,11 +62,11 @@ const CustomDrawerContent = (props) => {
         <TouchableOpacity
           style={styles.profileTouch}>
           <Image
-            source={{ uri: 'https://randomuser.me/api/portraits/men/1.jpg' }}
+            source={{ uri: `${IMAGES_URL}/logo/gym-logo.png` }}
             style={styles.profileImage}
           />
-          <Text style={styles.profileName}>Chetan Gujar</Text>
-          <Text style={styles.profileEmail}>chetan@cronico.co</Text>
+          <Text style={styles.profileName}>One Hour Fitness Club</Text>
+          <Text style={styles.profileEmail}>Everything You Need to Lead</Text>
         </TouchableOpacity>
       </View>
 
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   profileEmail: {
-    color: COLORS.white,
+    color: COLORS.lightGray4,
     fontSize: 14,
     opacity: 0.8,
   },
@@ -362,6 +363,7 @@ const DrawerNavigator = () => {
 };
 
 const App = () => {
+
   useEffect(() => {
     const handleAppStateChange = (nextAppState) => {
       if (nextAppState === 'active') {
