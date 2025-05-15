@@ -369,6 +369,11 @@ const Home = ({ navigation }) => {
     }, [])
   );
 
+  const formatFetchedDate = (dateStr) => {
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
+  };
+
   function renderMemberCard(member) {
     return (
       <View style={styles.memberCard}>
@@ -390,11 +395,14 @@ const Home = ({ navigation }) => {
             <Text style={styles.memberPlan}>
               Package: {member.package_name}
             </Text>
+            <Text style={styles.memberPlan}>
+              Plan: {formatFetchedDate(member.start_Date)} - {formatFetchedDate(member.end_date)}
+            </Text>
           </View>
           <View style={styles.expiryContainer}>
             <View></View>
             <View>
-              <Text style={styles.createdDate}>{member.start_Date}</Text>
+              <Text style={styles.createdDate}>{new Date(member.createdAt).toLocaleDateString('en-GB')}</Text>
             </View>
           </View>
         </View>
@@ -552,7 +560,7 @@ const styles = StyleSheet.create({
   expiryContainer: {
     position: 'absolute',
     right: 0,
-    top: 6,
+    top: 4,
   },
   createdDate: {
     fontSize: 12,

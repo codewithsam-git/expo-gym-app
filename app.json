@@ -7,6 +7,15 @@
     "icon": "./assets/gym-logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/logo/gym-logo.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#000000"
+    },
+    "plugins": [
+      "expo-splash-screen",
+      "expo-secure-store"
+    ],
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -17,13 +26,17 @@
       "bundleIdentifier": "com.codewithsamexpo.snack2d750b5721b6479e938fb34fb5084fa2"
     },
     "android": {
-      "enableHermes": true,      
+      "enableHermes": true,
       "package": "com.codewithsamexpo.snack2d750b5721b6479e938fb34fb5084fa2",
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
-      ]
+      ],
+      "splash": {
+        "backgroundColor": "transparent",
+        "resizeMode": "contain"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -32,6 +32,7 @@ const EditMember = ({ route }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isCountryFocus, setIsCountryFocus] = useState(false);
   const [isGenderFocus, setIsGenderFocus] = useState(false);
+  const [isCityFocus, setIsCityFocus] = useState(false);
   const [isPlanNameFocus, setIsPlanNameFocus] = useState(false);
   const steps = ['Step 1', 'Step 2', 'Step3'];
 
@@ -562,7 +563,7 @@ const EditMember = ({ route }) => {
                           color={COLORS.primary}
                           style={styles.inputIcon}
                         />
-                        <Dropdown
+                        {/* <Dropdown
                           style={[styles.input, isCountryFocus]}
                           placeholderStyle={styles.placeholderStyle}
                           selectedTextStyle={styles.selectedTextStyle}
@@ -583,6 +584,13 @@ const EditMember = ({ route }) => {
                             setCountry(item.value);
                             setIsCountryFocus(false);
                           }}
+                        /> */}
+                        <TextInput
+                          placeholder="Country"
+                          placeholderTextColor={COLORS.lightGray}
+                          value={country}
+                          onChangeText={setCountry}
+                          style={styles.input}
                         />
                       </View>
 
@@ -669,12 +677,28 @@ const EditMember = ({ route }) => {
                           color={COLORS.primary}
                           style={styles.inputIcon}
                         />
-                        <TextInput
-                          placeholder="City"
-                          placeholderTextColor={COLORS.lightGray}
+                        <Dropdown
+                          style={[styles.input, isCityFocus]}
+                          placeholderStyle={styles.placeholderStyle}
+                          selectedTextStyle={styles.selectedTextStyle}
+                          inputSearchStyle={styles.inputSearchStyle}
+                          data={[
+                            { label: 'Pune', value: 'Pune' },
+                            { label: 'Satara', value: 'Satara' },
+                          ]}
+                          search
+                          maxHeight={300}
+                          labelField="label"
+                          valueField="value"
+                          placeholder={!isCityFocus ? 'Select City' : '...'}
+                          searchPlaceholder="Search..."
                           value={city}
-                          onChangeText={setCity}
-                          style={styles.input}
+                          onFocus={() => setIsCityFocus(true)}
+                          onBlur={() => setIsCityFocus(false)}
+                          onChange={(item) => {
+                            setCity(item.value);
+                            setIsCityFocus(false);
+                          }}
                         />
                       </View>
 
@@ -850,7 +874,7 @@ const EditMember = ({ route }) => {
                               uri: `${IMAGES_URL}/membersImage/${fetchedImageUri}`,
                             }}
                             style={styles.imagePreview}
-                          />                          
+                          />
                         </View>
                       )}
 

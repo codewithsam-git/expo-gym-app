@@ -111,7 +111,7 @@ const ViewInventory = () => {
           <Image
             source={{ uri: `${IMAGES_URL}/inventory/${item.image}` }}
             style={styles.cardImage}
-            resizeMode="cover"
+            resizeMode="contain"
           />
 
           <View style={styles.cardDetails}>

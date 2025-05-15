@@ -31,6 +31,7 @@ const AddMember = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isCountryFocus, setIsCountryFocus] = useState(false);
   const [isGenderFocus, setIsGenderFocus] = useState(false);
+  const [isCityFocus, setIsCityFocus] = useState(false);
   const [isPlanNameFocus, setIsPlanNameFocus] = useState(false);
   const steps = ['Step 1', 'Step 2', 'Step 3'];
 
@@ -127,7 +128,7 @@ const AddMember = () => {
   const [birthdate, setBirthdate] = useState('');
   const [email, setEmail] = useState('');
   const [mobileNo, setMobileNo] = useState('');
-  const [country, setCountry] = useState('');
+  const [country, setCountry] = useState('India');
   const [city, setCity] = useState('');
   const [planName, setPlanName] = useState('');
   const [charges, setCharges] = useState('');
@@ -170,23 +171,23 @@ const AddMember = () => {
     fetchPackages();
   }, []);
 
-  useEffect(() => {
-    setFirstName('');
-    setLastName('');
-    setGender('');
-    setBirthdate('');
-    setEmail('');
-    setMobileNo('');
-    setCountry('');
-    setCity('');
-    setPlanName('');
-    setCharges('');
-    setDiscount('');
-    setDuration('');
-    setStartDate('');
-    setEndDate('');
-    setImageUri('');
-  }, []);
+  // useEffect(() => {
+  //   setFirstName('');
+  //   setLastName('');
+  //   setGender('');
+  //   setBirthdate('');
+  //   setEmail('');
+  //   setMobileNo('');
+  //   setCountry('');
+  //   setCity('');
+  //   setPlanName('');
+  //   setCharges('');
+  //   setDiscount('');
+  //   setDuration('');
+  //   setStartDate('');
+  //   setEndDate('');
+  //   setImageUri('');
+  // }, []);
 
   const handleStepClick = (stepIndex) => {
     setCurrentStep(stepIndex);
@@ -345,6 +346,7 @@ const AddMember = () => {
 
       const resData = await response.json();
       const memberId = resData.data.id;
+      const whatsappContact = resData.data.phoneno;
 
       if (response.ok) {
         Alert.alert('Success', 'Member added successfully!', [{ text: 'OK' }], {
@@ -366,7 +368,7 @@ const AddMember = () => {
         setEndDate('');
         setCurrentStep(0);
         setLoading(false);
-        navigation.navigate('history', { memberId: memberId });
+        navigation.navigate('history', { memberId: memberId, whatsappContact: whatsappContact });
       } else {
         throw new Error('Failed to add member');
       }
@@ -529,12 +531,14 @@ const AddMember = () => {
                           color={COLORS.primary}
                           style={styles.inputIcon}
                         />
-                        <Dropdown
+                        {/* <Dropdown
                           style={[styles.input, isCountryFocus]}
                           placeholderStyle={styles.placeholderStyle}
                           selectedTextStyle={styles.selectedTextStyle}
                           inputSearchStyle={styles.inputSearchStyle}
-                          data={countries}
+                          data={[
+                            {label: "India", value: "India"}
+                          ]}
                           search
                           maxHeight={300}
                           labelField="label"
@@ -550,6 +554,13 @@ const AddMember = () => {
                             setCountry(item.value);
                             setIsCountryFocus(false);
                           }}
+                        /> */}
+                        <TextInput
+                          placeholder="Country"
+                          placeholderTextColor={COLORS.lightGray}
+                          value={country}
+                          onChangeText={setCountry}
+                          style={styles.input}
                         />
                       </View>
 
@@ -636,12 +647,28 @@ const AddMember = () => {
                           color={COLORS.primary}
                           style={styles.inputIcon}
                         />
-                        <TextInput
-                          placeholder="City"
-                          placeholderTextColor={COLORS.lightGray}
+                        <Dropdown
+                          style={[styles.input, isCityFocus]}
+                          placeholderStyle={styles.placeholderStyle}
+                          selectedTextStyle={styles.selectedTextStyle}
+                          inputSearchStyle={styles.inputSearchStyle}
+                          data={[
+                            { label: 'Pune', value: 'Pune' },
+                            { label: 'Satara', value: 'Satara' },
+                          ]}
+                          search
+                          maxHeight={300}
+                          labelField="label"
+                          valueField="value"
+                          placeholder={!isCityFocus ? 'Select City' : '...'}
+                          searchPlaceholder="Search..."
                           value={city}
-                          onChangeText={setCity}
-                          style={styles.input}
+                          onFocus={() => setIsCityFocus(true)}
+                          onBlur={() => setIsCityFocus(false)}
+                          onChange={(item) => {
+                            setCity(item.value);
+                            setIsCityFocus(false);
+                          }}
                         />
                       </View>
 
@@ -832,7 +859,7 @@ const AddMember = () => {
                               source={images.noData}
                               style={styles.imagePreview}
                             />
-                          </View>                          
+                          </View>
                         </View>
                       )}
 

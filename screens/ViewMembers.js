@@ -72,7 +72,7 @@ const ViewMembers = () => {
     { label: 'All Members', type: 'All' },
     { label: 'Active Members', type: 'Active' },
     { label: 'Inactive Members', type: 'Inactive' },
-    { label: 'Expired Members', type: 'Expired' },
+    // { label: 'Expired Members', type: 'Expired' },
   ];
 
   const handleFilterSelect = (type) => {
@@ -97,15 +97,21 @@ const ViewMembers = () => {
     }
   };
 
-
   const formatFetchedDate = (dateStr) => {
     const [year, month, day] = dateStr.split("-");
     return `${day}/${month}/${year}`;
   };
 
   const fetchMembers = async () => {
+    const token = await AsyncStorage.getItem('token');
     try {
-      const response = await fetch(`${BASE_URL}/members`);
+      const response = await fetch(`${BASE_URL}/members`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

@@ -12,14 +12,22 @@ import {
   Alert,
   Image,
   Platform,
-  ScrollView,  
+  ScrollView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { COLORS, FONTS, SIZES, images } from '../constants';
+import BASE_URL from '../Api/commonApi';
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    AsyncStorage.setItem('demo', '123')
+      .then(() => console.log('✅ AsyncStorage is working!'))
+      .catch(err => console.log('❌ AsyncStorage error:', err));
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -27,47 +35,45 @@ const Login = ({ navigation }) => {
       return;
     }
 
-    if (email === "admin@onehour.com" && password === "Admin@123") {
-      Alert.alert("Success", "Login successful!");
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Home' }],
+    const requestBody = {
+      email: email,
+      password: password,
+    };
+
+    try {
+      const response = await fetch(`${BASE_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
       });
-    } else {  
-      Alert.alert("Error", "Invalid email or password.");
+
+      const data = await response.json();
+      console.log("data", data);
+
+      if (data.success === true) {
+        AsyncStorage.setItem('token', data.token, (error) => {
+          if (error) {
+            console.error("Error storing token in AsyncStorage", error);
+            Alert.alert("Error", "Failed to save login token. Please try again.");
+          } else {
+            Alert.alert("Success", "Login successful!");
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Home' }],
+            });
+          }
+        });
+      } else {
+        Alert.alert("Error", data.message || "Invalid email or password.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
     }
-
-    // If you want to keep the API call for future logins, you can keep the rest commented out
-    // const requestBody = {
-    //   email: email,
-    //   password: password,
-    // };
-
-    // try {
-    //   const response = await fetch(`${BASE_URL}/login`, {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify(requestBody),
-    //   });
-
-    //   const data = await response.json();
-    //   console.log("data", data);
-    //   if (response.ok) {
-    //     Alert.alert("Success", "Login successful!");
-    //     navigation.reset({
-    //       index: 0,
-    //       routes: [{ name: 'Home' }],
-    //     });
-    //   } else {
-    //     Alert.alert("Error", data.message || "Invalid email or password.");
-    //   }
-    // } catch (error) {
-    //   console.error("Login error:", error);
-    //   Alert.alert("Error", "Something went wrong. Please try again.");
-    // }
   };
+
 
   return (
     <SafeAreaView style={styles.safeArea}>

@@ -9,6 +9,8 @@ import {
   Dimensions,
   StyleSheet,
   Platform,
+  Linking,
+  Alert,
 } from 'react-native';
 import Header from '../components/Header';
 import BASE_URL from '../Api/commonApi';
@@ -18,9 +20,40 @@ import { useFocusEffect } from '@react-navigation/native';
 const screenWidth = Dimensions.get('window').width;
 import { LinearGradient } from 'expo-linear-gradient';
 import IMAGES_URL from '../Api/ImagesUrl';
+import Ionicon from 'react-native-vector-icons/FontAwesome';
 
 const Notification = ({ navigation }) => {
   const [members, setMembers] = useState([]);
+
+  const formatFetchedDate = (dateStr) => {
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
+  };
+
+  const sendWhatsAppMessage = (member) => {
+
+    const message =
+      `👋 Hello ${member.name} !\n\n` +
+      `Your gym membership has expired, but we're excited to welcome you back! 🔄 
+      \n` +
+      `Take advantage of our exclusive offer to continue your fitness journey. 🏋‍♂
+      \n` +
+      `👉 *Click below to learn more and renew today:* \n` +
+      `https://gym.cronicodigital.com/offers/\n\n` +
+      `Stay fit, stay strong! 💪\n\n` +
+      `Warm regards,\n` +
+      `*One Hour Fitness Club*`;
+
+
+    const phoneNumber = member.phoneno;
+    const whatsappUrl = `whatsapp://send?phone=+91${phoneNumber}&text=${encodeURIComponent(
+      message
+    )}`;
+
+    Linking.openURL(whatsappUrl).catch(() => {
+      Alert.alert('Make sure WhatsApp is installed on your device');
+    });
+  };
 
   function renderMemberExpiryTitleSection() {
     return (
@@ -45,7 +78,7 @@ const Notification = ({ navigation }) => {
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 8,
+            paddingBottom: 8,
             paddingHorizontal: 15,
             borderRadius: 10,
           }}>
@@ -56,7 +89,7 @@ const Notification = ({ navigation }) => {
             style={{ marginRight: 8 }}
           />
           <Text style={{ fontSize: 16, color: 'white', fontWeight: '600' }}>
-            Members with Expiring Plans
+            Membership Expired / Expiring Soon
           </Text>
         </View>
 
@@ -80,7 +113,7 @@ const Notification = ({ navigation }) => {
           <View style={styles.avatarContainer}>
             <Image
               source={{
-                uri: `${IMAGES_URL}/membersImage/${member.profile_image}` || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',                
+                uri: `${IMAGES_URL}/membersImage/${member.profile_image}` || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgzPKFziefwggi6URHF_ApNhe9okKizqq4lRBjzG9QQ5--_Ch0Iq9IUtPONEw9-SeKlqs&usqp=CAU',
               }}
               style={styles.avatar}
               resizeMode="cover"
@@ -92,14 +125,37 @@ const Notification = ({ navigation }) => {
               {member.name} {member.surname}
             </Text>
             <Text style={styles.memberPlan}>
-              Package: {member.package_name}
+              {member.package_name}
+            </Text>
+            <Text style={styles.memberPlan}>
+              {formatFetchedDate(member.start_Date)} - {formatFetchedDate(member.end_date)}
             </Text>
           </View>
           <View style={styles.expiryContainer}>
             <View></View>
             <View>
-              <Text style={styles.expiryDate}>Expired</Text>
+              <Text style={styles.expiryDate}>
+                {
+                  formatFetchedDate(member.end_date)
+                    > new Date().toLocaleDateString('en-GB')
+                    ? formatFetchedDate(member.end_date)
+                    : 'Expired'
+                }
+              </Text>
             </View>
+            <TouchableOpacity
+              style={styles.shareOnWhatsappButton}
+              onPress={() => sendWhatsAppMessage(member)}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.shareOnWhatsappText}>Offer</Text>
+                <Ionicon
+                  name="whatsapp"
+                  size={20}
+                  color="white"
+                  style={{ marginLeft: 5 }}
+                />
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -220,7 +276,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.white,
-    marginBottom: 5,
   },
   memberPlan: {
     fontSize: 14,
@@ -229,13 +284,28 @@ const styles = StyleSheet.create({
   expiryContainer: {
     position: 'absolute',
     right: 0,
-    top: 6,
+    top: 2,
   },
   expiryDate: {
     fontSize: 12,
     color: COLORS.lightRed, // Expiry date in red
     fontWeight: 'bold',
   },
+  shareOnWhatsappButton: {
+    marginTop: SIZES.base,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: '#5DBE3F',
+    borderRadius: SIZES.radius,
+    alignSelf: 'flex-start',
+  },
+  shareOnWhatsappText: {
+    ...FONTS.body4,
+    color: COLORS.white,
+    fontWeight: '500',
+    fontSize: 14,
+  }
+  ,
   emptyState: {
     marginTop: screenWidth / 2,
     justifyContent: 'center',

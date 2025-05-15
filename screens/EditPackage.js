@@ -168,6 +168,11 @@ const EditPackage = ({ route }) => {
                       style={styles.input}
                     />
                   </View>
+                  <Text style={styles.instructionText}>
+                    When adding the package name, ensure that the duration is
+                    added next to the package name. This is mandatory. Eg.
+                    Cardio training [1 month].
+                  </Text>
 
                   <View style={styles.inputContainer}>
                     <Icon
@@ -202,6 +207,8 @@ const EditPackage = ({ route }) => {
                       }}
                     />
                   </View>
+                  <Text style={styles.instructionText}>                    
+                  </Text>
 
                   <View style={styles.inputContainer}>
                     <MaterialIcon
@@ -219,6 +226,8 @@ const EditPackage = ({ route }) => {
                       keyboardType="phone-pad"
                     />
                   </View>
+                  <Text style={styles.instructionText}>                    
+                  </Text>
 
                   <View style={styles.inputContainer}>
                     <MaterialIcon
@@ -236,6 +245,10 @@ const EditPackage = ({ route }) => {
                       keyboardType="phone-pad"
                     />
                   </View>
+                  <Text style={styles.instructionText}>
+                    If no discount is available please enter the original amount
+                    as per the final price. This is mandatory.
+                  </Text>
 
                   <View style={styles.inputContainer}>
                     <Icon
@@ -305,7 +318,6 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
   },
   formContainerWrapper: {
     flex: 1,
@@ -326,13 +338,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     paddingVertical: 12,
     paddingHorizontal: 10,
-    marginBottom: 20,
+    marginBottom: SIZES.base,
     color: COLORS.white,
     borderColor: COLORS.lightGray,
     ...FONTS.body3,
   },
   inputIcon: {
     marginRight: 10,
+  },
+  instructionText: {
+    color: COLORS.lightRed,
+    fontSize: 12,
+    paddingLeft: 35,
+    marginBottom: SIZES.font,
   },
   placeholderStyle: {
     fontSize: 16,

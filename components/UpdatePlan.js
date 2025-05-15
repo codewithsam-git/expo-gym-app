@@ -27,7 +27,6 @@ import IMAGES_URL from '../Api/ImagesUrl';
 const UpdatePlan = ({ route }) => {
   const navigation = useNavigation();
   const { memberId } = route.params;
-
   const [choosePlan, setChoosePlan] = useState([]);
   const [members, setMembers] = useState({});
   const [charges, setCharges] = useState('');
@@ -49,9 +48,21 @@ const UpdatePlan = ({ route }) => {
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
   const [imageUri, setImageUri] = useState(null);
+  const [displayStartDate, setDisplayStartDate] = useState();
+  const [displayEndDate, setDisplayEndDate] = useState();
+
+  const [displayStartDate1, setDisplayStartDate1] = useState();
+  const [displayEndDate1, setDisplayEndDate1] = useState();
 
   const formatFetchedDate = (dateStr) => {
     const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatDisplayDate = (dateObj) => {
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
     return `${day}/${month}/${year}`;
   };
 
@@ -90,6 +101,9 @@ const UpdatePlan = ({ route }) => {
       // setStartDate(fetchedMember.start_Date);
       // setEndDate(fetchedMember.end_date);
       setImageUri(fetchedMember.profile_image);
+
+      setDisplayStartDate(formatFetchedDate(fetchedMember.start_Date));
+      setDisplayEndDate(formatFetchedDate(fetchedMember.end_date));
     } catch (err) {
       console.error('Fetch error:', err);
     }
@@ -118,6 +132,7 @@ const UpdatePlan = ({ route }) => {
     };
 
     const startDateFormatted = formatDate(date);
+    setDisplayStartDate1(formatDisplayDate(date));
     setStartDate(startDateFormatted);
 
     let endDateObj = new Date(date);
@@ -136,6 +151,7 @@ const UpdatePlan = ({ route }) => {
       }
     }
 
+    setDisplayEndDate1(formatDisplayDate(endDateObj));
     setEndDate(formatDate(endDateObj));
     hideDatePicker();
   };
@@ -244,9 +260,22 @@ const UpdatePlan = ({ route }) => {
           }}
           style={styles.profileHeaderImage}
         />
-        <View>
-          <Text style={styles.sectionTitle}>{members.name} {members.surname}</Text>
-        </View>
+        <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}>
+                      <Text style={styles.sectionTitle}>{members.name} {members.surname}</Text>
+                      <Icon
+                        name="pencil"
+                        size={20}
+                        color={COLORS.white}
+                        onPress={() =>
+                          navigation.navigate('editMember', { memberId: memberId })
+                        }
+                      />
+                    </View>
       </View>
 
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
@@ -292,7 +321,7 @@ const UpdatePlan = ({ route }) => {
                 />
                 <View style={styles.textContainer}>
                   <Text style={styles.label}>Start Date:</Text>
-                  <Text style={styles.value}>{formatFetchedDate(members.start_Date)}</Text>
+                  <Text style={styles.value}>{displayStartDate}</Text>
                 </View>
               </View>
             </View>
@@ -347,7 +376,7 @@ const UpdatePlan = ({ route }) => {
                 />
                 <View style={styles.textContainer}>
                   <Text style={styles.label}>End Date:</Text>
-                  <Text style={styles.value}>{formatFetchedDate(members.end_date)}</Text>
+                  <Text style={styles.value}>{displayEndDate}</Text>
                 </View>
               </View>
             </View>
@@ -438,11 +467,11 @@ const UpdatePlan = ({ route }) => {
                   />
                   {startDate ? (
                     <Text style={[styles.input, { color: COLORS.white }]}>
-                      {startDate || 'Select Start Date'}{' '}
+                      {displayStartDate1 || 'Start Date (dd/mm/yyyy)'}
                     </Text>
                   ) : (
                     <Text style={[styles.input, { color: COLORS.lightGray }]}>
-                      {startDate || 'Select Start Date'}{' '}
+                      {displayStartDate1 || 'Start Date (dd/mm/yyyy)'}
                     </Text>
                   )}
                 </TouchableOpacity>
@@ -459,11 +488,11 @@ const UpdatePlan = ({ route }) => {
                   />
                   {endDate ? (
                     <Text style={[styles.input, { color: COLORS.white }]}>
-                      {endDate || 'Select End Date'}{' '}
+                      {displayEndDate1 || 'End Date (dd/mm/yyyy)'}
                     </Text>
                   ) : (
                     <Text style={[styles.input, { color: COLORS.lightGray }]}>
-                      {endDate || 'Select End Date'}{' '}
+                      {displayEndDate1 || 'End Date (dd/mm/yyyy)'}
                     </Text>
                   )}
                 </TouchableOpacity>

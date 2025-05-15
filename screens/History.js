@@ -49,6 +49,11 @@ const History = ({ route }) => {
     fetchBillHistory();
   }, []);
 
+  const formatFetchedDate = (dateStr) => {
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
+  };
+
   function renderBillItem(bill, index) {   
     return (
       <Animatable.View
@@ -79,11 +84,11 @@ const History = ({ route }) => {
           </View>
           <View style={styles.dateRow}>
             <Text style={styles.dateText}>
-              {new Date(bill.start_Date).toLocaleDateString()}
+              {formatFetchedDate(bill.start_Date)}
             </Text>
             <Text style={styles.dateSeparator}> - </Text>
             <Text style={styles.dateText}>
-              {new Date(bill.end_date).toLocaleDateString()}
+              {formatFetchedDate(bill.end_date)}
             </Text>
           </View>
           <View style={styles.actionButtons}>
@@ -103,7 +108,7 @@ const History = ({ route }) => {
               </View>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.shareOnWhatsappButton}
+              style={styles.sendWhatsAppMessage}
               onPress={() => sendWhatsAppMessage(bill)}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text style={styles.shareOnWhatsappText}>Share</Text>
@@ -124,8 +129,8 @@ const History = ({ route }) => {
   const sendWhatsAppMessage = (bill) => {
     const planName = bill.package_name || 'N/A';
     const discountPrice = bill.packagePrice || 'N/A';
-    const startDate = new Date(bill.start_Date).toLocaleDateString();
-    const endDate = new Date(bill.end_date).toLocaleDateString();
+    const startDate = formatFetchedDate(bill.start_Date);
+    const endDate = formatFetchedDate(bill.end_date);
     const createDate = new Date().toLocaleDateString();
 
     const message =
@@ -142,7 +147,8 @@ const History = ({ route }) => {
       `*OneHourGym Team*`;
 
     const phoneNumber = whatsappContact;
-    const whatsappUrl = `whatsapp://send?phone=+91${phoneNumber}&text=${encodeURIComponent(
+    const whatsappUrl = `
+    =${encodeURIComponent(
       message
     )}`;
 

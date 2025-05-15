@@ -39,6 +39,11 @@ const MemberBill = ({ route }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const formatFetchedDate = (dateStr) => {
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
+  };
+
   const fetchBillData = async () => {
     try {
       const response = await fetch(`${BASE_URL}/bill-details?num=${num}`);
@@ -54,8 +59,8 @@ const MemberBill = ({ route }) => {
       setEmail(data.billData.member.email);
       setAddress(data.billData.member.address);
       setInvoiceNumber(data.billData.invoice_number);
-      setStartDate(data.billData.start_Date);
-      setEndDate(data.billData.end_date);
+      setStartDate(formatFetchedDate(data.billData.start_Date));
+      setEndDate(formatFetchedDate(data.billData.end_date));
       setPackagePrice(data.billData.packagePrice.toString());
       setDiscount(data.billData.discountFinalPrice.toString());
       setTotalAmount(
@@ -269,7 +274,7 @@ const MemberBill = ({ route }) => {
   </html>
     `;
   };
-  
+
 
   const generatePDF = async () => {
     try {
@@ -324,10 +329,10 @@ const MemberBill = ({ route }) => {
           <View style={styles.headerSpacer} />
         </View>
 
-        {isLoading ? ( 
+        {isLoading ? (
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color={COLORS.primary} />
-            <Text style={{textAlign: 'center', color: COLORS.lightGray4}}>Generating...</Text>
+            <Text style={{ textAlign: 'center', color: COLORS.lightGray4 }}>Generating...</Text>
           </View>
         ) : (
 

@@ -31,6 +31,7 @@ import EditAsset from './screens/EditAsset';
 import EditInventory from './screens/EditInventory';
 import Settings from './screens/Settings';
 import History from './screens/History';
+import { SplashScreen } from 'expo-splash-screen';
 
 import {
   StatusBar,
@@ -380,6 +381,17 @@ const App = () => {
     return () => subscription.remove();
   }, []);
 
+  useEffect(() => {
+    const hideSplashScreen = async () => {
+      await SplashScreen.preventAutoHideAsync();
+      setTimeout(() => {
+        SplashScreen.hideAsync();
+      }, 2000);
+    };
+
+    hideSplashScreen();
+  }, []);
+
   return (
     <View style={{ flex: 1 }}>
       <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
@@ -389,7 +401,7 @@ const App = () => {
             screenOptions={{
               headerShown: false,
             }}
-            initialRouteName={"Splash"}>
+            initialRouteName={"Login"}>
             <Stack.Screen
               name="Splash"
               component={Splash}

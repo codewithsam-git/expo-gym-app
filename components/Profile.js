@@ -39,11 +39,9 @@ const Profile = ({ route }) => {
   const [status, setStatus] = useState('');
   const [imageUri, setImageUri] = useState('');
 
-  const formatDate = (birthdate) => {
-    const day = String(birthdate.getDate()).padStart(2, '0');
-    const month = String(birthdate.getMonth() + 1).padStart(2, '0');
-    const year = birthdate.getFullYear();
-    return `${day}-${month}-${year}`;
+  const formatFetchedDate = (dateStr) => {
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
   };
 
   const fetchMemberById = async () => {
@@ -59,7 +57,7 @@ const Profile = ({ route }) => {
       setFirstName(fetchedMember.name);
       setLastName(fetchedMember.surname);
       setGender(fetchedMember.gender);
-      setBirthdate(formatDate(new Date(fetchedMember.birthdate)));
+      setBirthdate(formatFetchedDate(fetchedMember.birthdate));
       setEmail(fetchedMember.email);
       setMobileNo(fetchedMember.phoneno);
       setCountry(fetchedMember.country);
@@ -69,8 +67,8 @@ const Profile = ({ route }) => {
       setCharges(fetchedMember.packagePrice.toString());
       setDiscount(fetchedMember.discountFinalPrice.toString());
       setDuration(fetchedMember.duration);
-      setStartDate(fetchedMember.start_Date);
-      setEndDate(fetchedMember.end_date);
+      setStartDate(formatFetchedDate(fetchedMember.start_Date));
+      setEndDate(formatFetchedDate(fetchedMember.end_date));
       setStatus(fetchedMember.memberStatus);
       setImageUri(fetchedMember.profile_image);
     } catch (err) {
@@ -278,7 +276,7 @@ const Profile = ({ route }) => {
               </View>
             </View>
             <View style={styles.row}>
-              <View style={styles.column}>
+              <View>
                 <View style={styles.field}>
                   <Icon
                     name="calendar-outline"
@@ -316,7 +314,7 @@ const Profile = ({ route }) => {
             </View>
           </View>
 
-          <View style={styles.cardContainer}>
+          <View style={[styles.cardContainer, {marginBottom: SIZES.base}]}>
             <Text style={styles.title}>Payment Details</Text>
             <View style={styles.separator}></View>
             <View style={styles.row}>
